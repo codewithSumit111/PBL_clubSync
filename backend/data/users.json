@@ -1,0 +1,77 @@
+[
+  {
+    "id": "admin-001",
+    "name": "System Administrator",
+    "email": "admin@clubsync.edu",
+    "password": "$2a$10$se8RgyLSPrSdXp5LZNp1Le/3ApszT9GH6D/j7JhDUJFkCKQVtxfNW",
+    "role": "Admin",
+    "department": "Administration",
+    "createdAt": "2026-02-18T07:21:04.590Z"
+  },
+  {
+    "id": "club-001",
+    "name": "Robotics Club Lead",
+    "email": "robotics@clubsync.edu",
+    "password": "$2a$10$rcwLCtLJ1binMONVhdlgGe.3fsdG2h6mKTOGyW0QlHTJg3xBI5Sw2",
+    "role": "Club",
+    "department": "Engineering",
+    "clubName": "Robotics Club",
+    "clubId": "club-001",
+    "createdAt": "2026-02-18T07:21:04.646Z"
+  },
+  {
+    "id": "club-002",
+    "name": "Coding Club Lead",
+    "email": "coding@clubsync.edu",
+    "password": "$2a$10$80mUiKG0LX8zRRAfHI3v3ucdBLV52ivxUEzYTm9kMF59D7T7ozary",
+    "role": "Club",
+    "department": "Computer Science",
+    "clubName": "Coding Club",
+    "clubId": "club-002",
+    "createdAt": "2026-02-18T07:21:04.702Z"
+  },
+  {
+    "id": "student-001",
+    "name": "John Doe",
+    "email": "student@clubsync.edu",
+    "password": "$2a$10$WJuUOntkKv68vxGhHq7bFedRF949vv4lwyqht6wNAuN1iKViHc72C",
+    "role": "Student",
+    "department": "Computer Science",
+    "rollNo": "CS2021001",
+    "year": "3rd Year",
+    "createdAt": "2026-02-18T07:21:04.759Z"
+  },
+  {
+    "id": "student-002",
+    "name": "Jane Smith",
+    "email": "jane@clubsync.edu",
+    "password": "$2a$10$8IIJzmJk6Hk/YxATE2/fIuTd0DjLL9QYxx0MfjgyL.Lr0QmVdPYoq",
+    "role": "Student",
+    "department": "Electronics",
+    "rollNo": "EC2021042",
+    "year": "2nd Year",
+    "createdAt": "2026-02-18T07:21:04.816Z"
+  },
+  {
+    "id": "27f57945-d12f-4370-85ae-839ec3a1f1c8",
+    "name": "Test Student",
+    "email": "newstudent@college.edu",
+    "password": "$2a$10$3moS.iJt.6SGQciz5qgGEOslttQOUpyBqRD2oxQcSBv66M5DvIMWa",
+    "role": "Student",
+    "department": "Mechanical",
+    "rollNo": "CS2024099",
+    "year": null,
+    "createdAt": "2026-02-18T07:26:59.768Z"
+  },
+  {
+    "id": "fa64cc01-3888-43d8-b71b-58f15822c9b2",
+    "name": "Dip Charhate",
+    "email": "dipcharhate94@gmail.com",
+    "password": "$2a$10$b8gg2V8r.IJvLI/8Trf1y.30R0GkBoooWYhn6jQkGxGs4H6Ypytfe",
+    "role": "Student",
+    "department": "CE",
+    "rollNo": "21117",
+    "year": null,
+    "createdAt": "2026-02-18T07:32:41.604Z"
+  }
+]
