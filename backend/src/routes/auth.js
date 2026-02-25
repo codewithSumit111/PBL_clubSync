@@ -2,8 +2,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const { findUserByEmail, findUserById, addUser } = require('../db');
+const Student = require('../models/Student');
+const Club = require('../models/Club');
+const Admin = require('../models/Admin');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -16,9 +17,24 @@ function generateToken(payload) {
 }
 
 // Helper: sanitize user (remove password before sending)
-function sanitizeUser(user) {
-    const { password, ...safe } = user;
-    return safe;
+function sanitizeUser(user, fallbackRole) {
+    const safeUser = user.toObject ? user.toObject() : { ...user };
+    delete safeUser.password;
+    if (safeUser._id) {
+        safeUser.id = safeUser._id;
+    }
+    if (!safeUser.role && fallbackRole) {
+        safeUser.role = fallbackRole;
+    }
+    return safeUser;
+}
+
+// Helper: Get Model based on role
+function getModelByRole(role) {
+    if (role === 'Student') return Student;
+    if (role === 'Club') return Club;
+    if (role === 'Admin') return Admin;
+    return null;
 }
 
 // ─────────────────────────────────────────────
@@ -33,18 +49,15 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email, password, and role are required.' });
         }
 
-        const user = findUserByEmail(email);
+        const Model = getModelByRole(role);
+        if (!Model) {
+            return res.status(400).json({ success: false, message: 'Invalid role provided.' });
+        }
+
+        const user = await Model.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
-        }
-
-        // Role must match
-        if (user.role !== role) {
-            return res.status(403).json({
-                success: false,
-                message: `This account is registered as "${user.role}", not "${role}". Please select the correct role.`,
-            });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -52,13 +65,13 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
         }
 
-        const token = generateToken({ id: user.id, email: user.email, role: user.role, name: user.name });
+        const token = generateToken({ id: user._id, email: user.email, role: user.role || role, name: user.name || user.club_name });
 
         return res.status(200).json({
             success: true,
             message: 'Login successful.',
             token,
-            user: sanitizeUser(user),
+            user: sanitizeUser(user, role),
         });
     } catch (err) {
         console.error('[LOGIN ERROR]', err);
@@ -69,7 +82,6 @@ router.post('/login', async (req, res) => {
 // ─────────────────────────────────────────────
 // POST /api/auth/register
 // Body: { name, email, password, role, ...extras }
-// Admin cannot self-register.
 // Student extras: rollNo, department, year
 // Club extras:    clubName, department
 // ─────────────────────────────────────────────
@@ -77,8 +89,8 @@ router.post('/register', async (req, res) => {
     try {
         const { name, email, password, role, rollNo, department, year, clubName } = req.body;
 
-        if (!name || !email || !password || !role) {
-            return res.status(400).json({ success: false, message: 'Name, email, password, and role are required.' });
+        if (!email || !password || !role) {
+            return res.status(400).json({ success: false, message: 'Email, password, and role are required.' });
         }
 
         if (role === 'Admin') {
@@ -89,9 +101,20 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Role must be "Student" or "Club".' });
         }
 
-        const existing = findUserByEmail(email);
+        const Model = getModelByRole(role);
+
+        // Check if user already exists
+        const existing = await Model.findOne({ email: email.toLowerCase() });
         if (existing) {
             return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+        }
+
+        // Also check if rollNo is duplicate for students
+        if (role === 'Student' && rollNo) {
+            const existingRoll = await Student.findOne({ roll_no: rollNo });
+            if (existingRoll) {
+                return res.status(409).json({ success: false, message: 'An account with this Roll Number already exists.' });
+            }
         }
 
         if (password.length < 6) {
@@ -99,30 +122,36 @@ router.post('/register', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        let newUser;
 
-        const newUser = {
-            id: uuidv4(),
-            name,
-            email: email.toLowerCase(),
-            password: hashedPassword,
-            role,
-            department: department || null,
-            // Student-specific
-            ...(role === 'Student' && { rollNo: rollNo || null, year: year || null }),
-            // Club-specific
-            ...(role === 'Club' && { clubName: clubName || name, clubId: uuidv4() }),
-            createdAt: new Date().toISOString(),
-        };
+        if (role === 'Student') {
+            newUser = new Student({
+                name,
+                email: email.toLowerCase(),
+                password: hashedPassword,
+                role: 'Student',
+                roll_no: rollNo,
+                department,
+                year: year || 1 // Fallback to 1 if missing from the request
+            });
+        } else if (role === 'Club') {
+            newUser = new Club({
+                club_name: clubName || name, // UI might pass name instead of clubName
+                description: 'Please update your club description in the dashboard.', // Default description
+                email: email.toLowerCase(),
+                password: hashedPassword
+            });
+        }
 
-        addUser(newUser);
+        await newUser.save();
 
-        const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name });
+        const token = generateToken({ id: newUser._id, email: newUser.email, role: newUser.role || role, name: newUser.name || newUser.club_name });
 
         return res.status(201).json({
             success: true,
             message: 'Account created successfully.',
             token,
-            user: sanitizeUser(newUser),
+            user: sanitizeUser(newUser, role),
         });
     } catch (err) {
         console.error('[REGISTER ERROR]', err);
@@ -134,13 +163,21 @@ router.post('/register', async (req, res) => {
 // GET /api/auth/me  (protected)
 // Header: Authorization: Bearer <token>
 // ─────────────────────────────────────────────
-router.get('/me', protect, (req, res) => {
+router.get('/me', protect, async (req, res) => {
     try {
-        const user = findUserById(req.user.id);
+        const role = req.user.role;
+        const Model = getModelByRole(role);
+
+        if (!Model) {
+            return res.status(404).json({ success: false, message: 'Invalid user role.' });
+        }
+
+        const user = await Model.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found.' });
         }
-        return res.status(200).json({ success: true, user: sanitizeUser(user) });
+
+        return res.status(200).json({ success: true, user: sanitizeUser(user, role) });
     } catch (err) {
         console.error('[ME ERROR]', err);
         return res.status(500).json({ success: false, message: 'Server error.' });

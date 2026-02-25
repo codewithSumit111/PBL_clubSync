@@ -73,5 +73,16 @@
     "rollNo": "21117",
     "year": null,
     "createdAt": "2026-02-18T07:32:41.604Z"
+  },
+  {
+    "id": "864ff4d3-41f2-4d07-ac98-fa0d069910ea",
+    "name": "Ojas Deshpande",
+    "email": "ojas@gmail.com",
+    "password": "$2a$10$f9tFNCRtic4sslc69Kx9bOll5rF9G9p9PC/MerFCVVUtJgyFESIMS",
+    "role": "Student",
+    "department": "CE",
+    "rollNo": "21122",
+    "year": null,
+    "createdAt": "2026-02-25T06:28:27.305Z"
   }
 ]
