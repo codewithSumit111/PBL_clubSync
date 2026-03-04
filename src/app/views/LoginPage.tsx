@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUser, UserRole } from '../features/authSlice';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ShieldCheck, Users, GraduationCap,
-  Mail, Lock, UserPlus, ChevronUp, Eye, EyeOff
+  Mail, Lock, UserPlus, ChevronUp, Eye, EyeOff,
+  User, Hash, Building2, Calendar
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+const API_BASE = 'http://localhost:5000/api/auth';
 
 export const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -15,7 +19,21 @@ export const LoginPage: React.FC = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Sign-up form state
+  const [signupFirstName, setSignupFirstName] = useState('');
+  const [signupLastName, setSignupLastName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupRollNo, setSignupRollNo] = useState('');
+  const [signupDepartment, setSignupDepartment] = useState('');
+  const [signupYear, setSignupYear] = useState('1');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -29,24 +47,59 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const mockUser = {
-      id: selectedRole === 'Admin' ? 'A001' : selectedRole === 'Club' ? 'C001' : 'S123',
-      name: selectedRole === 'Admin' ? 'System Administrator' : selectedRole === 'Club' ? 'Robotics Club Lead' : 'John Doe',
-      role: selectedRole,
-      email: `${selectedRole.toLowerCase()}@college.edu`,
-      rollNo: selectedRole === 'Student' ? '123456' : undefined,
-      department: 'Computer Science',
-      clubId: selectedRole === 'Club' ? '1' : undefined,
-    };
-    dispatch(setUser({ user: mockUser, token: 'mock-token-' + Date.now() }));
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, role: selectedRole }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.message || 'Login failed.');
+        return;
+      }
+      toast.success('Login successful!');
+      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name || data.user.club_name, role: data.user.role || selectedRole, email: data.user.email, rollNo: data.user.roll_no, department: data.user.department, clubId: data.user._id, clubName: data.user.club_name }, token: data.token }));
+    } catch (err) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser = { id: 'S999', name: 'New Student', role: 'Student' as UserRole, email: 'new@college.edu', rollNo: '000001', department: 'CSE' };
-    dispatch(setUser({ user: newUser, token: 'mock-token-' + Date.now() }));
+    setIsLoading(true);
+    try {
+      const fullName = `${signupFirstName} ${signupLastName}`.trim();
+      const res = await fetch(`${API_BASE}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fullName,
+          email: signupEmail,
+          password: signupPassword,
+          role: 'Student',
+          rollNo: signupRollNo,
+          department: signupDepartment,
+          year: parseInt(signupYear),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.message || 'Registration failed.');
+        return;
+      }
+      toast.success('Account created successfully!');
+      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name, role: 'Student', email: data.user.email, rollNo: data.user.roll_no, department: data.user.department }, token: data.token }));
+    } catch (err) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const roles: { role: UserRole; icon: React.ElementType; label: string }[] = [
@@ -57,7 +110,6 @@ export const LoginPage: React.FC = () => {
 
   const curtainTransition = { type: 'tween' as const, ease: [0.16, 1, 0.3, 1] as [number, number, number, number], duration: 1.0 };
 
-  // Stars/particles data
   const particles = Array.from({ length: 40 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
@@ -81,6 +133,12 @@ export const LoginPage: React.FC = () => {
     boxShadow: focusedField === field ? '0 0 0 4px rgba(99,102,241,0.12), 0 0 20px rgba(99,102,241,0.1)' : 'none',
     backdropFilter: 'blur(10px)',
   });
+
+  const signupInputStyle: React.CSSProperties = {
+    width: '100%', padding: '14px 16px 14px 42px', fontSize: '14px', color: '#e2e8f0',
+    background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.08)',
+    borderRadius: '12px', outline: 'none',
+  };
 
   return (
     <>
@@ -170,18 +228,21 @@ export const LoginPage: React.FC = () => {
             </span>
           </div>
 
-          <motion.button
-            onClick={() => setIsSignUp(true)}
-            whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            style={{
-              background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)',
-              fontSize: '12px', fontWeight: 600, padding: '8px 20px', borderRadius: '8px', letterSpacing: '0.5px',
-              textTransform: 'uppercase' as const, cursor: 'pointer', backdropFilter: 'blur(10px)',
-            }}
-          >
-            Create Account
-          </motion.button>
+          {/* Only show "Create Account" button for Students */}
+          {selectedRole === 'Student' && (
+            <motion.button
+              onClick={() => setIsSignUp(true)}
+              whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.3)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)',
+                fontSize: '12px', fontWeight: 600, padding: '8px 20px', borderRadius: '8px', letterSpacing: '0.5px',
+                textTransform: 'uppercase' as const, cursor: 'pointer', backdropFilter: 'blur(10px)',
+              }}
+            >
+              Create Account
+            </motion.button>
+          )}
         </motion.div>
 
         {/* ══════ CENTERED FORM ══════ */}
@@ -291,7 +352,8 @@ export const LoginPage: React.FC = () => {
               }} />
               <input
                 type="email" required
-                defaultValue={`${selectedRole.toLowerCase()}@college.edu`}
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
                 placeholder="Email address"
                 style={inputStyle('email')}
                 onFocus={() => setFocusedField('email')}
@@ -313,6 +375,8 @@ export const LoginPage: React.FC = () => {
               }} />
               <input
                 type={showPassword ? 'text' : 'password'} required
+                value={loginPassword}
+                onChange={e => setLoginPassword(e.target.value)}
                 placeholder="Password"
                 style={{ ...inputStyle('password'), paddingRight: '48px' }}
                 onFocus={() => setFocusedField('password')}
@@ -351,18 +415,33 @@ export const LoginPage: React.FC = () => {
                 className="login-btn shimmer"
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
+                disabled={isLoading}
                 style={{
                   width: '100%', padding: '16px', fontSize: '15px', fontWeight: 700, color: '#ffffff',
-                  background: 'linear-gradient(135deg, #4f46e5, #6366f1, #7c3aed)',
-                  border: 'none', borderRadius: '14px', cursor: 'pointer',
+                  background: isLoading ? 'linear-gradient(135deg, #3730a3, #4338ca)' : 'linear-gradient(135deg, #4f46e5, #6366f1, #7c3aed)',
+                  border: 'none', borderRadius: '14px', cursor: isLoading ? 'wait' : 'pointer',
                   boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
                   position: 'relative', overflow: 'hidden',
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0.5px', opacity: isLoading ? 0.8 : 1,
                 }}
               >
-                <span style={{ position: 'relative', zIndex: 2 }}>Login</span>
+                <span style={{ position: 'relative', zIndex: 2 }}>{isLoading ? 'Signing in...' : 'Login'}</span>
               </motion.button>
             </motion.div>
+
+            {/* Sign up prompt for Students */}
+            {selectedRole === 'Student' && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{ textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.3)', marginTop: '20px' }}
+              >
+                Don't have an account?{' '}
+                <button type="button" onClick={() => setIsSignUp(true)} style={{ color: '#818cf8', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}>
+                  Sign up
+                </button>
+              </motion.p>
+            )}
           </form>
         </div>
 
@@ -390,7 +469,7 @@ export const LoginPage: React.FC = () => {
         </motion.div>
 
 
-        {/* ══════ SIGN UP CURTAIN ══════ */}
+        {/* ══════ SIGN UP CURTAIN (Students Only) ══════ */}
         <motion.div
           style={{
             position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
@@ -415,7 +494,7 @@ export const LoginPage: React.FC = () => {
             </svg>
           </div>
 
-          <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '420px', padding: '0 24px' }}>
+          <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '460px', padding: '0 24px', maxHeight: '90vh', overflowY: 'auto' }}>
             <motion.button
               onClick={() => setIsSignUp(false)}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 auto 24px', color: 'rgba(255,255,255,0.35)', fontSize: '13px', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
@@ -442,8 +521,8 @@ export const LoginPage: React.FC = () => {
               >
                 <UserPlus size={24} style={{ color: '#fff' }} />
               </motion.div>
-              <h2 style={{ fontSize: '30px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', marginBottom: '8px' }}>Create account</h2>
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.35)' }}>Join the ClubSync community</p>
+              <h2 style={{ fontSize: '30px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', marginBottom: '8px' }}>Create Student Account</h2>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.35)' }}>Join the ClubSync community as a student</p>
             </motion.div>
 
             <motion.form
@@ -451,18 +530,63 @@ export const LoginPage: React.FC = () => {
               initial={{ y: 30, opacity: 0 }}
               animate={isSignUp ? { y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.5 } } : { y: 30, opacity: 0 }}
             >
+              {/* Name Row */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <input type="text" placeholder="First name" className="signup-input" style={{ width: '100%', padding: '14px 16px', fontSize: '14px', color: '#e2e8f0', background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', outline: 'none' }} />
-                <input type="text" placeholder="Last name" className="signup-input" style={{ width: '100%', padding: '14px 16px', fontSize: '14px', color: '#e2e8f0', background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', outline: 'none' }} />
+                <div style={{ position: 'relative' }}>
+                  <User size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                  <input type="text" required placeholder="First name" value={signupFirstName} onChange={e => setSignupFirstName(e.target.value)} className="signup-input" style={signupInputStyle} />
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <User size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                  <input type="text" required placeholder="Last name" value={signupLastName} onChange={e => setSignupLastName(e.target.value)} className="signup-input" style={signupInputStyle} />
+                </div>
               </div>
-              <input type="email" placeholder="Email address" className="signup-input" style={{ width: '100%', padding: '14px 16px', fontSize: '14px', color: '#e2e8f0', background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', outline: 'none', marginBottom: '12px' }} />
-              <input type="password" placeholder="Create password" className="signup-input" style={{ width: '100%', padding: '14px 16px', fontSize: '14px', color: '#e2e8f0', background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', outline: 'none', marginBottom: '24px' }} />
-              <motion.button type="submit" className="login-btn shimmer" whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} style={{
-                width: '100%', padding: '15px', fontSize: '15px', fontWeight: 700, color: '#ffffff',
-                background: 'linear-gradient(135deg, #4f46e5, #6366f1, #7c3aed)', border: 'none', borderRadius: '14px',
-                cursor: 'pointer', boxShadow: '0 8px 32px rgba(99,102,241,0.4)', position: 'relative', overflow: 'hidden',
-              }}>
-                <span style={{ position: 'relative', zIndex: 2 }}>Get Started</span>
+
+              {/* Email */}
+              <div style={{ position: 'relative', marginBottom: '12px' }}>
+                <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                <input type="email" required placeholder="Email address" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} className="signup-input" style={signupInputStyle} />
+              </div>
+
+              {/* Roll Number */}
+              <div style={{ position: 'relative', marginBottom: '12px' }}>
+                <Hash size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                <input type="text" required placeholder="Roll Number (e.g. CS2023001)" value={signupRollNo} onChange={e => setSignupRollNo(e.target.value)} className="signup-input" style={signupInputStyle} />
+              </div>
+
+              {/* Department + Year Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ position: 'relative' }}>
+                  <Building2 size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                  <input type="text" required placeholder="Department" value={signupDepartment} onChange={e => setSignupDepartment(e.target.value)} className="signup-input" style={signupInputStyle} />
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Calendar size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                  <select required value={signupYear} onChange={e => setSignupYear(e.target.value)} className="signup-input" style={{ ...signupInputStyle, appearance: 'none' as const, cursor: 'pointer' }}>
+                    <option value="1" style={{ background: '#1a1a2e' }}>1st Year</option>
+                    <option value="2" style={{ background: '#1a1a2e' }}>2nd Year</option>
+                    <option value="3" style={{ background: '#1a1a2e' }}>3rd Year</option>
+                    <option value="4" style={{ background: '#1a1a2e' }}>4th Year</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div style={{ position: 'relative', marginBottom: '24px' }}>
+                <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
+                <input type="password" required placeholder="Create password (min 6 chars)" value={signupPassword} onChange={e => setSignupPassword(e.target.value)} className="signup-input" style={signupInputStyle} />
+              </div>
+
+              <motion.button type="submit" className="login-btn shimmer" whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}
+                disabled={isLoading}
+                style={{
+                  width: '100%', padding: '15px', fontSize: '15px', fontWeight: 700, color: '#ffffff',
+                  background: isLoading ? 'linear-gradient(135deg, #3730a3, #4338ca)' : 'linear-gradient(135deg, #4f46e5, #6366f1, #7c3aed)',
+                  border: 'none', borderRadius: '14px',
+                  cursor: isLoading ? 'wait' : 'pointer', boxShadow: '0 8px 32px rgba(99,102,241,0.4)', position: 'relative', overflow: 'hidden',
+                  opacity: isLoading ? 0.8 : 1,
+                }}>
+                <span style={{ position: 'relative', zIndex: 2 }}>{isLoading ? 'Creating Account...' : 'Get Started'}</span>
               </motion.button>
               <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '18px' }}>
                 By signing up, you agree to our <a href="#" style={{ color: '#818cf8', textDecoration: 'none' }}>Terms</a> & <a href="#" style={{ color: '#818cf8', textDecoration: 'none' }}>Privacy</a>.

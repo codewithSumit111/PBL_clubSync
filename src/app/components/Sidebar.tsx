@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Trophy, 
-  BookOpen, 
-  Bell, 
-  Settings, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Users,
+  Trophy,
+  BookOpen,
+  Bell,
+  Settings,
+  LogOut,
   ChevronRight,
   ShieldCheck,
   Building2
@@ -30,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student', 'Club'] },
     { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin', 'Student'] },
     { id: 'my-clubs', label: 'My Clubs', icon: Building2, roles: ['Student'] },
+    { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
     { id: 'student-mgmt', label: 'Members', icon: Users, roles: ['Club', 'Admin'] },
     { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student', 'Club'] },
     { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student', 'Club'] },
@@ -46,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
           <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
             C
           </div>
-          <span className="font-bold text-gray-900 leading-tight">ClubSync <br/><span className="text-xs text-indigo-500">College Management</span></span>
+          <span className="font-bold text-gray-900 leading-tight">ClubSync <br /><span className="text-xs text-indigo-500">College Management</span></span>
         </div>
       </div>
 
@@ -58,8 +59,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
             className={twMerge(
               clsx(
                 "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
-                currentView === item.id 
-                  ? "bg-indigo-50 text-indigo-600" 
+                currentView === item.id
+                  ? "bg-indigo-50 text-indigo-600"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )
             )}

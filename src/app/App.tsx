@@ -9,6 +9,7 @@ import { ClubListView } from './views/ClubListView';
 import { LogbookView } from './views/LogbookView';
 import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
+import { ManageClubLeads } from './views/ManageClubLeads';
 import { Toaster } from 'sonner';
 
 const AppContent: React.FC = () => {
@@ -30,6 +31,8 @@ const AppContent: React.FC = () => {
         return <LogbookView />;
       case 'achievements':
         return <AchievementView />;
+      case 'add-club-lead':
+        return <ManageClubLeads />;
       case 'analytics':
         return <CCAAnalytics />;
       default:
@@ -48,6 +51,7 @@ const AppContent: React.FC = () => {
       clubs: 'Explore All Clubs',
       'my-clubs': 'My Registered Clubs',
       'student-mgmt': 'Student Management',
+      'add-club-lead': 'Add Club Lead',
       logbook: 'Activity Logbook',
       achievements: 'Student Achievements',
       analytics: 'Institutional Analytics',
@@ -59,7 +63,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
-      
+
       <main className="flex-1 flex flex-col min-w-0">
         <Header title={getTitle()} />
         <div className="flex-1 overflow-y-auto p-8">
@@ -68,7 +72,7 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       </main>
-      
+
       <Toaster position="bottom-right" />
     </div>
   );

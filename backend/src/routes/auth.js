@@ -87,30 +87,25 @@ router.post('/login', async (req, res) => {
 // ─────────────────────────────────────────────
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, role, rollNo, department, year, clubName } = req.body;
+        const { name, email, password, role, rollNo, department, year } = req.body;
 
         if (!email || !password || !role) {
             return res.status(400).json({ success: false, message: 'Email, password, and role are required.' });
         }
 
-        if (role === 'Admin') {
-            return res.status(403).json({ success: false, message: 'Admin accounts cannot be self-registered.' });
+        // Only Students can self-register
+        if (role !== 'Student') {
+            return res.status(403).json({ success: false, message: 'Only Student accounts can be self-registered.' });
         }
-
-        if (!['Student', 'Club'].includes(role)) {
-            return res.status(400).json({ success: false, message: 'Role must be "Student" or "Club".' });
-        }
-
-        const Model = getModelByRole(role);
 
         // Check if user already exists
-        const existing = await Model.findOne({ email: email.toLowerCase() });
+        const existing = await Student.findOne({ email: email.toLowerCase() });
         if (existing) {
             return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
         }
 
-        // Also check if rollNo is duplicate for students
-        if (role === 'Student' && rollNo) {
+        // Check if rollNo is duplicate
+        if (rollNo) {
             const existingRoll = await Student.findOne({ roll_no: rollNo });
             if (existingRoll) {
                 return res.status(409).json({ success: false, message: 'An account with this Roll Number already exists.' });
@@ -122,39 +117,84 @@ router.post('/register', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        let newUser;
 
-        if (role === 'Student') {
-            newUser = new Student({
-                name,
-                email: email.toLowerCase(),
-                password: hashedPassword,
-                role: 'Student',
-                roll_no: rollNo,
-                department,
-                year: year || 1 // Fallback to 1 if missing from the request
-            });
-        } else if (role === 'Club') {
-            newUser = new Club({
-                club_name: clubName || name, // UI might pass name instead of clubName
-                description: 'Please update your club description in the dashboard.', // Default description
-                email: email.toLowerCase(),
-                password: hashedPassword
-            });
-        }
+        const newUser = new Student({
+            name,
+            email: email.toLowerCase(),
+            password: hashedPassword,
+            role: 'Student',
+            roll_no: rollNo,
+            department,
+            year: year || 1
+        });
 
         await newUser.save();
 
-        const token = generateToken({ id: newUser._id, email: newUser.email, role: newUser.role || role, name: newUser.name || newUser.club_name });
+        const token = generateToken({ id: newUser._id, email: newUser.email, role: 'Student', name: newUser.name });
 
         return res.status(201).json({
             success: true,
             message: 'Account created successfully.',
             token,
-            user: sanitizeUser(newUser, role),
+            user: sanitizeUser(newUser, 'Student'),
         });
     } catch (err) {
         console.error('[REGISTER ERROR]', err);
+        return res.status(500).json({ success: false, message: 'Server error. Please try again.' });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/auth/add-club-lead  (admin-only)
+// Body: { clubName, email, password, description }
+// ─────────────────────────────────────────────
+router.post('/add-club-lead', protect, async (req, res) => {
+    try {
+        // Only admins can add club leads
+        if (req.user.role !== 'Admin') {
+            return res.status(403).json({ success: false, message: 'Only admins can add club lead accounts.' });
+        }
+
+        const { clubName, email, password, description } = req.body;
+
+        if (!clubName || !email || !password) {
+            return res.status(400).json({ success: false, message: 'Club name, email, and password are required.' });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+        }
+
+        // Check if email already exists
+        const existing = await Club.findOne({ email: email.toLowerCase() });
+        if (existing) {
+            return res.status(409).json({ success: false, message: 'A club with this email already exists.' });
+        }
+
+        // Check if club name already exists
+        const existingName = await Club.findOne({ club_name: clubName });
+        if (existingName) {
+            return res.status(409).json({ success: false, message: 'A club with this name already exists.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newClub = new Club({
+            club_name: clubName,
+            description: description || 'Club description to be updated.',
+            email: email.toLowerCase(),
+            password: hashedPassword
+        });
+
+        await newClub.save();
+
+        return res.status(201).json({
+            success: true,
+            message: `Club lead account for "${clubName}" created successfully.`,
+            club: sanitizeUser(newClub, 'Club'),
+        });
+    } catch (err) {
+        console.error('[ADD CLUB LEAD ERROR]', err);
         return res.status(500).json({ success: false, message: 'Server error. Please try again.' });
     }
 });
