@@ -25,6 +25,12 @@ const adminSchema = new mongoose.Schema({
     department: {
         type: String,
         trim: true // Optional if admin spans across all depts
+    },
+    intake_window: {
+        is_active: { type: Boolean, default: false },
+        start_date: { type: Date },
+        end_date: { type: Date },
+        max_preferences: { type: Number, default: 3 }
     }
 }, {
     timestamps: true
