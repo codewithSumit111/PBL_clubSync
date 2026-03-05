@@ -11,6 +11,13 @@ import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
 import { Toaster } from 'sonner';
+// ── Club Role Views ──────────────────────────────────────────
+import { ClubStudentMgmt } from './views/club/ClubStudentMgmt';
+import { ClubCCAManagement } from './views/club/ClubCCAManagement';
+import { ClubAchievements } from './views/club/ClubAchievements';
+import { ClubEventsNotifications } from './views/club/ClubEventsNotifications';
+import { ClubAnalytics } from './views/club/ClubAnalytics';
+import { ClubReports } from './views/club/ClubReports';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -35,6 +42,19 @@ const AppContent: React.FC = () => {
         return <ManageClubLeads />;
       case 'analytics':
         return <CCAAnalytics />;
+      // ── Club Role Views ──────────────────────
+      case 'club-students':
+        return <ClubStudentMgmt />;
+      case 'club-cca':
+        return <ClubCCAManagement />;
+      case 'club-achievements':
+        return <ClubAchievements />;
+      case 'club-events':
+        return <ClubEventsNotifications />;
+      case 'club-analytics':
+        return <ClubAnalytics />;
+      case 'club-reports':
+        return <ClubReports />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[70vh] text-gray-400">
@@ -55,7 +75,14 @@ const AppContent: React.FC = () => {
       logbook: 'Activity Logbook',
       achievements: 'Student Achievements',
       analytics: 'Institutional Analytics',
-      settings: 'Account Settings'
+      settings: 'Account Settings',
+      // Club views
+      'club-students': 'Student Management',
+      'club-cca': 'CCA & Marks Management',
+      'club-achievements': 'Club Achievements',
+      'club-events': 'Events & Notifications',
+      'club-analytics': 'Club Analytics',
+      'club-reports': 'Reports & Exports',
     };
     return titles[currentView] || 'Portal';
   };
