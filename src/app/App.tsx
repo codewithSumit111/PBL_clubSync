@@ -61,20 +61,23 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+    <>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div className="flex min-h-screen font-['Inter',sans-serif]" style={{ background: 'linear-gradient(135deg, #e0f2f1 0%, #e8eaf6 35%, #f3e5f5 65%, #e0f2f1 100%)' }}>
+        <Sidebar currentView={currentView} onViewChange={setCurrentView} />
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <Header title={getTitle()} />
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">
-            {renderView()}
+        <main className="flex-1 flex flex-col min-w-0">
+          <Header title={getTitle()} />
+          <div className="flex-1 overflow-y-auto p-8">
+            <div className="max-w-7xl mx-auto">
+              {renderView()}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      <Toaster position="bottom-right" />
-    </div>
+        <Toaster position="bottom-right" />
+      </div>
+    </>
   );
 };
 
@@ -85,3 +88,4 @@ export default function App() {
     </Provider>
   );
 }
+

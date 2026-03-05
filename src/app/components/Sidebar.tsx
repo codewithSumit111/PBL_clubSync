@@ -41,13 +41,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
   const filteredItems = menuItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col sticky top-0">
+    <aside className="w-64 h-screen bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col sticky top-0" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.03)' }}>
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+          <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-teal-500/30">
             C
           </div>
-          <span className="font-bold text-gray-900 leading-tight">ClubSync <br /><span className="text-xs text-indigo-500">College Management</span></span>
+          <span className="font-bold text-gray-900 leading-tight">ClubSync <br /><span className="text-xs text-teal-500">College Management</span></span>
         </div>
       </div>
 
@@ -60,13 +60,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
               clsx(
                 "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
                 currentView === item.id
-                  ? "bg-indigo-50 text-indigo-600"
+                  ? "bg-teal-500 text-white shadow-lg shadow-teal-500/25"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )
             )}
           >
             <div className="flex items-center gap-3">
-              <item.icon size={20} className={currentView === item.id ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"} />
+              <item.icon size={20} className={currentView === item.id ? "text-white" : "text-gray-400 group-hover:text-gray-600"} />
               <span className="font-medium">{item.label}</span>
             </div>
             {currentView === item.id && <ChevronRight size={16} />}
@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
 
       <div className="p-4 border-t border-gray-100 space-y-4">
         <div className="px-4 py-3 bg-gray-50 rounded-xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+          <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
             {user?.name.charAt(0)}
           </div>
           <div className="flex-1 overflow-hidden">

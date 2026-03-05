@@ -1,33 +1,33 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
   Cell,
   LineChart,
   Line
 } from 'recharts';
-import { 
-  TrendingUp, 
-  Users, 
-  Award, 
-  Clock, 
-  CheckCircle2, 
+import {
+  TrendingUp,
+  Users,
+  Award,
+  Clock,
+  CheckCircle2,
   AlertCircle,
   ArrowUpRight
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  
+
   // Mock data for analytics
   const clubData = [
     { name: 'Jan', students: 400, hours: 240 },
@@ -37,22 +37,22 @@ export const DashboardOverview: React.FC = () => {
   ];
 
   const pieData = [
-    { name: 'Technical', value: 45, color: '#4F46E5' },
+    { name: 'Technical', value: 45, color: '#0d9488' },
     { name: 'Arts', value: 25, color: '#EC4899' },
-    { name: 'Sports', value: 20, color: '#10B981' },
-    { name: 'Social', value: 10, color: '#F59E0B' },
+    { name: 'Sports', value: 20, color: '#f59e0b' },
+    { name: 'Social', value: 10, color: '#8b5cf6' },
   ];
 
   const studentStats = [
-    { label: 'Total CCA Hours', value: '42.5', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Current Marks', value: '18/25', icon: Award, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Active Clubs', value: '3', icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Total CCA Hours', value: '42.5', icon: Clock, color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Current Marks', value: '18/25', icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Active Clubs', value: '3', icon: Users, color: 'text-pink-600', bg: 'bg-pink-50' },
     { label: 'Achievements', value: '5', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
   const adminStats = [
-    { label: 'Total Students', value: '2,450', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total Clubs', value: '42', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Total Students', value: '2,450', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Total Clubs', value: '42', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
     { label: 'Pending Approvals', value: '128', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
     { label: 'CCA Participation', value: '88%', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
@@ -69,14 +69,14 @@ export const DashboardOverview: React.FC = () => {
         </div>
         <div className="flex gap-3">
           <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">Export Report</button>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-shadow shadow-lg shadow-indigo-100">Quick Action</button>
+          <button className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-medium hover:bg-teal-600 transition-shadow shadow-lg shadow-teal-200">Quick Action</button>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <div key={idx} className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
                 <stat.icon size={24} />
@@ -93,7 +93,7 @@ export const DashboardOverview: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-bold text-gray-900">Engagement Overview</h3>
             <select className="text-sm bg-gray-50 border-none rounded-lg px-3 py-1 outline-none">
@@ -105,20 +105,20 @@ export const DashboardOverview: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={clubData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <Tooltip 
-                  cursor={{fill: '#f8fafc'}}
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <Tooltip
+                  cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Bar dataKey="students" fill="#4F46E5" radius={[4, 4, 0, 0]} barSize={40} />
-                <Bar dataKey="hours" fill="#C7D2FE" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="students" fill="#0d9488" radius={[6, 6, 0, 0]} barSize={36} />
+                <Bar dataKey="hours" fill="#99f6e4" radius={[6, 6, 0, 0]} barSize={36} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
           <h3 className="font-bold text-gray-900 mb-8">Participation by Type</h3>
           <div className="h-[250px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -159,10 +159,10 @@ export const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Recent Activity (Table) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
           <h3 className="font-bold text-gray-900">Recent Updates</h3>
-          <button className="text-indigo-600 text-sm font-bold hover:underline">View All</button>
+          <button className="text-teal-600 text-sm font-bold hover:underline">View All</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -179,7 +179,7 @@ export const DashboardOverview: React.FC = () => {
                 <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">
                         {['JD', 'AS', 'RK'][i]}
                       </div>
                       <div>
@@ -192,9 +192,8 @@ export const DashboardOverview: React.FC = () => {
                     {['Submitted Workshop Log', 'Joined Robotics Club', 'Updated Skill Marks'][i]}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                      i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
                       {i === 0 ? 'Pending' : 'Completed'}
                     </span>
                   </td>
