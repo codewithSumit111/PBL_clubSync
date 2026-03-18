@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Upload, X, FileText, Image, Loader2, Link2, CheckCircle2 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
 
 interface FileUploadProps {
     /** Called with the URL (either uploaded file path or external link) */
@@ -48,9 +48,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
             const data = await res.json();
             if (data.success) {
-                // Build full URL for display
-                const fullUrl = `http://localhost:5000${data.file.url}`;
-                onFileUploaded(fullUrl);
+                // Use the URL returned by the backend directly
+                onFileUploaded(data.file.url);
                 setUploadedFileName(data.file.originalName);
             } else {
                 alert(data.message || 'Upload failed');
