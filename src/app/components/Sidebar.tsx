@@ -9,7 +9,13 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
-  Building2
+  Building2,
+  Award,
+  CalendarDays,
+  BarChart3,
+  FileText,
+  Star,
+  GraduationCap
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -26,15 +32,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
 
-  const menuItems: { id: string; label: string; icon: any; roles: UserRole[] }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student', 'Club'] },
+  const menuItems: { id: string; label: string; icon: any; roles: UserRole[]; section?: string }[] = [
+    // ── Shared ────────────────────────────────────
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student'] },
+
+    // ── Student only ──────────────────────────────
     { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin', 'Student'] },
-    { id: 'my-clubs', label: 'My Clubs', icon: Building2, roles: ['Student'] },
+    { id: 'my-clubs', label: 'My Clubs', icon: GraduationCap, roles: ['Student'] },
+    { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student'] },
+    { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student'] },
+    { id: 'analytics', label: 'CCA Progress', icon: ShieldCheck, roles: ['Student'] },
+
+    // ── Admin only ────────────────────────────────
     { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
-    { id: 'student-mgmt', label: 'Members', icon: Users, roles: ['Club', 'Admin'] },
-    { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student', 'Club'] },
-    { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student', 'Club'] },
-    { id: 'analytics', label: 'Analytics', icon: ShieldCheck, roles: ['Admin', 'Club'] },
+    { id: 'student-mgmt', label: 'All Members', icon: Users, roles: ['Admin'] },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['Admin'] },
+
+    // ── Club only ─────────────────────────────────
+    { id: 'club-students', label: 'Students', icon: Users, roles: ['Club'] },
+    { id: 'club-cca', label: 'CCA & Marks', icon: Award, roles: ['Club'] },
+    { id: 'club-achievements', label: 'Achievements', icon: Star, roles: ['Club'] },
+    { id: 'club-events', label: 'Events & Notify', icon: CalendarDays, roles: ['Club'] },
+    { id: 'club-analytics', label: 'Analytics', icon: BarChart3, roles: ['Club'] },
+    { id: 'club-reports', label: 'Reports', icon: FileText, roles: ['Club'] },
+
+    // ── Shared bottom ─────────────────────────────
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Student', 'Club'] },
   ];
 
