@@ -26,6 +26,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
     const [data, setData] = useState<StudentDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const USE_MOCK_DASHBOARD = process.env.NODE_ENV === 'development';
 
     const loadDashboard = async () => {
         setLoading(true);
@@ -36,25 +37,30 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
         } catch (err: any) {
             console.error('Dashboard fetch error:', err);
             setError(err.message || 'Failed to load dashboard');
-            // Fallback: use mock data so UI still renders
-            setData({
-                joinedClubs: [
-                    { _id: '1', club_name: 'Robotics Club', description: 'Build and program robots', department: 'Engineering', cca_hours: 8, cca_marks: {} },
-                    { _id: '2', club_name: 'Debate Society', description: 'Sharpen your oratory skills', department: 'Arts', cca_hours: 5, cca_marks: {} },
-                    { _id: '3', club_name: 'Coding Club', description: 'Competitive programming & hackathons', department: 'CS', cca_hours: 2, cca_marks: {} },
-                ],
-                ccaProgress: { completed: 15, mandated: 30, percentage: 50 },
-                actionItems: [
-                    { type: 'logbook', message: 'Submit weekly logbook for Coding Club', club_name: 'Coding Club', priority: 'medium' },
-                    { type: 'allocation', message: 'Accept preference allocation for Photography Club', club_name: 'Photography Club', priority: 'high' },
-                    { type: 'pending_review', message: 'Logbook pending review: "Arduino Workshop" for Robotics Club', club_name: 'Robotics Club', priority: 'low' },
-                ],
-                notices: [
-                    { _id: 'n1', title: 'CCA Hours Submission Deadline', message: 'All students must submit their CCA hours logbook by March 15, 2026. Late submissions will not be accepted.', category: 'Urgent', posted_by: { name: 'Dr. Sharma' }, createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
-                    { _id: 'n2', title: 'Annual Club Fair 2026', message: 'The annual club fair will be held on March 20th in the main auditorium. All clubs are expected to set up their stalls.', category: 'Event', posted_by: { name: 'Admin Office' }, createdAt: new Date(Date.now() - 24 * 3600000).toISOString() },
-                    { _id: 'n3', title: 'New Club Registration Open', message: 'Registration for new clubs is now open. Students interested in forming a new club should submit their proposal.', category: 'General', posted_by: { name: 'Student Affairs' }, createdAt: new Date(Date.now() - 72 * 3600000).toISOString() },
-                ],
-            });
+            if (USE_MOCK_DASHBOARD) {
+                // Fallback: use mock data in development so UI still renders
+                setData({
+                    joinedClubs: [
+                        { _id: '1', club_name: 'Robotics Club', description: 'Build and program robots', department: 'Engineering', cca_hours: 8, cca_marks: {} },
+                        { _id: '2', club_name: 'Debate Society', description: 'Sharpen your oratory skills', department: 'Arts', cca_hours: 5, cca_marks: {} },
+                        { _id: '3', club_name: 'Coding Club', description: 'Competitive programming & hackathons', department: 'CS', cca_hours: 2, cca_marks: {} },
+                    ],
+                    ccaProgress: { completed: 15, mandated: 30, percentage: 50 },
+                    actionItems: [
+                        { type: 'logbook', message: 'Submit weekly logbook for Coding Club', club_name: 'Coding Club', priority: 'medium' },
+                        { type: 'allocation', message: 'Accept preference allocation for Photography Club', club_name: 'Photography Club', priority: 'high' },
+                        { type: 'pending_review', message: 'Logbook pending review: "Arduino Workshop" for Robotics Club', club_name: 'Robotics Club', priority: 'low' },
+                    ],
+                    notices: [
+                        { _id: 'n1', title: 'CCA Hours Submission Deadline', message: 'All students must submit their CCA hours logbook by March 15, 2026. Late submissions will not be accepted.', category: 'Urgent', posted_by: { name: 'Dr. Sharma' }, createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
+                        { _id: 'n2', title: 'Annual Club Fair 2026', message: 'The annual club fair will be held on March 20th in the main auditorium. All clubs are expected to set up their stalls.', category: 'Event', posted_by: { name: 'Admin Office' }, createdAt: new Date(Date.now() - 24 * 3600000).toISOString() },
+                        { _id: 'n3', title: 'New Club Registration Open', message: 'Registration for new clubs is now open. Students interested in forming a new club should submit their proposal.', category: 'General', posted_by: { name: 'Student Affairs' }, createdAt: new Date(Date.now() - 72 * 3600000).toISOString() },
+                    ],
+                });
+            } else {
+                // In production, avoid showing mock data that could mislead users
+                setData(null);
+            }
         } finally {
             setLoading(false);
         }
