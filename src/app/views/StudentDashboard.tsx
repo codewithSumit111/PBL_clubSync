@@ -19,7 +19,9 @@ import {
     ChevronRight,
 } from 'lucide-react';
 
-export const StudentDashboard: React.FC = () => {
+export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = ({
+    onNavigateToMyClubs,
+}) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const [data, setData] = useState<StudentDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -202,9 +204,17 @@ export const StudentDashboard: React.FC = () => {
                                 <button
                                     key={club._id || idx}
                                     onClick={() => {
-                                        // Navigate to my-clubs view
+                                        // Prefer explicit navigation callback when provided
+                                        if (onNavigateToMyClubs) {
+                                            onNavigateToMyClubs();
+                                            return;
+                                        }
+
+                                        // Fallback: trigger existing sidebar behavior via DOM for backward compatibility
                                         const sidebar = document.querySelector<HTMLButtonElement>('button[data-view="my-clubs"]');
-                                        if (sidebar) sidebar.click();
+                                        if (sidebar) {
+                                            sidebar.click();
+                                        }
                                     }}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-xl ${chipColor.bg} ${chipColor.text} ${chipColor.hover} border border-transparent hover:border-current/10 transition-all duration-200 group cursor-pointer`}
                                 >
