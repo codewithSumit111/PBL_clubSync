@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
 
   const menuItems: { id: string; label: string; icon: any; roles: UserRole[]; section?: string }[] = [
     // ── Shared ────────────────────────────────────
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student', 'Club'] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student'] },
 
     // ── Student only ──────────────────────────────
     { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin', 'Student'] },

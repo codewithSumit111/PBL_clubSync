@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
     Users, Search, CheckCircle2, XCircle, Clock,
-    Filter, ChevronDown, UserCheck, Building2, RefreshCw, AlertCircle
+    Filter, ChevronDown, UserCheck, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -105,12 +105,12 @@ export const ClubStudentMgmt: React.FC = () => {
     const filteredPending = pending.filter(s =>
         (s.name?.toLowerCase().includes(search.toLowerCase()) || s.roll_no?.toLowerCase().includes(search.toLowerCase())) &&
         (deptFilter === 'All' || s.department === deptFilter)
-    );
+    ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     const filteredMembers = members.filter(s =>
         (s.name?.toLowerCase().includes(search.toLowerCase()) || s.roll_no?.toLowerCase().includes(search.toLowerCase())) &&
         (deptFilter === 'All' || s.department === deptFilter)
-    );
+    ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     if (error) {
         return (
@@ -139,11 +139,10 @@ export const ClubStudentMgmt: React.FC = () => {
             </div>
 
             {/* Stats Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {[
                     { label: 'Pending Applications', value: pending.length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
                     { label: 'Total Members', value: members.length, icon: UserCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
-                    { label: 'Departments', value: departments.length - 1, icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((stat, i) => (
                     <div key={i} className={`${cardClass} p-4 flex items-center gap-3`}>
                         <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>

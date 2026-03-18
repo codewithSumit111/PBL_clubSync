@@ -18,10 +18,12 @@ import { ClubAchievements } from './views/club/ClubAchievements';
 import { ClubEventsNotifications } from './views/club/ClubEventsNotifications';
 import { ClubAnalytics } from './views/club/ClubAnalytics';
 import { ClubReports } from './views/club/ClubReports';
+import { SettingsView } from './views/SettingsView';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const [currentView, setCurrentView] = useState('dashboard');
+  const defaultView = user?.role === 'Club' ? 'club-students' : 'dashboard';
+  const [currentView, setCurrentView] = useState(defaultView);
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -55,6 +57,8 @@ const AppContent: React.FC = () => {
         return <ClubAnalytics />;
       case 'club-reports':
         return <ClubReports />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[70vh] text-gray-400">

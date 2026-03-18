@@ -122,7 +122,6 @@ export const ClubAnalytics: React.FC = () => {
 
     const kpis = [
         { label: 'Total Members', value: analytics.totalMembers, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50', delta: 'registered' },
-        { label: 'Total CCA Hours', value: analytics.totalCCAHours, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50', delta: 'hours logged' },
         { label: 'Avg. CCA Marks', value: `${analytics.avgMarks}/25`, icon: Award, color: 'text-purple-600', bg: 'bg-purple-50', delta: 'average score' },
         { label: 'Achievements', value: analytics.totalAchievements, icon: Trophy, color: 'text-amber-600', bg: 'bg-amber-50', delta: 'total tagged' },
     ];
@@ -141,7 +140,7 @@ export const ClubAnalytics: React.FC = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {kpis.map((kpi, i) => (
                     <div key={i} className={`${cardClass} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
                         <div className="flex items-center justify-between mb-3">
