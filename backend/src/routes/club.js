@@ -106,4 +106,36 @@ router.put('/applications/:student_id', protect, async (req, res) => {
     }
 });
 
+// @route   GET /api/clubs/dashboard
+// @desc    Get dashboard metrics for a club
+router.get('/dashboard', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized as club' });
+        }
+
+        const club = await Club.findById(req.user.id).populate('registered_students');
+        if (!club) {
+            return res.status(404).json({ success: false, message: 'Club not found' });
+        }
+
+        // Stats needed: total members, pending approvals, active events
+        const pendingApprovalsCount = await Student.countDocuments({
+            registered_clubs: { $elemMatch: { club: club._id, status: 'Pending' } }
+        });
+
+        return res.json({
+            success: true,
+            stats: {
+                totalMembers: club.registered_students.length,
+                pendingApprovals: pendingApprovalsCount,
+                activeEvents: club.events.length,
+            }
+        });
+    } catch (err) {
+        console.error('[CLUB DASHBOARD ERROR]', err);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

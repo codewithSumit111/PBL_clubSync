@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { addLogEntry, updateLogStatus, LogbookEntry } from '../features/studentSlice';
-import { 
-  Calendar, 
-  Clock, 
-  FileText, 
-  Send, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Calendar,
+  Clock,
+  FileText,
+  Send,
+  CheckCircle,
+  XCircle,
   Clock3,
   Search,
   Plus
@@ -18,11 +18,41 @@ import { toast } from 'sonner';
 const EMPTY_ARRAY: string[] = [];
 
 export const LogbookView: React.FC = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, token } = useSelector((state: RootState) => state.auth);
   const { logbooks } = useSelector((state: RootState) => state.students);
   const { clubs } = useSelector((state: RootState) => state.clubs);
   const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
   const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    const fetchLogs = async () => {
+      if (!user || !token) return;
+      const endpoint = user.role === 'Student' ? '/api/logbooks/mine' : user.role === 'Club' ? '/api/logbooks/club' : null;
+      if (!endpoint) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const mapped = data.logbooks.map((l: any) => ({
+            id: l._id,
+            studentId: typeof l.student_id === 'object' ? l.student_id._id : l.student_id,
+            clubId: typeof l.club_id === 'object' ? l.club_id._id : l.club_id,
+            activityDescription: l.activity_description,
+            date: l.date.split('T')[0],
+            hours: l.hours,
+            status: l.status
+          }));
+          dispatch({ type: 'students/setLogbooks', payload: mapped });
+        }
+      } catch (err) {
+        console.error('Error fetching logs', err);
+      }
+    };
+    fetchLogs();
+  }, [user, token, dispatch]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,16 +62,16 @@ export const LogbookView: React.FC = () => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  const filteredLogs = user?.role === 'Student' 
+  const filteredLogs = user?.role === 'Student'
     ? logbooks.filter(l => l.studentId === user.id)
     : user?.role === 'Club'
-    ? logbooks.filter(l => l.clubId === user.clubId)
-    : logbooks;
+      ? logbooks.filter(l => l.clubId === user.clubId)
+      : logbooks;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     const newLog: LogbookEntry = {
       id: Math.random().toString(36).substr(2, 9),
       studentId: user.id,
@@ -75,7 +105,7 @@ export const LogbookView: React.FC = () => {
           <p className="text-gray-500">Track and manage co-curricular activity hours.</p>
         </div>
         {user?.role === 'Student' && (
-          <button 
+          <button
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
           >
@@ -92,11 +122,11 @@ export const LogbookView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Select Club</label>
-                <select 
+                <select
                   required
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.clubId}
-                  onChange={e => setFormData({...formData, clubId: e.target.value})}
+                  onChange={e => setFormData({ ...formData, clubId: e.target.value })}
                 >
                   <option value="">Choose a club...</option>
                   {myClubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -104,47 +134,47 @@ export const LogbookView: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Date of Activity</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   required
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.date}
-                  onChange={e => setFormData({...formData, date: e.target.value})}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Duration (Hours)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   step="0.5"
                   required
                   placeholder="e.g. 2.5"
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.hours}
-                  onChange={e => setFormData({...formData, hours: e.target.value})}
+                  onChange={e => setFormData({ ...formData, hours: e.target.value })}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-bold text-gray-700">Activity Description</label>
-                <textarea 
+                <textarea
                   required
                   rows={3}
                   placeholder="What did you do during this session?"
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                 ></textarea>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => setIsAdding(false)}
                 className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all"
               >
@@ -165,16 +195,15 @@ export const LogbookView: React.FC = () => {
         ) : (
           filteredLogs.map((log) => {
             const clubName = clubs.find(c => c.id === log.clubId)?.name || 'Unknown Club';
-            
+
             return (
               <div key={log.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
                 <div className="flex gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    log.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' : 
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${log.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' :
                     log.status === 'Rejected' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                  }`}>
-                    {log.status === 'Approved' ? <CheckCircle size={24} /> : 
-                     log.status === 'Rejected' ? <XCircle size={24} /> : <Clock3 size={24} />}
+                    }`}>
+                    {log.status === 'Approved' ? <CheckCircle size={24} /> :
+                      log.status === 'Rejected' ? <XCircle size={24} /> : <Clock3 size={24} />}
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">{log.activityDescription}</h4>
@@ -193,22 +222,21 @@ export const LogbookView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                    log.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : 
+                  <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${log.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
                     log.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                  }`}>
+                    }`}>
                     {log.status}
                   </div>
-                  
+
                   {user?.role === 'Club' && log.status === 'Pending' && (
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleStatusUpdate(log.id, 'Approved')}
                         className="p-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
                       >
                         <CheckCircle size={20} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleStatusUpdate(log.id, 'Rejected')}
                         className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                       >

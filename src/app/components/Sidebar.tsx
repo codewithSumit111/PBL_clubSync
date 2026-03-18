@@ -31,10 +31,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin', 'Student'] },
     { id: 'my-clubs', label: 'My Clubs', icon: Building2, roles: ['Student'] },
     { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
-    { id: 'student-mgmt', label: 'Members', icon: Users, roles: ['Club', 'Admin'] },
+    { id: 'student-mgmt', label: 'Members', icon: Users, roles: ['Club'] },
     { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student', 'Club'] },
     { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student', 'Club'] },
-    { id: 'analytics', label: 'Analytics', icon: ShieldCheck, roles: ['Admin', 'Club'] },
+    { id: 'analytics', label: 'Analytics', icon: ShieldCheck, roles: ['Admin'] },
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Student', 'Club'] },
   ];
 

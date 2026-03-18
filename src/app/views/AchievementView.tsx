@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { addAchievement, Achievement } from '../features/studentSlice';
-import { 
-  Trophy, 
-  Award, 
-  MapPin, 
-  Calendar, 
-  Plus, 
+import {
+  Trophy,
+  Award,
+  MapPin,
+  Calendar,
+  Plus,
   Star,
   ExternalLink,
   Search
@@ -17,11 +17,41 @@ import { toast } from 'sonner';
 const EMPTY_ARRAY: string[] = [];
 
 export const AchievementView: React.FC = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, token } = useSelector((state: RootState) => state.auth);
   const { achievements } = useSelector((state: RootState) => state.students);
   const { clubs } = useSelector((state: RootState) => state.clubs);
   const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
   const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    const fetchAchievements = async () => {
+      if (!user || !token) return;
+      const endpoint = user.role === 'Student' ? '/api/achievements/mine' : user.role === 'Club' ? '/api/achievements/club' : null;
+      if (!endpoint) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const mapped = data.achievements.map((a: any) => ({
+            id: a._id,
+            studentId: typeof a.student_id === 'object' ? a.student_id._id : a.student_id,
+            clubId: typeof a.club_id === 'object' ? a.club_id._id : a.club_id,
+            title: a.title,
+            description: a.description,
+            level: a.level,
+            date: a.date.split('T')[0]
+          }));
+          dispatch({ type: 'students/setAchievements', payload: mapped });
+        }
+      } catch (err) {
+        console.error('Error fetching achievements', err);
+      }
+    };
+    fetchAchievements();
+  }, [user, token, dispatch]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,16 +62,16 @@ export const AchievementView: React.FC = () => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  const filteredAchievements = user?.role === 'Student' 
+  const filteredAchievements = user?.role === 'Student'
     ? achievements.filter(a => a.studentId === user.id)
     : user?.role === 'Club'
-    ? achievements.filter(a => a.clubId === user.clubId)
-    : achievements;
+      ? achievements.filter(a => a.clubId === user.clubId)
+      : achievements;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     const newAchievement: Achievement = {
       id: Math.random().toString(36).substr(2, 9),
       studentId: user.id,
@@ -70,7 +100,7 @@ export const AchievementView: React.FC = () => {
           <p className="text-gray-500">Celebrate your success and gain recognition.</p>
         </div>
         {user?.role === 'Student' && (
-          <button 
+          <button
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
           >
@@ -89,22 +119,22 @@ export const AchievementView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-bold text-gray-700">Achievement Title</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="e.g. Winner of Inter-College Robowar"
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Associated Club</label>
-                <select 
+                <select
                   required
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.clubId}
-                  onChange={e => setFormData({...formData, clubId: e.target.value})}
+                  onChange={e => setFormData({ ...formData, clubId: e.target.value })}
                 >
                   <option value="">Select club...</option>
                   {myClubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -112,11 +142,11 @@ export const AchievementView: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Achievement Level</label>
-                <select 
+                <select
                   required
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.level}
-                  onChange={e => setFormData({...formData, level: e.target.value})}
+                  onChange={e => setFormData({ ...formData, level: e.target.value })}
                 >
                   <option value="College">College Level</option>
                   <option value="Inter-College">Inter-College Level</option>
@@ -127,35 +157,35 @@ export const AchievementView: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Date Received</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   required
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.date}
-                  onChange={e => setFormData({...formData, date: e.target.value})}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-bold text-gray-700">Description / Impact</label>
-                <textarea 
+                <textarea
                   required
                   rows={3}
                   placeholder="Describe your achievement and its significance..."
                   className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                 ></textarea>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => setIsAdding(false)}
                 className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all"
               >
@@ -181,7 +211,7 @@ export const AchievementView: React.FC = () => {
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Trophy size={80} />
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
                     <Star size={28} />

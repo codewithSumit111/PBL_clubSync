@@ -1,4 +1,5 @@
 // backend/src/index.js
+// Triggering restart...
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -20,6 +21,8 @@ app.use('/api/auth', authRoutes); // Auth routes connected to DB
 app.use('/api/clubs', require('./routes/club'));
 app.use('/api/logbooks', require('./routes/logbook'));
 app.use('/api/achievements', require('./routes/achievement'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/students', require('./routes/student'));
 
 // Connect to MongoDB
 connectDB();
