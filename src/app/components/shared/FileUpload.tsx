@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Upload, X, FileText, Image, Loader2, Link2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000/api';
 
@@ -52,11 +53,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 onFileUploaded(data.file.url);
                 setUploadedFileName(data.file.originalName);
             } else {
-                alert(data.message || 'Upload failed');
+                toast.error(data.message || 'Upload failed');
             }
         } catch (err) {
             console.error('Upload error:', err);
-            alert('Failed to upload file. Please try again.');
+            toast.error('Failed to upload file. Please try again.');
         } finally {
             setUploading(false);
         }
