@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Upload, X, FileText, Image, Loader2, Link2, CheckCircle2 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -26,6 +26,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     const [uploadedFileName, setUploadedFileName] = useState<string>('');
     const [mode, setMode] = useState<'file' | 'link'>('file');
     const [linkValue, setLinkValue] = useState(value || '');
+
+    useEffect(() => {
+        setLinkValue(value || '');
+    }, [value]);
 
     const uploadFile = useCallback(async (file: File) => {
         setUploading(true);
