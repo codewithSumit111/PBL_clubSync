@@ -1,143 +1,535 @@
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { registerForClub } from '../features/studentSlice';
-import { 
-  Search, 
-  Filter, 
-  Users, 
-  UserPlus, 
-  ArrowRight, 
+import {
+  Search,
+  Users,
   ExternalLink,
-  ChevronRight,
-  Plus
+  ChevronDown,
+  X,
+  Send,
+  Loader2,
+  Building2,
+  Globe,
+  Filter,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY_ARRAY: string[] = [];
+const API_BASE = 'http://localhost:5000/api';
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('clubsync_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+interface ClubData {
+  _id: string;
+  club_name: string;
+  description: string;
+  department?: string;
+  category: string;
+  tagline?: string;
+  official_website?: string;
+  faculty_coordinators?: { name: string; email: string; department: string }[];
+  events?: { title: string; description?: string; date: string }[];
+  analytics?: { total_members: number; active_events: number };
+  member_count?: number;
+}
+
+interface IntakeStatus {
+  is_open: boolean;
+  max_preferences: number;
+  start_date?: string;
+  end_date?: string;
+}
+
+const CATEGORIES = ['All', 'Technical', 'Cultural', 'Sports', 'Social', 'Literary', 'Other'];
+
+const categoryStyles: Record<string, { bg: string; text: string; headerBg: string }> = {
+  Technical: { bg: 'bg-blue-50', text: 'text-blue-700', headerBg: 'from-blue-500 to-indigo-600' },
+  Cultural: { bg: 'bg-pink-50', text: 'text-pink-700', headerBg: 'from-pink-500 to-purple-600' },
+  Sports: { bg: 'bg-emerald-50', text: 'text-emerald-700', headerBg: 'from-emerald-500 to-teal-600' },
+  Social: { bg: 'bg-amber-50', text: 'text-amber-700', headerBg: 'from-amber-500 to-orange-500' },
+  Literary: { bg: 'bg-violet-50', text: 'text-violet-700', headerBg: 'from-violet-500 to-purple-600' },
+  Other: { bg: 'bg-gray-50', text: 'text-gray-700', headerBg: 'from-gray-500 to-gray-600' },
+};
+
+// Mock clubs for fallback
+const MOCK_CLUBS: ClubData[] = [
+  { _id: 'm1', club_name: 'Robotics Club', description: 'Designing and building innovative robotic systems for national competitions. Join us to explore the world of automation and AI-powered machines!', category: 'Technical', tagline: 'Build the future, one bot at a time', department: 'Engineering', member_count: 45, analytics: { total_members: 45, active_events: 3 } },
+  { _id: 'm2', club_name: 'Debate Society', description: 'Sharpen your oratory skills through parliamentary debates, Model UN, and public speaking workshops.', category: 'Literary', tagline: 'Words that move the world', department: 'Arts', member_count: 32, analytics: { total_members: 32, active_events: 2 } },
+  { _id: 'm3', club_name: 'Coding Club', description: 'Competitive programming hub of our college. Prepare for hackathons, code sprints, and tech competitions.', category: 'Technical', tagline: 'Code. Compete. Conquer.', department: 'CS', member_count: 60, analytics: { total_members: 60, active_events: 5 } },
+  { _id: 'm4', club_name: 'Photography Club', description: 'Capture moments, tell stories. Learn photography techniques, photo editing, and photojournalism.', category: 'Cultural', tagline: 'Every frame tells a story', department: 'Media', member_count: 28, analytics: { total_members: 28, active_events: 1 } },
+  { _id: 'm5', club_name: 'Cricket Team', description: 'Represent the college in inter-college tournaments. Regular practice sessions and fitness training.', category: 'Sports', tagline: 'Swing for the fences', department: 'Sports', member_count: 22, analytics: { total_members: 22, active_events: 4 } },
+  { _id: 'm6', club_name: 'NSS Cell', description: 'National Service Scheme - contribute to community development through social activities and outreach programs.', category: 'Social', tagline: 'Not me, but you', department: 'Social Work', member_count: 55, analytics: { total_members: 55, active_events: 6 } },
+];
 
 export const ClubListView: React.FC = () => {
-  const { clubs } = useSelector((state: RootState) => state.clubs);
   const { user } = useSelector((state: RootState) => state.auth);
-  const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
-  const dispatch = useDispatch();
-  
+
+  const [clubs, setClubs] = useState<ClubData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [expandedClub, setExpandedClub] = useState<string | null>(null);
 
-  const categories = ['All', 'Technical', 'Arts', 'Sports', 'Social'];
+  // Preference form state
+  const [intakeStatus, setIntakeStatus] = useState<IntakeStatus>({ is_open: false, max_preferences: 3 });
+  const [showPrefForm, setShowPrefForm] = useState(false);
+  const [pref1, setPref1] = useState('');
+  const [pref2, setPref2] = useState('');
+  const [pref3, setPref3] = useState('');
+  const [submittingPref, setSubmittingPref] = useState(false);
 
+  // Fetch clubs from API
+  useEffect(() => {
+    const fetchClubs = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/clubs`, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (data.success && data.clubs.length > 0) {
+          setClubs(data.clubs);
+        } else {
+          setClubs(MOCK_CLUBS);
+        }
+      } catch {
+        setClubs(MOCK_CLUBS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchIntake = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/clubs/intake-status`, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          setIntakeStatus(data);
+        }
+      } catch {
+        // Fallback: show intake as open for demo
+        setIntakeStatus({ is_open: true, max_preferences: 3 });
+      }
+    };
+
+    fetchClubs();
+    fetchIntake();
+  }, []);
+
+  // Filter clubs
   const filteredClubs = clubs.filter(club => {
-    const matchesSearch = club.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          club.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = club.club_name || '';
+    const desc = club.description || '';
+    const tag = club.tagline || '';
+    const matchesSearch =
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tag.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || club.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleJoin = (clubId: string, clubName: string) => {
-    if (!user) return;
-    dispatch(registerForClub({ studentId: user.id, clubId }));
-    toast.success(`Successfully registered for ${clubName}!`, {
-      description: 'The club lead will review your application shortly.'
-    });
+  // Count clubs per category
+  const categoryCounts = CATEGORIES.reduce((acc, cat) => {
+    acc[cat] = cat === 'All' ? clubs.length : clubs.filter(c => c.category === cat).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Submit preferences
+  const handleSubmitPreferences = async () => {
+    const preferences = [pref1, pref2, pref3].filter(Boolean);
+    if (preferences.length === 0) {
+      toast.error('Please select at least one club preference');
+      return;
+    }
+
+    const uniquePrefs = new Set(preferences);
+    if (uniquePrefs.size !== preferences.length) {
+      toast.error('You cannot select the same club twice');
+      return;
+    }
+
+    setSubmittingPref(true);
+    try {
+      const res = await fetch(`${API_BASE}/clubs/preferences`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ preferences }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Preferences submitted!', { description: data.message });
+        setShowPrefForm(false);
+        setPref1('');
+        setPref2('');
+        setPref3('');
+      } else {
+        toast.error(data.message || 'Failed to submit preferences');
+      }
+    } catch {
+      toast.error('Failed to connect to server');
+    } finally {
+      setSubmittingPref(false);
+    }
   };
+
+  const style = (cat: string) => categoryStyles[cat] || categoryStyles.Other;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex-1 max-w-md relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search clubs by name or interest..." 
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* Header & Search */}
+      <div
+        className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6"
+        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+              <Building2 size={20} className="text-teal-600" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900 text-lg">All Clubs</h2>
+              <p className="text-xs text-gray-500">{clubs.length} active clubs available</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search clubs..."
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Preference form button */}
+            {user?.role === 'Student' && intakeStatus.is_open && (
+              <button
+                onClick={() => setShowPrefForm(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-600 transition-all shadow-lg shadow-teal-200 whitespace-nowrap"
+              >
+                <Sparkles size={16} />
+                Submit Preferences
+              </button>
+            )}
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-          {categories.map(cat => (
+
+        {/* Category Filters */}
+        <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
+          <Filter size={14} className="text-gray-400 flex-shrink-0" />
+          {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                selectedCategory === cat 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${selectedCategory === cat
+                ? 'bg-teal-500 text-white shadow-lg shadow-teal-200'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                }`}
             >
               {cat}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${selectedCategory === cat ? 'bg-white/20' : 'bg-gray-200'}`}>
+                {categoryCounts[cat] || 0}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClubs.map((club) => {
-          const isRegistered = studentRegs.includes(club.id);
-          
-          return (
-            <div key={club.id} className="group bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
-              <div className="h-32 bg-indigo-50 relative">
-                <div className="absolute top-4 right-4">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    club.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 
-                    club.category === 'Arts' ? 'bg-pink-100 text-pink-700' : 'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    {club.category}
+      {/* Intake Window Banner */}
+      {user?.role === 'Student' && intakeStatus.is_open && (
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl p-5 flex items-center justify-between text-white shadow-lg shadow-teal-200/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold">Club Intake Window is Open!</h3>
+              <p className="text-sm text-white/80">
+                Select your top {intakeStatus.max_preferences} club preferences before the deadline.
+                {intakeStatus.end_date && (
+                  <span className="ml-1 font-semibold">
+                    Closes: {new Date(intakeStatus.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
-                </div>
-                <div className="absolute -bottom-6 left-6 w-12 h-12 bg-white rounded-2xl shadow-lg border border-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <span className="text-xl font-bold text-indigo-600">{club.name.charAt(0)}</span>
-                </div>
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPrefForm(true)}
+            className="px-5 py-2.5 bg-white text-teal-700 rounded-xl text-sm font-bold hover:bg-white/90 transition-all whitespace-nowrap shadow"
+          >
+            Submit Now
+          </button>
+        </div>
+      )}
+
+      {/* Club Cards Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="bg-white/60 rounded-2xl border border-white/50 overflow-hidden">
+              <div className="h-28 bg-gray-100 animate-pulse" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-2/3 bg-gray-100 rounded animate-pulse" />
+                <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                <div className="h-3 w-4/5 bg-gray-100 rounded animate-pulse" />
               </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredClubs.length === 0 ? (
+        <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50">
+          <Search size={48} className="text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-gray-500">No clubs found</h3>
+          <p className="text-sm text-gray-400 mt-1">Try a different search term or category</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredClubs.map(club => {
+            const catStyle = style(club.category);
+            const isExpanded = expandedClub === club._id;
+            return (
+              <div
+                key={club._id}
+                className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
+              >
+                {/* Header gradient */}
+                <div className={`h-24 bg-gradient-to-br ${catStyle.headerBg} relative p-4 flex items-end`}>
+                  <div className="absolute top-3 right-3">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur`}>
+                      {club.category}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-5 left-5 w-10 h-10 bg-white rounded-xl shadow-lg border border-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span className="text-lg font-bold text-teal-600">{club.club_name.charAt(0)}</span>
+                  </div>
+                </div>
 
-              <div className="p-6 pt-10 flex-1 flex flex-col">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">{club.name}</h3>
-                <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-1">
-                  {club.description}
-                </p>
+                {/* Content */}
+                <div className="p-5 pt-8 flex-1 flex flex-col">
+                  <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-teal-600 transition-colors">
+                    {club.club_name}
+                  </h3>
+                  {club.tagline && (
+                    <p className="text-xs text-teal-600 font-medium italic mb-2">"{club.tagline}"</p>
+                  )}
+                  <p className={`text-gray-500 text-sm ${isExpanded ? '' : 'line-clamp-3'} mb-4 flex-1`}>
+                    {club.description}
+                  </p>
 
-                <div className="flex items-center justify-between mt-auto pt-6 border-t border-gray-50">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200"></div>
-                    ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-white bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600">
-                      +42
+                  {/* Quick stats */}
+                  <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Users size={12} />
+                      {club.member_count || club.analytics?.total_members || 0} members
+                    </span>
+                    {club.department && (
+                      <span className={`px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text} text-[10px] font-bold`}>
+                        {club.department}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Faculty coordinators (expanded) */}
+                  {isExpanded && club.faculty_coordinators && club.faculty_coordinators.length > 0 && (
+                    <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Faculty Coordinators</h4>
+                      {club.faculty_coordinators.map((fc, i) => (
+                        <div key={i} className="text-sm text-gray-700">
+                          {fc.name} <span className="text-gray-400">({fc.department})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upcoming events (expanded) */}
+                  {isExpanded && club.events && club.events.length > 0 && (
+                    <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Upcoming Events</h4>
+                      {club.events.slice(0, 3).map((ev, i) => (
+                        <div key={i} className="text-sm text-gray-700 flex justify-between">
+                          <span>{ev.title}</span>
+                          <span className="text-xs text-gray-400">{new Date(ev.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                    <button
+                      onClick={() => setExpandedClub(isExpanded ? null : club._id)}
+                      className="text-xs font-medium text-gray-500 hover:text-teal-600 transition-colors flex items-center gap-1"
+                    >
+                      {isExpanded ? 'Show less' : 'View details'}
+                      <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {club.official_website && (
+                        <a
+                          href={club.official_website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                        >
+                          <Globe size={14} />
+                        </a>
+                      )}
                     </div>
                   </div>
-                  
-                  {isRegistered ? (
-                    <button className="flex items-center gap-1 text-emerald-600 font-bold text-sm bg-emerald-50 px-4 py-2 rounded-xl">
-                      Registered <ArrowRight size={16} />
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => handleJoin(club.id, club.name)}
-                      className="flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors shadow-lg shadow-gray-100"
-                    >
-                      Join Club
-                    </button>
-                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Preference Form Modal */}
+      {showPrefForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="bg-gradient-to-br from-teal-500 to-emerald-500 p-6 text-white relative">
+              <button
+                onClick={() => setShowPrefForm(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <X size={16} />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Club Preference Form</h3>
+                  <p className="text-sm text-white/80">Select your top {intakeStatus.max_preferences} club preferences</p>
                 </div>
               </div>
             </div>
-          );
-        })}
 
-        {user?.role === 'Admin' && (
-          <button className="h-full min-h-[300px] border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center gap-4 text-gray-400 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all group">
-            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white transition-colors">
-              <Plus size={32} />
+            {/* Form body */}
+            <div className="p-6 space-y-5">
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-start gap-2 text-sm text-teal-800">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <span>Rank your preferred clubs in order. Preference 1 has the highest priority for allocation.</span>
+              </div>
+
+              {/* Preference 1 */}
+              <div>
+                <label className="text-sm font-bold text-gray-700 mb-1.5 block">
+                  Preference 1 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={pref1}
+                  onChange={e => setPref1(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all text-sm appearance-none"
+                >
+                  <option value="">Select your 1st choice...</option>
+                  {clubs.map(c => (
+                    <option key={c._id} value={c._id} disabled={c._id === pref2 || c._id === pref3}>
+                      {c.club_name} ({c.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Preference 2 */}
+              <div>
+                <label className="text-sm font-bold text-gray-700 mb-1.5 block">
+                  Preference 2
+                </label>
+                <select
+                  value={pref2}
+                  onChange={e => setPref2(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all text-sm appearance-none"
+                >
+                  <option value="">Select your 2nd choice...</option>
+                  {clubs.map(c => (
+                    <option key={c._id} value={c._id} disabled={c._id === pref1 || c._id === pref3}>
+                      {c.club_name} ({c.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Preference 3 */}
+              <div>
+                <label className="text-sm font-bold text-gray-700 mb-1.5 block">
+                  Preference 3
+                </label>
+                <select
+                  value={pref3}
+                  onChange={e => setPref3(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all text-sm appearance-none"
+                >
+                  <option value="">Select your 3rd choice...</option>
+                  {clubs.map(c => (
+                    <option key={c._id} value={c._id} disabled={c._id === pref1 || c._id === pref2}>
+                      {c.club_name} ({c.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selected summary */}
+              {(pref1 || pref2 || pref3) && (
+                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Your Selections</h4>
+                  {[pref1, pref2, pref3].map((p, idx) => {
+                    if (!p) return null;
+                    const club = clubs.find(c => c._id === p);
+                    return (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 font-bold text-xs flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <span className="font-medium text-gray-800">{club?.club_name || 'Unknown'}</span>
+                        <span className="text-xs text-gray-400">({club?.category})</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <span className="font-bold">Create New Club</span>
-          </button>
-        )}
-      </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-0 flex gap-3">
+              <button
+                onClick={() => setShowPrefForm(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitPreferences}
+                disabled={!pref1 || submittingPref}
+                className="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-sm hover:bg-teal-600 transition-all shadow-lg shadow-teal-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingPref ? (
+                  <><Loader2 size={16} className="animate-spin" /> Submitting...</>
+                ) : (
+                  <><Send size={16} /> Submit Preferences</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

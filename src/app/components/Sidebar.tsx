@@ -77,6 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
         {filteredItems.map((item) => (
           <button
             key={item.id}
+            data-view={item.id}
             onClick={() => onViewChange(item.id)}
             className={twMerge(
               clsx(

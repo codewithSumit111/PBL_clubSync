@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./db');
 const authRoutes = require('./routes/auth'); // Re-enabled
 
@@ -20,6 +21,13 @@ app.use('/api/auth', authRoutes); // Auth routes connected to DB
 app.use('/api/clubs', require('./routes/club'));
 app.use('/api/logbooks', require('./routes/logbook'));
 app.use('/api/achievements', require('./routes/achievement'));
+app.use('/api/students', require('./routes/student'));
+app.use('/api/notices', require('./routes/notice'));
+app.use('/api/uploads', require('./routes/upload'));
+app.use('/api/events', require('./routes/event'));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Connect to MongoDB
 connectDB();
