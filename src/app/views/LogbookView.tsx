@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import { addLogEntry, updateLogStatus, LogbookEntry } from '../features/studentSlice';
 import { FileUpload } from '../components/shared/FileUpload';
 import {
   Calendar,
@@ -49,6 +50,42 @@ interface LogEntry {
 }
 
 export const LogbookView: React.FC = () => {
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const { logbooks } = useSelector((state: RootState) => state.students);
+  const { clubs } = useSelector((state: RootState) => state.clubs);
+  const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
+  const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    const fetchLogs = async () => {
+      if (!user || !token) return;
+      const endpoint = user.role === 'Student' ? '/api/logbooks/mine' : user.role === 'Club' ? '/api/logbooks/club' : null;
+      if (!endpoint) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const mapped = data.logbooks.map((l: any) => ({
+            id: l._id,
+            studentId: typeof l.student_id === 'object' ? l.student_id._id : l.student_id,
+            clubId: typeof l.club_id === 'object' ? l.club_id._id : l.club_id,
+            activityDescription: l.activity_description,
+            date: l.date.split('T')[0],
+            hours: l.hours,
+            status: l.status
+          }));
+          dispatch({ type: 'students/setLogbooks', payload: mapped });
+        }
+      } catch (err) {
+        console.error('Error fetching logs', err);
+      }
+    };
+    fetchLogs();
+  }, [user, token, dispatch]);
+
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -66,6 +103,24 @@ export const LogbookView: React.FC = () => {
     report_file: '',
   });
 
+  const filteredLogs = user?.role === 'Student'
+    ? logbooks.filter(l => l.studentId === user.id)
+    : user?.role === 'Club'
+      ? logbooks.filter(l => l.clubId === user.clubId)
+      : logbooks;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const newLog: LogbookEntry = {
+      id: Math.random().toString(36).substr(2, 9),
+      studentId: user.id,
+      clubId: formData.clubId,
+      activityDescription: formData.description,
+      date: formData.date,
+      hours: Number(formData.hours),
+      status: 'Pending'
   // Fetch student's logbooks & their clubs
   const fetchData = async (showSkeleton = true) => {
     if (showSkeleton) setLoading(true);
@@ -216,6 +271,17 @@ export const LogbookView: React.FC = () => {
 
       {/* New Entry Form */}
       {isAdding && (
+        <div className="bg-white p-8 rounded-3xl border-2 border-indigo-100 shadow-xl shadow-indigo-50/50 animate-in slide-in-from-top-4">
+          <h3 className="text-xl font-bold mb-6 text-gray-900">Add Log Entry</h3>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Select Club</label>
+                <select
+                  required
+                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  value={formData.clubId}
+                  onChange={e => setFormData({ ...formData, clubId: e.target.value })}
         <div
           className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-8 animate-in slide-in-from-top-4"
           style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
@@ -268,6 +334,21 @@ export const LogbookView: React.FC = () => {
                   onChange={e => setFormData({ ...formData, hours: e.target.value })}
                 />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-bold text-gray-700">Activity Description</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="What did you do during this session?"
+                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                ></textarea>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+                />
+              </div>
               <div className="space-y-1.5 md:col-span-2">
                 <FileUpload
                   label="Proof / Attachment"
@@ -308,6 +389,70 @@ export const LogbookView: React.FC = () => {
         </div>
       )}
 
+      <div className="grid gap-4">
+        {filteredLogs.length === 0 ? (
+          <div className="bg-white p-12 rounded-3xl border border-dashed border-gray-200 text-center text-gray-500">
+            <FileText className="mx-auto mb-4 text-gray-300" size={48} />
+            <p className="font-medium text-lg">No log entries found.</p>
+            <p className="text-sm">Start by submitting your first activity log!</p>
+          </div>
+        ) : (
+          filteredLogs.map((log) => {
+            const clubName = clubs.find(c => c.id === log.clubId)?.name || 'Unknown Club';
+
+            return (
+              <div key={log.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                <div className="flex gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${log.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' :
+                    log.status === 'Rejected' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                    }`}>
+                    {log.status === 'Approved' ? <CheckCircle size={24} /> :
+                      log.status === 'Rejected' ? <XCircle size={24} /> : <Clock3 size={24} />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">{log.activityDescription}</h4>
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      <span className="flex items-center gap-1.5 text-sm text-gray-500">
+                        <Calendar size={14} /> {log.date}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-sm text-gray-500">
+                        <Clock size={14} /> {log.hours} Hours
+                      </span>
+                      <span className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600">
+                        {clubName}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${log.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                    log.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                    {log.status}
+                  </div>
+
+                  {user?.role === 'Club' && log.status === 'Pending' && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleStatusUpdate(log.id, 'Approved')}
+                        className="p-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
+                      >
+                        <CheckCircle size={20} />
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(log.id, 'Rejected')}
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                      >
+                        <XCircle size={20} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       {/* Filter Tabs */}
       <div className="flex items-center gap-2">
         <Filter size={14} className="text-gray-400" />
