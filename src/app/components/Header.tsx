@@ -7,10 +7,14 @@ export const Header: React.FC<{ title: string }> = ({ title }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
     <header className="h-16 border-b border-white/50 bg-white/40 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-8">
-      <div>
-        <p className="text-xs text-teal-600 font-medium">Welcome back, {user?.name} 👋</p>
-        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-      </div>
+      {user?.role !== 'Club' ? (
+        <div>
+          <p className="text-xs text-teal-600 font-medium">Welcome back, {user?.name} 👋</p>
+          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+        </div>
+      ) : (
+        <div />
+      )}
 
       <div className="flex items-center gap-6">
         <div className="relative hidden md:block">

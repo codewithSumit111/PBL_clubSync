@@ -32,6 +32,16 @@ const clubSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    category: {
+        type: String,
+        enum: ['Technical', 'Cultural', 'Sports', 'Social', 'Literary', 'Other'],
+        default: 'Other'
+    },
+    tagline: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     email: {
         type: String,
         required: true,

@@ -24,6 +24,7 @@ import {
   AlertCircle,
   ArrowUpRight
 } from 'lucide-react';
+import { StudentDashboard } from './StudentDashboard';
 
 export const DashboardOverview: React.FC = () => {
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -55,6 +56,12 @@ export const DashboardOverview: React.FC = () => {
   }, [user, token]);
 
   // Mock data for analytics chart (can be updated later)
+  // Render student-specific dashboard if role is Student
+  if (user?.role === 'Student') {
+    return <StudentDashboard />;
+  }
+
+  // Mock data for admin charts
   const clubData = [
     { name: 'Jan', students: 400, hours: 240 },
     { name: 'Feb', students: 520, hours: 380 },
