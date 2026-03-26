@@ -22,19 +22,12 @@ router.get('/', async (req, res) => {
         });
 
         res.json({ success: true, clubs: clubsWithCount });
-    } catch (err) {
-        console.error('Error fetching clubs:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
 // ─────────────────────────────────────────────────────────────────
 // PUBLIC / STUDENT ROUTES
 // ─────────────────────────────────────────────────────────────────
 
-// @route   GET /api/public-clubs
-// @desc    Simplified list of clubs for general display
-router.get('/public', async (req, res) => {
+// GET /api/clubs — Get all clubs
+router.get('/', async (req, res) => {
     try {
         const clubs = await Club.find().select('club_name description faculty_coordinators events analytics official_website email');
         res.json({ success: true, clubs });
@@ -192,6 +185,9 @@ router.put('/applications/:student_id', protect, async (req, res) => {
         if (!student) {
             return res.status(404).json({ success: false, message: 'Student not found' });
         }
+
+        const application = student.registered_clubs.find(rc => rc.club.toString() === req.user.id);
+        if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
         const application = student.registered_clubs.find(
             rc => rc.club.toString() === req.user.id
