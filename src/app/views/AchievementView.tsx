@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { addAchievement, Achievement } from '../features/studentSlice';
 import { FileUpload } from '../components/shared/FileUpload';
 import {
   Trophy,
@@ -65,42 +64,6 @@ const MOCK_ACHIEVEMENTS: AchievementData[] = [
 ];
 
 export const AchievementView: React.FC = () => {
-  const { user, token } = useSelector((state: RootState) => state.auth);
-  const { achievements } = useSelector((state: RootState) => state.students);
-  const { clubs } = useSelector((state: RootState) => state.clubs);
-  const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
-  const dispatch = useDispatch();
-
-  React.useEffect(() => {
-    const fetchAchievements = async () => {
-      if (!user || !token) return;
-      const endpoint = user.role === 'Student' ? '/api/achievements/mine' : user.role === 'Club' ? '/api/achievements/club' : null;
-      if (!endpoint) return;
-
-      try {
-        const res = await fetch(`http://localhost:5000${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          const mapped = data.achievements.map((a: any) => ({
-            id: a._id,
-            studentId: typeof a.student_id === 'object' ? a.student_id._id : a.student_id,
-            clubId: typeof a.club_id === 'object' ? a.club_id._id : a.club_id,
-            title: a.title,
-            description: a.description,
-            level: a.level,
-            date: a.date.split('T')[0]
-          }));
-          dispatch({ type: 'students/setAchievements', payload: mapped });
-        }
-      } catch (err) {
-        console.error('Error fetching achievements', err);
-      }
-    };
-    fetchAchievements();
-  }, [user, token, dispatch]);
-
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [achievements, setAchievements] = useState<AchievementData[]>([]);
@@ -119,24 +82,6 @@ export const AchievementView: React.FC = () => {
     certificate_url: '',
   });
 
-  const filteredAchievements = user?.role === 'Student'
-    ? achievements.filter(a => a.studentId === user.id)
-    : user?.role === 'Club'
-      ? achievements.filter(a => a.clubId === user.clubId)
-      : achievements;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    const newAchievement: Achievement = {
-      id: Math.random().toString(36).substr(2, 9),
-      studentId: user.id,
-      clubId: formData.clubId,
-      title: formData.title,
-      description: formData.description,
-      level: formData.level,
-      date: formData.date
   const fetchData = async (showSkeleton = true) => {
     if (showSkeleton) setLoading(true);
     try {
