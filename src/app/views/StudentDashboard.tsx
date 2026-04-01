@@ -26,7 +26,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
     const [data, setData] = useState<StudentDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const USE_MOCK_DASHBOARD = process.env.NODE_ENV === 'development';
+    const USE_MOCK_DASHBOARD = import.meta.env.MODE === 'development';
 
     const loadDashboard = async () => {
         setLoading(true);
