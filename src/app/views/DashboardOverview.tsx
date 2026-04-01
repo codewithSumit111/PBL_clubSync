@@ -27,35 +27,8 @@ import {
 import { StudentDashboard } from './StudentDashboard';
 
 export const DashboardOverview: React.FC = () => {
-  const { user, token } = useSelector((state: RootState) => state.auth);
-  const [dashboardData, setDashboardData] = React.useState<any>(null);
+  const { user } = useSelector((state: RootState) => state.auth);
 
-  React.useEffect(() => {
-    const fetchDashboard = async () => {
-      if (!user || !token) return;
-      let endpoint = '';
-      if (user.role === 'Admin') endpoint = '/api/admin/dashboard';
-      else if (user.role === 'Student') endpoint = '/api/students/dashboard';
-      else if (user.role === 'Club') endpoint = '/api/clubs/dashboard';
-
-      if (!endpoint) return;
-
-      try {
-        const res = await fetch(`http://localhost:5000${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setDashboardData(data);
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard', err);
-      }
-    };
-    fetchDashboard();
-  }, [user, token]);
-
-  // Mock data for analytics chart (can be updated later)
   // Render student-specific dashboard if role is Student
   if (user?.role === 'Student') {
     return <StudentDashboard />;
@@ -76,28 +49,12 @@ export const DashboardOverview: React.FC = () => {
     { name: 'Social', value: 10, color: '#8b5cf6' },
   ];
 
-  const studentStats = [
-    { label: 'Total CCA Hours', value: dashboardData?.stats?.totalCcaHours || '0', icon: Clock, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Current Marks', value: dashboardData?.stats?.currentMarks || '0/25', icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Active Clubs', value: dashboardData?.stats?.activeClubs || '0', icon: Users, color: 'text-pink-600', bg: 'bg-pink-50' },
-    { label: 'Achievements', value: dashboardData?.stats?.achievements || '0', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
+  const stats = [
+    { label: 'Total Students', value: '2,450', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Total Clubs', value: '42', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Pending Approvals', value: '128', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'CCA Participation', value: '88%', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
-
-  const adminStats = [
-    { label: 'Total Students', value: dashboardData?.stats?.totalStudents || '0', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Total Clubs', value: dashboardData?.stats?.totalClubs || '0', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Pending Approvals', value: dashboardData?.stats?.pendingApprovals || '0', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'CCA Participation', value: dashboardData?.stats?.ccaParticipation || '0%', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  ];
-
-  const clubStats = [
-    { label: 'Total Members', value: dashboardData?.stats?.totalMembers || '0', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Pending Approvals', value: dashboardData?.stats?.pendingApprovals || '0', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Active Events', value: dashboardData?.stats?.activeEvents || '0', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Platform Rating', value: '4.8/5', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
-
-  const stats = user?.role === 'Student' ? studentStats : user?.role === 'Club' ? clubStats : adminStats;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -199,60 +156,53 @@ export const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Recent Activity (Table) */}
-      {(user?.role === 'Admin' || user?.role === 'Club') && (
-        <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-            <h3 className="font-bold text-gray-900">Recent Platform Updates</h3>
-            <button className="text-teal-600 text-sm font-bold hover:underline">View All</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                <tr>
-                  <th className="px-6 py-4">Student/Club</th>
-                  <th className="px-6 py-4">Activity</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-sm">
-                {dashboardData?.recentUpdates?.length > 0 ? dashboardData.recentUpdates.map((r: any, i: number) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">
-                          {r.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{r.name}</p>
-                          <p className="text-xs text-gray-500">{r.department || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      Joined Platform
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 font-medium">
-                      {new Date(r.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                      No recent updates available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+      <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+          <h3 className="font-bold text-gray-900">Recent Updates</h3>
+          <button className="text-teal-600 text-sm font-bold hover:underline">View All</button>
         </div>
-      )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="px-6 py-4">Student/Club</th>
+                <th className="px-6 py-4">Activity</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 text-sm">
+              {[1, 2, 3].map((_, i) => (
+                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">
+                        {['JD', 'AS', 'RK'][i]}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{['John Doe', 'Alice Smith', 'Rahul Kumar'][i]}</p>
+                        <p className="text-xs text-gray-500">Comp. Science</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {['Submitted Workshop Log', 'Joined Robotics Club', 'Updated Skill Marks'][i]}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                      {i === 0 ? 'Pending' : 'Completed'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 font-medium">
+                    {['Feb 10, 2026', 'Feb 09, 2026', 'Feb 08, 2026'][i]}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

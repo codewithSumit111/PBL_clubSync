@@ -36,10 +36,36 @@ interface StudentState {
 }
 
 const initialState: StudentState = {
-  registrations: {},
-  logbooks: [],
-  achievements: [],
-  marks: {}
+  registrations: {
+    'S123': ['1', '3']
+  },
+  logbooks: [
+    {
+      id: 'L1',
+      studentId: 'S123',
+      clubId: '1',
+      activityDescription: 'Arduino Workshop',
+      date: '2024-02-10',
+      hours: 4,
+      status: 'Approved'
+    }
+  ],
+  achievements: [
+    {
+      id: 'A1',
+      studentId: 'S123',
+      clubId: '3',
+      title: 'Hackathon Winner',
+      description: 'First prize in Inter-college Hackathon',
+      level: 'State',
+      date: '2024-01-15'
+    }
+  ],
+  marks: {
+    'S123': {
+      '1': { participation: 4, leadership: 3, discipline: 5, skillDevelopment: 4, impact: 2 }
+    }
+  }
 };
 
 const studentSlice = createSlice({
@@ -52,12 +78,6 @@ const studentSlice = createSlice({
       if (!state.registrations[studentId].includes(clubId)) {
         state.registrations[studentId].push(clubId);
       }
-    },
-    setLogbooks: (state, action: PayloadAction<LogbookEntry[]>) => {
-      state.logbooks = action.payload;
-    },
-    setAchievements: (state, action: PayloadAction<Achievement[]>) => {
-      state.achievements = action.payload;
     },
     addLogEntry: (state, action: PayloadAction<LogbookEntry>) => {
       state.logbooks.push(action.payload);
@@ -77,5 +97,5 @@ const studentSlice = createSlice({
   },
 });
 
-export const { registerForClub, setLogbooks, setAchievements, addLogEntry, updateLogStatus, addAchievement, updateMarks } = studentSlice.actions;
+export const { registerForClub, addLogEntry, updateLogStatus, addAchievement, updateMarks } = studentSlice.actions;
 export default studentSlice.reducer;
