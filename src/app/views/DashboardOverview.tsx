@@ -24,11 +24,17 @@ import {
   AlertCircle,
   ArrowUpRight
 } from 'lucide-react';
+import { StudentDashboard } from './StudentDashboard';
 
 export const DashboardOverview: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // Mock data for analytics
+  // Render student-specific dashboard if role is Student
+  if (user?.role === 'Student') {
+    return <StudentDashboard />;
+  }
+
+  // Mock data for admin charts
   const clubData = [
     { name: 'Jan', students: 400, hours: 240 },
     { name: 'Feb', students: 520, hours: 380 },
@@ -43,21 +49,12 @@ export const DashboardOverview: React.FC = () => {
     { name: 'Social', value: 10, color: '#8b5cf6' },
   ];
 
-  const studentStats = [
-    { label: 'Total CCA Hours', value: '42.5', icon: Clock, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Current Marks', value: '18/25', icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Active Clubs', value: '3', icon: Users, color: 'text-pink-600', bg: 'bg-pink-50' },
-    { label: 'Achievements', value: '5', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
-
-  const adminStats = [
+  const stats = [
     { label: 'Total Students', value: '2,450', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
     { label: 'Total Clubs', value: '42', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
     { label: 'Pending Approvals', value: '128', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
     { label: 'CCA Participation', value: '88%', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
-
-  const stats = user?.role === 'Student' ? studentStats : adminStats;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
