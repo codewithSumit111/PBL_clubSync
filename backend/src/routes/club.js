@@ -9,7 +9,34 @@ const { protect } = require('../middleware/auth');
 // @desc    Get all clubs (Public or Student)
 router.get('/', async (req, res) => {
     try {
-        const clubs = await Club.find().select('club_name description department faculty_coordinators events analytics official_website');
+        const clubs = await Club.find().select(
+            'club_name description department category tagline faculty_coordinators events analytics official_website registered_students'
+        );
+
+        // Map to include member count
+        const clubsWithCount = clubs.map(c => {
+            const obj = c.toObject();
+            obj.member_count = obj.registered_students ? obj.registered_students.length : 0;
+            delete obj.registered_students; // don't leak student IDs
+            return obj;
+        });
+
+        res.json({ success: true, clubs: clubsWithCount });
+    } catch (err) {
+        console.error('Error fetching clubs:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// PUBLIC / STUDENT ROUTES
+// ─────────────────────────────────────────────────────────────────
+
+// @route   GET /api/public-clubs
+// @desc    Simplified list of clubs for general display
+router.get('/public', async (req, res) => {
+    try {
+        const clubs = await Club.find().select('club_name description faculty_coordinators events analytics official_website email');
         res.json({ success: true, clubs });
     } catch (err) {
         console.error('Error fetching clubs:', err);

@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { setClubs } from '../features/clubSlice';
-import { registerForClub } from '../features/studentSlice';
 import {
   Search,
-  Filter,
   Users,
-  UserPlus,
-  ArrowRight,
   ExternalLink,
   ChevronRight,
   Plus,
@@ -22,6 +17,7 @@ const EMPTY_ARRAY: string[] = [];
 export const ClubListView: React.FC = () => {
   const { clubs } = useSelector((state: RootState) => state.clubs);
   const { user } = useSelector((state: RootState) => state.auth);
+<<<<<<< HEAD
   const studentRegs = useSelector((state: RootState) => state.students.registrations[user?.id || ''] || EMPTY_ARRAY);
   const dispatch = useDispatch();
 
@@ -47,14 +43,29 @@ export const ClubListView: React.FC = () => {
     if (clubs.length === 0) fetchAllClubs();
   }, [dispatch, clubs.length]);
 
+=======
+
+  const [clubs, setClubs] = useState<ClubData[]>([]);
+  const [loading, setLoading] = useState(true);
+>>>>>>> origin/main
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const categories = ['All', 'Technical', 'Arts', 'Sports', 'Social'];
 
   const filteredClubs = clubs.filter(club => {
+<<<<<<< HEAD
     const matchesSearch = club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       club.description.toLowerCase().includes(searchTerm.toLowerCase());
+=======
+    const name = club.club_name || '';
+    const desc = club.description || '';
+    const tag = club.tagline || '';
+    const matchesSearch =
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tag.toLowerCase().includes(searchTerm.toLowerCase());
+>>>>>>> origin/main
     const matchesCategory = selectedCategory === 'All' || club.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -83,6 +94,7 @@ export const ClubListView: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className="space-y-6">
       {/* Header & Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl p-5 rounded-3xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
@@ -105,6 +117,60 @@ export const ClubListView: React.FC = () => {
               className={`px-5 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${selectedCategory === cat
                 ? 'bg-indigo-600 text-white shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5'
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-100 outline-none'
+=======
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header & Search */}
+      <div
+        className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6"
+        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+              <Building2 size={20} className="text-teal-600" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900 text-lg">All Clubs</h2>
+              <p className="text-xs text-gray-500">{clubs.length} active clubs available</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search clubs..."
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Preference form button */}
+            {user?.role === 'Student' && intakeStatus.is_open && (
+              <button
+                onClick={() => setShowPrefForm(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-600 transition-all shadow-lg shadow-teal-200 whitespace-nowrap"
+              >
+                <Sparkles size={16} />
+                Submit Preferences
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
+          <Filter size={14} className="text-gray-400 flex-shrink-0" />
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${selectedCategory === cat
+                ? 'bg-teal-500 text-white shadow-lg shadow-teal-200'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+>>>>>>> origin/main
                 }`}
             >
               {cat}
@@ -113,6 +179,7 @@ export const ClubListView: React.FC = () => {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Grid */}
       <motion.div
         variants={containerVariants}
@@ -135,6 +202,22 @@ export const ClubListView: React.FC = () => {
                       'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
                     }`}>
                     {club.category}
+=======
+      {/* Intake Window Banner */}
+      {user?.role === 'Student' && intakeStatus.is_open && (
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl p-5 flex items-center justify-between text-white shadow-lg shadow-teal-200/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold">Club Intake Window is Open!</h3>
+              <p className="text-sm text-white/80">
+                Select your top {intakeStatus.max_preferences} club preferences before the deadline.
+                {intakeStatus.end_date && (
+                  <span className="ml-1 font-semibold">
+                    Closes: {new Date(intakeStatus.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+>>>>>>> origin/main
                   </span>
                 </div>
                 <div className="absolute -bottom-6 left-6 w-14 h-14 bg-white rounded-2xl shadow-[0_4px_12px_rgb(0,0,0,0.08)] border border-slate-100 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 z-20">
@@ -158,6 +241,7 @@ export const ClubListView: React.FC = () => {
                     </div>
                   </div>
 
+<<<<<<< HEAD
                   {user?.role === 'Student' && (
                     isRegistered ? (
                       <button className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm bg-emerald-50 px-4 py-2 rounded-xl ring-1 ring-inset ring-emerald-600/20 hover:bg-emerald-100 transition-colors">
@@ -172,6 +256,55 @@ export const ClubListView: React.FC = () => {
                       </button>
                     )
                   )}
+=======
+                  {/* Faculty coordinators (expanded) */}
+                  {isExpanded && club.faculty_coordinators && club.faculty_coordinators.length > 0 && (
+                    <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Faculty Coordinators</h4>
+                      {club.faculty_coordinators.map((fc, i) => (
+                        <div key={i} className="text-sm text-gray-700">
+                          {fc.name} <span className="text-gray-400">({fc.department})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upcoming events (expanded) */}
+                  {isExpanded && club.events && club.events.length > 0 && (
+                    <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Upcoming Events</h4>
+                      {club.events.slice(0, 3).map((ev, i) => (
+                        <div key={i} className="text-sm text-gray-700 flex justify-between">
+                          <span>{ev.title}</span>
+                          <span className="text-xs text-gray-400">{new Date(ev.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                    <button
+                      onClick={() => setExpandedClub(isExpanded ? null : club._id)}
+                      className="text-xs font-medium text-gray-500 hover:text-teal-600 transition-colors flex items-center gap-1"
+                    >
+                      {isExpanded ? 'Show less' : 'View details'}
+                      <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {club.official_website && (
+                        <a
+                          href={club.official_website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                        >
+                          <Globe size={14} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+>>>>>>> origin/main
                 </div>
               </div>
             </motion.div>

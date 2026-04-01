@@ -1,12 +1,12 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
+import { 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -16,9 +16,9 @@ import {
   Legend,
   CartesianGrid
 } from 'recharts';
-import {
-  Download,
-  Filter,
+import { 
+  Download, 
+  Filter, 
   PieChart as PieIcon,
   TrendingUp,
   Award,
@@ -26,26 +26,8 @@ import {
 } from 'lucide-react';
 
 export const CCAAnalytics: React.FC = () => {
-  const { user, token } = useSelector((state: RootState) => state.auth);
-  const [studentsData, setStudentsData] = React.useState<any[]>([]);
-
-  React.useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/api/admin/students', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setStudentsData(data.students);
-        }
-      } catch (err) {
-        console.error('Error fetching students', err);
-      }
-    };
-    if (user?.role === 'Admin') fetchStudents();
-  }, [user, token]);
-
+  const { user } = useSelector((state: RootState) => state.auth);
+  
   // Mock data for student CCA marks
   const ccaData = [
     { subject: 'Participation', A: 4.5, fullMark: 5 },
@@ -91,7 +73,11 @@ export const CCAAnalytics: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={ccaData}>
                 <PolarGrid stroke="#f1f5f9" />
+<<<<<<< HEAD
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }} />
+=======
+                <PolarAngleAxis dataKey="subject" tick={{fill: '#64748b', fontSize: 12}} />
+>>>>>>> origin/main
                 <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
                 <Radar
                   name="Student Performance"
@@ -139,6 +125,7 @@ export const CCAAnalytics: React.FC = () => {
               <BarChart data={departmentData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" hide />
+<<<<<<< HEAD
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 700 }} />
                 <Tooltip
                   cursor={{ fill: '#f8fafc' }}
@@ -147,6 +134,16 @@ export const CCAAnalytics: React.FC = () => {
                 <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }} />
                 <Bar dataKey="active" name="Active Students %" fill="#4F46E5" radius={[0, 8, 8, 0]} barSize={24} />
                 <Bar dataKey="top" name="Top Achievers %" fill="#818cf8" radius={[0, 8, 8, 0]} barSize={24} />
+=======
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 13}} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend verticalAlign="top" height={36}/>
+                <Bar dataKey="active" name="Active Students %" fill="#4F46E5" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar dataKey="top" name="Top Achievers %" fill="#C7D2FE" radius={[0, 4, 4, 0]} barSize={20} />
+>>>>>>> origin/main
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -188,16 +185,28 @@ export const CCAAnalytics: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
-              {studentsData.length > 0 ? studentsData.map((row, i) => (
-                <tr key={row.id || i} className="hover:bg-gray-50/50 transition-colors">
+              {[
+                { roll: 'CS001', name: 'Arjun Mehra', dept: 'Comp. Science', hours: 42.5, marks: 21 },
+                { roll: 'CS002', name: 'Bhavna K.', dept: 'Comp. Science', hours: 38.0, marks: 19 },
+                { roll: 'EC045', name: 'Chetan S.', dept: 'Electronics', hours: 24.5, marks: 14 },
+                { roll: 'ME112', name: 'Divya R.', dept: 'Mechanical', hours: 56.0, marks: 24 },
+              ].map((row, i) => (
+                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-8 py-5 font-mono text-xs text-gray-500">{row.roll}</td>
                   <td className="px-8 py-5 font-bold text-gray-900">{row.name}</td>
                   <td className="px-8 py-5 text-gray-600">{row.dept}</td>
                   <td className="px-8 py-5 text-center font-medium">{row.hours}</td>
                   <td className="px-8 py-5 text-center">
+<<<<<<< HEAD
                     <span className={`px-3 py-1 rounded-lg font-bold ${row.marks >= 20 ? 'bg-emerald-50 text-emerald-700' :
                       row.marks >= 15 ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'
                       }`}>
+=======
+                    <span className={`px-3 py-1 rounded-lg font-bold ${
+                      row.marks >= 20 ? 'bg-emerald-50 text-emerald-700' : 
+                      row.marks >= 15 ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'
+                    }`}>
+>>>>>>> origin/main
                       {row.marks}
                     </span>
                   </td>
@@ -205,13 +214,7 @@ export const CCAAnalytics: React.FC = () => {
                     <button className="text-indigo-600 font-bold hover:underline">View File</button>
                   </td>
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} className="px-8 py-5 text-center text-gray-500">
-                    No student records found.
-                  </td>
-                </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>

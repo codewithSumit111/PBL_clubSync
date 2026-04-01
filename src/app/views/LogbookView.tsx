@@ -65,6 +65,8 @@ export const LogbookView: React.FC = () => {
     report_file: '',
   });
 
+  // Fetch student's logbooks & their clubs
+
   const fetchData = async (showSkeleton = true) => {
     if (!user) return;
     if (showSkeleton) setLoading(true);
@@ -317,6 +319,8 @@ export const LogbookView: React.FC = () => {
           </form>
         </div>
       )}
+
+      {/* Filter Tabs */}
 
       <div className="flex items-center gap-2">
         <Filter size={14} className="text-gray-400" />

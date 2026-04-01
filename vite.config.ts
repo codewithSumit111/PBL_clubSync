@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import path from 'path'
+import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
@@ -13,10 +13,18 @@ export default defineConfig({
   resolve: {
     alias: {
       // Alias @ to the src directory
-      '@': path.resolve(__dirname, './src'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+  server: {
+    proxy: {
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
 })
