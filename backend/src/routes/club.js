@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Club = require('../models/Club');
 const Student = require('../models/Student');
+const Logbook = require('../models/Logbook');
 const { protect } = require('../middleware/auth');
 
 // @route   GET /api/clubs
@@ -57,6 +58,24 @@ router.post('/register/:club_id', protect, async (req, res) => {
 
     } catch (err) {
         console.error('Error registering for club:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// @route   GET /api/clubs/members
+// @desc    Get all students who applied to or are members of the club
+router.get('/members', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const students = await Student.find({ 'registered_clubs.club': req.user.id })
+            .select('name roll_no department year email registered_clubs');
+
+        res.json({ success: true, students });
+    } catch (err) {
+        console.error('Error fetching club members:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -124,13 +143,74 @@ router.get('/dashboard', protect, async (req, res) => {
             registered_clubs: { $elemMatch: { club: club._id, status: 'Pending' } }
         });
 
+        // Dynamic Chart Data for Clubs
+        
+        // 1. Engagement Series: Monthly hours logged for this club
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+        sixMonthsAgo.setDate(1);
+
+        const logbookAgg = await Logbook.aggregate([
+            { $match: { club_id: club._id, date: { $gte: sixMonthsAgo } } },
+            { $group: {
+                _id: { month: { $month: "$date" }, year: { $year: "$date" } },
+                totalHours: { $sum: "$hours" },
+                activityCount: { $sum: 1 }
+            }}
+        ]) || [];
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const engagementSeries = [];
+        for (let i = 0; i < 6; i++) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - (5 - i));
+            const monthStr = months[d.getMonth()];
+            
+            const hoursRecord = logbookAgg.find(x => x._id && x._id.month === d.getMonth() + 1 && x._id.year === d.getFullYear());
+            
+            engagementSeries.push({
+                name: monthStr,
+                students: hoursRecord ? hoursRecord.activityCount : 0, // Using students key for chart compatibility
+                hours: hoursRecord ? hoursRecord.totalHours : 0
+            });
+        }
+
+        // 2. Participation by Type (Pie Chart) - based on student departments
+        const participationByType = [];
+        if (club.registered_students && club.registered_students.length > 0) {
+            const deptCounts = {};
+            club.registered_students.forEach(s => {
+                const dept = s.department || 'Other';
+                deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+            });
+
+            const colors = ['#4f46e5', '#7c3aed', '#0ea5e9', '#e11d48', '#10b981', '#f59e0b'];
+            const totalStudents = club.registered_students.length;
+            
+            Object.keys(deptCounts).forEach((dept, index) => {
+                participationByType.push({
+                    name: dept,
+                    value: Math.round((deptCounts[dept] / totalStudents) * 100),
+                    color: colors[index % colors.length]
+                });
+            });
+        }
+        
+        if (participationByType.length === 0) {
+            participationByType.push({ name: 'None', value: 100, color: '#e2e8f0' });
+        }
+
         return res.json({
             success: true,
             stats: {
                 totalMembers: club.registered_students.length,
                 pendingApprovals: pendingApprovalsCount,
                 activeEvents: club.events.length,
-            }
+                rating: '4.8/5', // mock rating
+                growth: '+8%' // mocked club growth
+            },
+            engagementSeries,
+            participationByType
         });
     } catch (err) {
         console.error('[CLUB DASHBOARD ERROR]', err);

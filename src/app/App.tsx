@@ -11,6 +11,7 @@ import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
 import { Toaster } from 'sonner';
+import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -63,14 +64,24 @@ const AppContent: React.FC = () => {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-      <div className="flex min-h-screen font-['Inter',sans-serif]" style={{ background: 'linear-gradient(135deg, #e0f2f1 0%, #e8eaf6 35%, #f3e5f5 65%, #e0f2f1 100%)' }}>
+      <div className="flex min-h-screen bg-slate-50 text-slate-900 font-['Inter',sans-serif] selection:bg-indigo-100 selection:text-indigo-900">
         <Sidebar currentView={currentView} onViewChange={setCurrentView} />
 
         <main className="flex-1 flex flex-col min-w-0">
           <Header title={getTitle()} />
-          <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex-1 overflow-y-auto p-8 overflow-x-hidden">
             <div className="max-w-7xl mx-auto">
-              {renderView()}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentView}
+                  initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  {renderView()}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </main>

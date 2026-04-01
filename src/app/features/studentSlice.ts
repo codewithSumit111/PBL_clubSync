@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface LogbookEntry {
   id: string;
   studentId: string;
+  studentName?: string;
   clubId: string;
   activityDescription: string;
   date: string;

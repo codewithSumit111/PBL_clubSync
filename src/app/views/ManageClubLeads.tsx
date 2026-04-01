@@ -53,61 +53,62 @@ export const ManageClubLeads: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-            <Plus size={20} className="text-indigo-600" />
+      <div className="mb-10">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center ring-1 ring-inset ring-indigo-600/10">
+            <Plus size={24} className="text-indigo-600" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add Club Lead</h1>
-            <p className="text-sm text-gray-500">Create a new club lead account to manage a club</p>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Add Club Lead</h1>
+            <p className="text-sm font-medium text-slate-500 mt-1">Create a new club lead account to manage a club</p>
           </div>
         </div>
       </div>
 
       {/* Form Card */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="bg-white p-8 md:p-10 rounded-3xl border border-slate-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
 
           {/* Club Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Club Name</label>
-            <div className="relative">
-              <Building2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-bold text-slate-700">Club Name</label>
+            <div className="relative group">
+              <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="text"
                 required
                 value={clubName}
                 onChange={e => setClubName(e.target.value)}
                 placeholder="e.g. Robotics Club"
-                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400"
               />
             </div>
           </div>
 
           {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-            <div className="relative">
-              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-bold text-slate-700">Email Address</label>
+            <div className="relative group">
+              <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="club.lead@college.edu"
-                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400"
               />
             </div>
           </div>
 
           {/* Password */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-            <div className="relative">
-              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-bold text-slate-700">Password</label>
+            <div className="relative group">
+              <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="password"
                 required
@@ -115,62 +116,65 @@ export const ManageClubLeads: React.FC = () => {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Minimum 6 characters"
-                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400"
               />
             </div>
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Club Description <span className="text-gray-400 font-normal">(optional)</span></label>
-            <div className="relative">
-              <FileText size={16} className="absolute left-4 top-4 text-gray-400" />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-bold text-slate-700">Club Description <span className="text-slate-400 font-medium">(optional)</span></label>
+            <div className="relative group">
+              <FileText size={18} className="absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Brief description of the club and its activities..."
                 rows={3}
-                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none"
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400 resize-none"
               />
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              <>
-                <Plus size={16} />
-                Create Club Lead Account
-              </>
-            )}
-          </button>
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-sm rounded-xl transition-all duration-300 shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5 flex items-center justify-center gap-2 outline-none disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  <Plus size={20} strokeWidth={2.5} />
+                  Create Club Lead Account
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
 
       {/* Recently Added */}
       {recentlyAdded.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-green-500" />
+          <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-emerald-500" strokeWidth={2.5} />
             Recently Added Club Leads
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {recentlyAdded.map((club, i) => (
-              <div key={i} className="bg-green-50 border border-green-200 rounded-xl px-5 py-3 flex items-center justify-between">
+              <div key={i} className="bg-emerald-50 rounded-2xl p-5 flex items-center justify-between ring-1 ring-inset ring-emerald-600/20 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{club.name}</p>
-                  <p className="text-xs text-gray-500">{club.email}</p>
+                  <p className="font-bold text-slate-900">{club.name}</p>
+                  <p className="text-xs font-medium text-slate-500 mt-0.5">{club.email}</p>
                 </div>
-                <CheckCircle2 size={18} className="text-green-500" />
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                  <CheckCircle2 size={16} className="text-emerald-600" strokeWidth={3} />
+                </div>
               </div>
             ))}
           </div>
@@ -178,13 +182,15 @@ export const ManageClubLeads: React.FC = () => {
       )}
 
       {/* Info Card */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 flex gap-3">
-        <AlertCircle size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="mt-8 bg-sky-50 rounded-3xl p-6 flex gap-4 ring-1 ring-inset ring-sky-600/10 shadow-sm">
+        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+          <AlertCircle size={20} className="text-sky-600" strokeWidth={2.5} />
+        </div>
         <div>
-          <p className="text-sm font-medium text-blue-900">How it works</p>
-          <p className="text-xs text-blue-700 mt-1">
+          <p className="font-bold text-sky-900">How it works</p>
+          <p className="text-sm font-medium text-sky-700 leading-relaxed mt-1.5">
             Club leads can use the email and password you set here to sign in from the login page.
-            They will be able to manage their club, events, and members from the dashboard.
+            They will be able to manage their club, events, and their members from their dashboard.
           </p>
         </div>
       </div>

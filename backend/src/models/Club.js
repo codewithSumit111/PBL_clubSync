@@ -24,6 +24,11 @@ const clubSchema = new mongoose.Schema({
         unique: true,
         trim: true
     },
+    category: {
+        type: String,
+        enum: ['Technical', 'Arts', 'Sports', 'Social', 'Other'],
+        default: 'Other'
+    },
     description: {
         type: String,
         required: true

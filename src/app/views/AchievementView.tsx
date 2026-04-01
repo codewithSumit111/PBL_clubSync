@@ -94,45 +94,49 @@ export const AchievementView: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Achievements Wall</h2>
-          <p className="text-gray-500">Celebrate your success and gain recognition.</p>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Achievements Wall</h2>
+          <p className="text-slate-500 mt-1 font-medium">Celebrate your success and gain recognition.</p>
         </div>
         {user?.role === 'Student' && (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5 outline-none"
           >
-            <Plus size={20} />
+            <Plus size={20} strokeWidth={2.5} />
             Record Achievement
           </button>
         )}
       </div>
 
       {isAdding && (
-        <div className="bg-white p-8 rounded-3xl border-2 border-indigo-100 shadow-xl animate-in slide-in-from-top-4">
-          <h3 className="text-xl font-bold mb-6 text-gray-900 flex items-center gap-2">
-            <Trophy className="text-amber-500" /> Submit Achievement
+        <div className="bg-white p-8 md:p-10 rounded-3xl border border-slate-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] animate-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400"></div>
+          <h3 className="text-xl font-extrabold mb-8 text-slate-900 tracking-tight flex items-center gap-3">
+            <div className="p-2.5 bg-amber-50 text-amber-500 rounded-xl">
+              <Trophy size={20} strokeWidth={2.5} />
+            </div>
+            Submit Achievement
           </h3>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-bold text-gray-700">Achievement Title</label>
+              <div className="space-y-2.5 md:col-span-2">
+                <label className="text-sm font-bold text-slate-700">Achievement Title</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Winner of Inter-College Robowar"
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full p-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400"
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Associated Club</label>
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-slate-700">Associated Club</label>
                 <select
                   required
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full p-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700"
                   value={formData.clubId}
                   onChange={e => setFormData({ ...formData, clubId: e.target.value })}
                 >
@@ -140,11 +144,11 @@ export const AchievementView: React.FC = () => {
                   {myClubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Achievement Level</label>
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-slate-700">Achievement Level</label>
                 <select
                   required
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full p-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700"
                   value={formData.level}
                   onChange={e => setFormData({ ...formData, level: e.target.value })}
                 >
@@ -155,39 +159,39 @@ export const AchievementView: React.FC = () => {
                   <option value="International">International Level</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Date Received</label>
+              <div className="space-y-2.5">
+                <label className="text-sm font-bold text-slate-700">Date Received</label>
                 <input
                   type="date"
                   required
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full p-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700"
                   value={formData.date}
                   onChange={e => setFormData({ ...formData, date: e.target.value })}
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-bold text-gray-700">Description / Impact</label>
+              <div className="space-y-2.5 md:col-span-2">
+                <label className="text-sm font-bold text-slate-700">Description / Impact</label>
                 <textarea
                   required
                   rows={3}
                   placeholder="Describe your achievement and its significance..."
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full p-3.5 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium text-slate-700 resize-none placeholder:text-slate-400"
                   value={formData.description}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
                 ></textarea>
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-6">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all"
+                className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5"
               >
                 Record Now
               </button>
@@ -196,47 +200,50 @@ export const AchievementView: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {filteredAchievements.length === 0 ? (
-          <div className="col-span-2 bg-white p-16 rounded-3xl border border-dashed border-gray-200 text-center text-gray-500">
-            <Award className="mx-auto mb-4 text-gray-200" size={64} />
-            <p className="font-bold text-xl text-gray-900 mb-1">No achievements recorded yet</p>
-            <p>Your hard work deserves to be seen. Record your first win!</p>
+          <div className="col-span-2 bg-white p-16 py-24 rounded-3xl border-2 border-dashed border-slate-200 text-center text-slate-500 shadow-sm">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Award className="text-slate-300" size={40} />
+            </div>
+            <p className="font-extrabold text-2xl text-slate-800 tracking-tight mb-2">No achievements recorded yet</p>
+            <p className="font-medium text-slate-500 text-lg">Your hard work deserves to be seen. Record your first win!</p>
           </div>
         ) : (
           filteredAchievements.map((item) => {
             const clubName = clubs.find(c => c.id === item.clubId)?.name || 'General';
             return (
-              <div key={item.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Trophy size={80} />
+              <div key={item.id} className="bg-white p-7 rounded-3xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Trophy size={100} />
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
-                    <Star size={28} />
+                <div className="flex items-start gap-5 relative z-10">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100/50 flex items-center justify-center text-amber-500 shrink-0 shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+                    <Star size={32} />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-700 bg-indigo-50 ring-1 ring-inset ring-indigo-600/10 px-2.5 py-1 rounded-md">
                         {item.level}
                       </span>
-                      <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
-                        <Calendar size={12} /> {item.date}
+                      <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
+                        <Calendar size={14} /> {item.date}
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors leading-snug">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                    <p className="text-sm text-slate-500 mt-2.5 line-clamp-2 font-medium leading-relaxed">
                       {item.description}
                     </p>
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                    <div className="mt-6 pt-5 border-t border-slate-100/80 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-400 group-hover:text-indigo-500 transition-colors">
                         <MapPin size={14} /> {clubName}
                       </div>
-                      <button className="text-indigo-600 text-xs font-bold flex items-center gap-1 hover:underline">
-                        View Certificate <ExternalLink size={12} />
+                      <button className="text-amber-600 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 hover:text-amber-700 transition-colors group/btn">
+                        Certificate <ExternalLink size={14} className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                       </button>
                     </div>
                   </div>

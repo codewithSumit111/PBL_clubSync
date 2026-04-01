@@ -16,6 +16,7 @@ import { RootState } from '../store';
 import { logout, UserRole } from '../features/authSlice';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { motion } from 'motion/react';
 
 interface SidebarProps {
   currentView: string;
@@ -41,42 +42,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
   const filteredItems = menuItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <aside className="w-64 h-screen bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col sticky top-0" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.03)' }}>
+    <aside className="w-[280px] h-[calc(100vh-2rem)] my-4 ml-4 bg-white/80 backdrop-blur-2xl border border-white/60 flex flex-col sticky top-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden z-20 transition-all">
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-teal-500/30">
+          <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-[0_4px_12px_rgba(79,70,229,0.3)]">
             C
           </div>
-          <span className="font-bold text-gray-900 leading-tight">ClubSync <br /><span className="text-xs text-teal-500">College Management</span></span>
+          <span className="font-extrabold text-slate-900 tracking-tight leading-tight flex flex-col">
+            ClubSync
+            <span className="text-[10px] font-bold tracking-widest uppercase text-indigo-500 mt-0.5">Campus Platform</span>
+          </span>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
         {filteredItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onViewChange(item.id)}
-            className={twMerge(
-              clsx(
-                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
-                currentView === item.id
-                  ? "bg-teal-500 text-white shadow-lg shadow-teal-500/25"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-              )
+          <div key={item.id} className="relative">
+            {currentView === item.id && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute inset-0 bg-indigo-600 rounded-2xl shadow-[0_8px_20px_rgba(79,70,229,0.25)]"
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              />
             )}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon size={20} className={currentView === item.id ? "text-white" : "text-gray-400 group-hover:text-gray-600"} />
-              <span className="font-medium">{item.label}</span>
-            </div>
-            {currentView === item.id && <ChevronRight size={16} />}
-          </button>
+            <button
+              onClick={() => onViewChange(item.id)}
+              className={twMerge(
+                clsx(
+                  "relative z-10 w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 group font-semibold text-sm",
+                  currentView === item.id
+                    ? "text-white translate-x-1"
+                    : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900 hover:translate-x-1"
+                )
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon size={20} className={currentView === item.id ? "text-white" : "text-gray-400 group-hover:text-gray-600"} />
+                <span className="font-medium">{item.label}</span>
+              </div>
+              {currentView === item.id && <ChevronRight size={16} className="text-white" />}
+            </button>
+          </div>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-gray-100 space-y-4">
-        <div className="px-4 py-3 bg-gray-50 rounded-xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
+      <div className="p-4 border-t border-slate-100/50 space-y-3 bg-white/50">
+        <div className="px-4 py-3 bg-slate-50/80 rounded-2xl flex items-center gap-3 border border-slate-100">
+          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shadow-inner">
             {user?.name.charAt(0)}
           </div>
           <div className="flex-1 overflow-hidden">

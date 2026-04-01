@@ -36,14 +36,84 @@ router.get('/dashboard', protect, async (req, res) => {
             .limit(5)
             .select('name department createdAt role');
 
+        // --- NEW: Generate Dynamic Data for Charts ---
+        
+        // 1. Engagement Series (Last 6 Months: Students Joined & Hours Logged)
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+        sixMonthsAgo.setDate(1);
+
+        const logbookAgg = await Logbook.aggregate([
+            { $match: { date: { $gte: sixMonthsAgo } } },
+            { $group: {
+                _id: { month: { $month: "$date" }, year: { $year: "$date" } },
+                totalHours: { $sum: "$hours" }
+            }}
+        ]) || [];
+
+        const studentAgg = await Student.aggregate([
+            { $match: { createdAt: { $gte: sixMonthsAgo } } },
+            { $group: {
+                _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+                count: { $sum: 1 }
+            }}
+        ]) || [];
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const engagementSeries = [];
+        for (let i = 0; i < 6; i++) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - (5 - i));
+            const monthStr = months[d.getMonth()];
+            
+            const hoursRecord = logbookAgg.find(x => x._id && x._id.month === d.getMonth() + 1 && x._id.year === d.getFullYear());
+            const studentsRecord = studentAgg.find(x => x._id && x._id.month === d.getMonth() + 1 && x._id.year === d.getFullYear());
+            
+            engagementSeries.push({
+                name: monthStr,
+                students: studentsRecord ? studentsRecord.count : 0,
+                hours: hoursRecord ? hoursRecord.totalHours : 0
+            });
+        }
+
+        // 2. Participation by Type (Pie Chart) - based on club categories
+        const clubsByCategory = await Club.aggregate([
+            { $group: { _id: "$category", count: { $sum: 1 } } }
+        ]) || [];
+
+        const categoryColors = {
+            'Technical': '#4f46e5',
+            'Arts': '#7c3aed',
+            'Sports': '#0ea5e9',
+            'Social': '#e11d48',
+            'Other': '#10b981'
+        };
+
+        const totalCats = clubsByCategory.reduce((sum, curr) => sum + curr.count, 0) || 1;
+        const participationByType = clubsByCategory.map(c => {
+            const catName = c._id || 'Other';
+            return {
+                name: catName,
+                value: Math.round((c.count / totalCats) * 100),
+                color: categoryColors[catName] || categoryColors['Other']
+            };
+        });
+        
+        if (participationByType.length === 0) {
+            participationByType.push({ name: 'Other', value: 100, color: categoryColors['Other'] });
+        }
+
         return res.json({
             success: true,
             stats: {
                 totalStudents,
                 totalClubs,
                 pendingApprovals,
-                ccaParticipation: `${participationRate}%`
+                ccaParticipation: `${participationRate}%`,
+                growth: '+12%' // mocked growth for now
             },
+            engagementSeries,
+            participationByType,
             recentUpdates: recentStudents
         });
 
