@@ -1,31 +1,33 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Club = require('../models/Club');
-const Student = require('../models/Student');
-const Logbook = require('../models/Logbook');
-const { protect } = require('../middleware/auth');
+const Club = require("../models/Club");
+const Student = require("../models/Student");
+const Logbook = require("../models/Logbook");
+const { protect } = require("../middleware/auth");
 
 // @route   GET /api/clubs
 // @desc    Get all clubs (Public or Student)
-router.get('/', async (req, res) => {
-    try {
-        const clubs = await Club.find().select(
-            'club_name description department category tagline faculty_coordinators events analytics official_website registered_students'
-        );
+router.get("/", async (req, res) => {
+  try {
+    const clubs = await Club.find().select(
+      "club_name description department category tagline faculty_coordinators events analytics official_website registered_students",
+    );
 
-        // Map to include member count
-        const clubsWithCount = clubs.map(c => {
-            const obj = c.toObject();
-            obj.member_count = obj.registered_students ? obj.registered_students.length : 0;
-            delete obj.registered_students; // don't leak student IDs
-            return obj;
-        });
+    // Map to include member count
+    const clubsWithCount = clubs.map((c) => {
+      const obj = c.toObject();
+      obj.member_count = obj.registered_students
+        ? obj.registered_students.length
+        : 0;
+      delete obj.registered_students; // don't leak student IDs
+      return obj;
+    });
 
-        res.json({ success: true, clubs: clubsWithCount });
-    } catch (err) {
-        console.error('Error fetching clubs:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+    res.json({ success: true, clubs: clubsWithCount });
+  } catch (err) {
+    console.error("Error fetching clubs:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -34,215 +36,345 @@ router.get('/', async (req, res) => {
 
 // @route   GET /api/public-clubs
 // @desc    Simplified list of clubs for general display
-router.get('/public', async (req, res) => {
-    try {
-        const clubs = await Club.find().select('club_name description faculty_coordinators events analytics official_website email');
-        res.json({ success: true, clubs });
-    } catch (err) {
-        console.error('Error fetching clubs:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+router.get("/public", async (req, res) => {
+  try {
+    const clubs = await Club.find().select(
+      "club_name description faculty_coordinators events analytics official_website email",
+    );
+    res.json({ success: true, clubs });
+  } catch (err) {
+    console.error("Error fetching clubs:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // @route   POST /api/clubs/register/:club_id
 // @desc    Student registers for a club
-router.post('/register/:club_id', protect, async (req, res) => {
-    try {
-        if (req.user.role !== 'Student') {
-            return res.status(403).json({ success: false, message: 'Only students can register for clubs' });
-        }
-
-        const club = await Club.findById(req.params.club_id);
-        if (!club) {
-            return res.status(404).json({ success: false, message: 'Club not found' });
-        }
-
-        const student = await Student.findById(req.user.id);
-
-        // Check if student already applied or is registered
-        const alreadyRegistered = student.registered_clubs.find(
-            rc => rc.club.toString() === req.params.club_id
-        );
-
-        if (alreadyRegistered) {
-            return res.status(400).json({ success: false, message: 'You have already applied or registered for this club' });
-        }
-
-        const { preference_order } = req.body; // UI should send 1, 2, 3 etc
-
-        // Add to student's pending list
-        student.registered_clubs.push({
-            club: req.params.club_id,
-            status: 'Pending',
-            preference_order: preference_order || (student.registered_clubs.length + 1)
+router.post("/register/:club_id", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Student") {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Only students can register for clubs",
         });
-
-        await student.save();
-
-        // Also add logic to put student in Club's pending queue if applicable,
-        // For now, depending on student's registered_clubs array for the source of truth
-        res.status(200).json({ success: true, message: `Application to ${club.club_name} submitted successfully!` });
-
-    } catch (err) {
-        console.error('Error registering for club:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
     }
+
+    const club = await Club.findById(req.params.club_id);
+    if (!club) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Club not found" });
+    }
+
+    const student = await Student.findById(req.user.id);
+
+    // Check if student already applied or is registered
+    const alreadyRegistered = student.registered_clubs.find(
+      (rc) => rc.club.toString() === req.params.club_id,
+    );
+
+    if (alreadyRegistered) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "You have already applied or registered for this club",
+        });
+    }
+
+    const { preference_order } = req.body; // UI should send 1, 2, 3 etc
+
+    // Add to student's pending list
+    student.registered_clubs.push({
+      club: req.params.club_id,
+      status: "Pending",
+      preference_order: preference_order || student.registered_clubs.length + 1,
+    });
+
+    await student.save();
+
+    // Also add logic to put student in Club's pending queue if applicable,
+    // For now, depending on student's registered_clubs array for the source of truth
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: `Application to ${club.club_name} submitted successfully!`,
+      });
+  } catch (err) {
+    console.error("Error registering for club:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // @route   GET /api/clubs/members
 // @desc    Get all students who applied to or are members of the club
-router.get('/members', protect, async (req, res) => {
-    try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
-        }
-
-        const students = await Student.find({ 'registered_clubs.club': req.user.id })
-            .select('name roll_no department year email registered_clubs');
-
-        res.json({ success: true, students });
-    } catch (err) {
-        console.error('Error fetching club members:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
+router.get("/members", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Club") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
     }
+
+    const students = await Student.find({
+      "registered_clubs.club": req.user.id,
+    }).select("name roll_no department year email registered_clubs");
+
+    res.json({ success: true, students });
+  } catch (err) {
+    console.error("Error fetching club members:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // @route   PUT /api/clubs/applications/:student_id
 // @desc    Club approves/rejects a student application
-router.put('/applications/:student_id', protect, async (req, res) => {
-    try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
-        }
-
-        const { status } = req.body;
-        if (!['Approved', 'Rejected'].includes(status)) {
-            return res.status(400).json({ success: false, message: 'Invalid status' });
-        }
-
-        const student = await Student.findById(req.params.student_id);
-        if (!student) {
-            return res.status(404).json({ success: false, message: 'Student not found' });
-        }
-
-        // Find the application for this club in student's array
-        const application = student.registered_clubs.find(rc => rc.club.toString() === req.user.id);
-
-        if (!application) {
-            return res.status(404).json({ success: false, message: 'No application found for this student to your club' });
-        }
-
-        application.status = status;
-        await student.save();
-
-        // If approved, add student to the Club's registered_students list 
-        if (status === 'Approved') {
-            const club = await Club.findById(req.user.id);
-            if (!club.registered_students.includes(student._id)) {
-                club.registered_students.push(student._id);
-                await club.save();
-            }
-        }
-
-        res.json({ success: true, message: `Application ${status.toLowerCase()}` });
-
-    } catch (err) {
-        console.error('Error handling application:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
+router.put("/applications/:student_id", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Club") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
     }
+
+    const { status } = req.body;
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
+    }
+
+    const student = await Student.findById(req.params.student_id);
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+
+    const application = student.registered_clubs.find(
+      (rc) => rc.club.toString() === req.user.id,
+    );
+    if (!application) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "No application found for this student to your club",
+        });
+    }
+
+    application.status = status;
+    await student.save();
+
+    // If approved, add student to the Club's registered_students list
+    if (status === "Approved") {
+      const club = await Club.findById(req.user.id);
+      if (!club.registered_students.includes(student._id)) {
+        club.registered_students.push(student._id);
+        await club.save();
+      }
+    }
+
+    res.json({ success: true, message: `Application ${status.toLowerCase()}` });
+  } catch (err) {
+    console.error("Error handling application:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // @route   GET /api/clubs/dashboard
 // @desc    Get dashboard metrics for a club
-router.get('/dashboard', protect, async (req, res) => {
-    try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized as club' });
-        }
-
-        const club = await Club.findById(req.user.id).populate('registered_students');
-        if (!club) {
-            return res.status(404).json({ success: false, message: 'Club not found' });
-        }
-
-        // Stats needed: total members, pending approvals, active events
-        const pendingApprovalsCount = await Student.countDocuments({
-            registered_clubs: { $elemMatch: { club: club._id, status: 'Pending' } }
-        });
-
-        // Dynamic Chart Data for Clubs
-        
-        // 1. Engagement Series: Monthly hours logged for this club
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-        sixMonthsAgo.setDate(1);
-
-        const logbookAgg = await Logbook.aggregate([
-            { $match: { club_id: club._id, date: { $gte: sixMonthsAgo } } },
-            { $group: {
-                _id: { month: { $month: "$date" }, year: { $year: "$date" } },
-                totalHours: { $sum: "$hours" },
-                activityCount: { $sum: 1 }
-            }}
-        ]) || [];
-
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const engagementSeries = [];
-        for (let i = 0; i < 6; i++) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - (5 - i));
-            const monthStr = months[d.getMonth()];
-            
-            const hoursRecord = logbookAgg.find(x => x._id && x._id.month === d.getMonth() + 1 && x._id.year === d.getFullYear());
-            
-            engagementSeries.push({
-                name: monthStr,
-                students: hoursRecord ? hoursRecord.activityCount : 0, // Using students key for chart compatibility
-                hours: hoursRecord ? hoursRecord.totalHours : 0
-            });
-        }
-
-        // 2. Participation by Type (Pie Chart) - based on student departments
-        const participationByType = [];
-        if (club.registered_students && club.registered_students.length > 0) {
-            const deptCounts = {};
-            club.registered_students.forEach(s => {
-                const dept = s.department || 'Other';
-                deptCounts[dept] = (deptCounts[dept] || 0) + 1;
-            });
-
-            const colors = ['#4f46e5', '#7c3aed', '#0ea5e9', '#e11d48', '#10b981', '#f59e0b'];
-            const totalStudents = club.registered_students.length;
-            
-            Object.keys(deptCounts).forEach((dept, index) => {
-                participationByType.push({
-                    name: dept,
-                    value: Math.round((deptCounts[dept] / totalStudents) * 100),
-                    color: colors[index % colors.length]
-                });
-            });
-        }
-        
-        if (participationByType.length === 0) {
-            participationByType.push({ name: 'None', value: 100, color: '#e2e8f0' });
-        }
-
-        return res.json({
-            success: true,
-            stats: {
-                totalMembers: club.registered_students.length,
-                pendingApprovals: pendingApprovalsCount,
-                activeEvents: club.events.length,
-                rating: '4.8/5', // mock rating
-                growth: '+8%' // mocked club growth
-            },
-            engagementSeries,
-            participationByType
-        });
-    } catch (err) {
-        console.error('[CLUB DASHBOARD ERROR]', err);
-        return res.status(500).json({ success: false, message: 'Server error' });
+router.get("/dashboard", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Club") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized as club" });
     }
+
+    const club = await Club.findById(req.user.id).populate(
+      "registered_students",
+    );
+    if (!club) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Club not found" });
+    }
+
+    // Stats needed: total members, pending approvals, active events
+    const pendingApprovalsCount = await Student.countDocuments({
+      registered_clubs: { $elemMatch: { club: club._id, status: "Pending" } },
+    });
+
+    // Dynamic Chart Data for Clubs
+
+    // 1. Engagement Series: Monthly hours logged for this club
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+
+    const logbookAgg =
+      (await Logbook.aggregate([
+        { $match: { club_id: club._id, date: { $gte: sixMonthsAgo } } },
+        {
+          $group: {
+            _id: { month: { $month: "$date" }, year: { $year: "$date" } },
+            totalHours: { $sum: "$hours" },
+            activityCount: { $sum: 1 },
+          },
+        },
+      ])) || [];
+
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const engagementSeries = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (5 - i));
+      const monthStr = months[d.getMonth()];
+
+      const hoursRecord = logbookAgg.find(
+        (x) =>
+          x._id &&
+          x._id.month === d.getMonth() + 1 &&
+          x._id.year === d.getFullYear(),
+      );
+
+      engagementSeries.push({
+        name: monthStr,
+        students: hoursRecord ? hoursRecord.activityCount : 0, // Using students key for chart compatibility
+        hours: hoursRecord ? hoursRecord.totalHours : 0,
+      });
+    }
+
+    // 2. Participation by Type (Pie Chart) - based on student departments
+    const participationByType = [];
+    if (club.registered_students && club.registered_students.length > 0) {
+      const deptCounts = {};
+      club.registered_students.forEach((s) => {
+        const dept = s.department || "Other";
+        deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+      });
+
+      const colors = [
+        "#4f46e5",
+        "#7c3aed",
+        "#0ea5e9",
+        "#e11d48",
+        "#10b981",
+        "#f59e0b",
+      ];
+      const totalStudents = club.registered_students.length;
+
+      Object.keys(deptCounts).forEach((dept, index) => {
+        participationByType.push({
+          name: dept,
+          value: Math.round((deptCounts[dept] / totalStudents) * 100),
+          color: colors[index % colors.length],
+        });
+      });
+    }
+
+    if (participationByType.length === 0) {
+      participationByType.push({ name: "None", value: 100, color: "#e2e8f0" });
+    }
+
+    return res.json({
+      success: true,
+      stats: {
+        totalMembers: club.registered_students.length,
+        pendingApprovals: pendingApprovalsCount,
+        activeEvents: club.events.length,
+        rating: "4.8/5", // mock rating
+        growth: "+8%", // mocked club growth
+      },
+      engagementSeries,
+      participationByType,
+    });
+  } catch (err) {
+    console.error("[CLUB DASHBOARD ERROR]", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// POST /api/clubs/events — Create a new event
+router.post("/events", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Club") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+
+    const { title, description, date, time, venue } = req.body;
+    if (!title || !date) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Title and date are required" });
+    }
+
+    const club = await Club.findById(req.user.id);
+    if (!club)
+      return res
+        .status(404)
+        .json({ success: false, message: "Club not found" });
+
+    club.events.push({
+      title,
+      description: description || "",
+      date: new Date(date),
+      attendees: [],
+    });
+    await club.save();
+
+    const newEvent = club.events[club.events.length - 1];
+    res
+      .status(201)
+      .json({ success: true, event: { ...newEvent.toObject(), time, venue } });
+  } catch (err) {
+    console.error("Error creating event:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// GET /api/clubs/events — Get all events for this club
+router.get("/events", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "Club") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+
+    const club = await Club.findById(req.user.id).select("events");
+    if (!club)
+      return res
+        .status(404)
+        .json({ success: false, message: "Club not found" });
+
+    const sorted = [...club.events].sort(
+      (a, b) => new Date(b.date) - new Date(a.date),
+    );
+    res.json({ success: true, events: sorted });
+  } catch (err) {
+    console.error("Error fetching club events:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 module.exports = router;
