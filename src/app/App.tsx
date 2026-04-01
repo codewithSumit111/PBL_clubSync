@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSelector, Provider } from 'react-redux';
+import { useSelector, Provider, useDispatch } from 'react-redux';
 import { store, RootState } from './store';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -10,12 +10,52 @@ import { LogbookView } from './views/LogbookView';
 import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
+import { ClubMembersView } from './views/ClubMembersView';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
   const [currentView, setCurrentView] = useState('dashboard');
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  React.useEffect(() => {
+    const restoreSession = async () => {
+      const storedToken = localStorage.getItem('clubsync_token');
+      if (storedToken && !isAuthenticated) {
+        try {
+          const res = await fetch('http://localhost:5000/api/auth/me', {
+            headers: { Authorization: `Bearer ${storedToken}` }
+          });
+          const data = await res.json();
+          if (data.success && data.user) {
+             const safeUser = { ...data.user, name: data.user.name || data.user.club_name || 'User' };
+             dispatch({
+               type: 'auth/setUser',
+               payload: { user: safeUser, token: storedToken }
+             });
+          } else {
+            localStorage.removeItem('clubsync_token');
+          }
+        } catch (e) {
+          console.error('Session restore failed:', e);
+        }
+      }
+      setIsRestoring(false);
+    };
+    restoreSession();
+  }, [dispatch, isAuthenticated]);
+
+  if (isRestoring) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-pulse flex gap-2 font-bold text-slate-500">
+          Loading ClubSync...
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -34,6 +74,8 @@ const AppContent: React.FC = () => {
         return <AchievementView />;
       case 'add-club-lead':
         return <ManageClubLeads />;
+      case 'student-mgmt':
+        return <ClubMembersView />;
       case 'analytics':
         return <CCAAnalytics />;
       default:
