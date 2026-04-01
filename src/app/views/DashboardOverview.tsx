@@ -23,6 +23,7 @@ import {
   AlertCircle,
   ArrowUpRight
 } from 'lucide-react';
+import { StudentDashboard } from './StudentDashboard';
 
 export const DashboardOverview: React.FC = () => {
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -53,16 +54,13 @@ export const DashboardOverview: React.FC = () => {
     fetchDashboard();
   }, [user, token]);
 
+  if (user?.role === 'Student') {
+    return <StudentDashboard />;
+  }
+
   // Extract dynamic chart data from API response
   const clubData = dashboardData?.engagementSeries || [];
   const pieData = dashboardData?.participationByType || [];
-
-  const studentStats = [
-    { label: 'Total CCA Hours', value: dashboardData?.stats?.totalCcaHours || '0', icon: Clock, color: 'text-indigo-600', bg: 'bg-indigo-50', growth: dashboardData?.stats?.growth },
-    { label: 'Current Marks', value: dashboardData?.stats?.currentMarks || '0/25', icon: Award, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Active Clubs', value: dashboardData?.stats?.activeClubs || '0', icon: Users, color: 'text-rose-600', bg: 'bg-rose-50' },
-    { label: 'Achievements', value: dashboardData?.stats?.achievements || '0', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
 
   const adminStats = [
     { label: 'Total Students', value: dashboardData?.stats?.totalStudents || '0', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', growth: dashboardData?.stats?.growth },
@@ -78,7 +76,7 @@ export const DashboardOverview: React.FC = () => {
     { label: 'Platform Rating', value: dashboardData?.stats?.rating || '0/5', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
-  const stats = user?.role === 'Student' ? studentStats : user?.role === 'Club' ? clubStats : adminStats;
+  const stats = user?.role === 'Club' ? clubStats : adminStats;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -174,7 +172,7 @@ export const DashboardOverview: React.FC = () => {
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none scale-150 -translate-y-1/4 translate-x-1/4">
             <div className="w-40 h-40 rounded-full bg-indigo-500 blur-3xl"></div>
           </div>
-          <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-8 relative z-10">Participation {user?.role === 'Student' ? 'by Type' : 'by Category'}</h3>
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-8 relative z-10">Participation {user?.role === 'Admin' ? 'by Type' : 'by Category'}</h3>
           <div className="h-[250px] w-full relative">
             {pieData.length > 0 ? (
               <>
