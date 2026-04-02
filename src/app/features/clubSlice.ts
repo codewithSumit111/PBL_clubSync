@@ -15,32 +15,7 @@ interface ClubState {
 }
 
 const initialState: ClubState = {
-  clubs: [
-    {
-      id: '1',
-      name: 'Robotics Club',
-      description: 'Designing and building innovative robotic systems for national competitions.',
-      facultyCoordinators: ['Dr. Sharma'],
-      councilMembers: ['Rahul Singh', 'Ananya Roy'],
-      category: 'Technical'
-    },
-    {
-      id: '2',
-      name: 'Cultural Club',
-      description: 'Fostering creativity through dance, music, and drama performances.',
-      facultyCoordinators: ['Prof. Verma'],
-      councilMembers: ['Ishaan Gupta'],
-      category: 'Arts'
-    },
-    {
-      id: '3',
-      name: 'Coding Ninjas',
-      description: 'The competitive programming hub of our college.',
-      facultyCoordinators: ['Dr. Patel'],
-      councilMembers: ['Siddharth Jain'],
-      category: 'Technical'
-    }
-  ],
+  clubs: [],
   loading: false,
 };
 

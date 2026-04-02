@@ -10,6 +10,7 @@ import { LogbookView } from './views/LogbookView';
 import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
+import { ManageNotices } from './views/ManageNotices';
 import { Toaster } from 'sonner';
 // ── Club Role Views ──────────────────────────────────────────
 import { ClubStudentMgmt } from './views/club/ClubStudentMgmt';
@@ -35,13 +36,15 @@ const AppContent: React.FC = () => {
         return <DashboardOverview />;
       case 'clubs':
       case 'my-clubs':
-        return <ClubListView />;
+        return <ClubListView mode={currentView} onViewChange={setCurrentView} />;
       case 'logbook':
         return <LogbookView />;
       case 'achievements':
         return <AchievementView />;
       case 'add-club-lead':
         return <ManageClubLeads />;
+      case 'manage-notices':
+        return <ManageNotices />;
       case 'analytics':
         return <CCAAnalytics />;
       // ── Club Role Views ──────────────────────
@@ -76,6 +79,7 @@ const AppContent: React.FC = () => {
       'my-clubs': 'My Registered Clubs',
       'student-mgmt': 'Student Management',
       'add-club-lead': 'Add Club Lead',
+      'manage-notices': 'Manage Notices',
       logbook: 'Activity Logbook',
       achievements: 'Student Achievements',
       analytics: 'Institutional Analytics',

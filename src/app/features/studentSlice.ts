@@ -36,36 +36,10 @@ interface StudentState {
 }
 
 const initialState: StudentState = {
-  registrations: {
-    'S123': ['1', '3']
-  },
-  logbooks: [
-    {
-      id: 'L1',
-      studentId: 'S123',
-      clubId: '1',
-      activityDescription: 'Arduino Workshop',
-      date: '2024-02-10',
-      hours: 4,
-      status: 'Approved'
-    }
-  ],
-  achievements: [
-    {
-      id: 'A1',
-      studentId: 'S123',
-      clubId: '3',
-      title: 'Hackathon Winner',
-      description: 'First prize in Inter-college Hackathon',
-      level: 'State',
-      date: '2024-01-15'
-    }
-  ],
-  marks: {
-    'S123': {
-      '1': { participation: 4, leadership: 3, discipline: 5, skillDevelopment: 4, impact: 2 }
-    }
-  }
+  registrations: {},
+  logbooks: [],
+  achievements: [],
+  marks: {},
 };
 
 const studentSlice = createSlice({

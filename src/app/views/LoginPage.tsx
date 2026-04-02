@@ -401,7 +401,7 @@ export const LoginPage: React.FC = () => {
                 <input type="checkbox" style={{ width: '15px', height: '15px', accentColor: '#6366f1' }} />
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Remember me</span>
               </label>
-              <a href="#" className="link-glow" style={{ fontSize: '13px', color: '#818cf8', fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}>Forgot password?</a>
+              <button type="button" onClick={() => toast.info('Contact your administrator to reset your password.')} className="link-glow" style={{ fontSize: '13px', color: '#818cf8', fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s', background: 'none', border: 'none', cursor: 'pointer' }}>Forgot password?</button>
             </motion.div>
 
             {/* Login Button */}

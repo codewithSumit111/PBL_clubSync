@@ -60,17 +60,13 @@ const categoryStyles: Record<string, { bg: string; text: string; headerBg: strin
   Other: { bg: 'bg-gray-50', text: 'text-gray-700', headerBg: 'from-gray-500 to-gray-600' },
 };
 
-// Mock clubs for fallback
-const MOCK_CLUBS: ClubData[] = [
-  { _id: 'm1', club_name: 'Robotics Club', description: 'Designing and building innovative robotic systems for national competitions. Join us to explore the world of automation and AI-powered machines!', category: 'Technical', tagline: 'Build the future, one bot at a time', department: 'Engineering', member_count: 45, analytics: { total_members: 45, active_events: 3 } },
-  { _id: 'm2', club_name: 'Debate Society', description: 'Sharpen your oratory skills through parliamentary debates, Model UN, and public speaking workshops.', category: 'Literary', tagline: 'Words that move the world', department: 'Arts', member_count: 32, analytics: { total_members: 32, active_events: 2 } },
-  { _id: 'm3', club_name: 'Coding Club', description: 'Competitive programming hub of our college. Prepare for hackathons, code sprints, and tech competitions.', category: 'Technical', tagline: 'Code. Compete. Conquer.', department: 'CS', member_count: 60, analytics: { total_members: 60, active_events: 5 } },
-  { _id: 'm4', club_name: 'Photography Club', description: 'Capture moments, tell stories. Learn photography techniques, photo editing, and photojournalism.', category: 'Cultural', tagline: 'Every frame tells a story', department: 'Media', member_count: 28, analytics: { total_members: 28, active_events: 1 } },
-  { _id: 'm5', club_name: 'Cricket Team', description: 'Represent the college in inter-college tournaments. Regular practice sessions and fitness training.', category: 'Sports', tagline: 'Swing for the fences', department: 'Sports', member_count: 22, analytics: { total_members: 22, active_events: 4 } },
-  { _id: 'm6', club_name: 'NSS Cell', description: 'National Service Scheme - contribute to community development through social activities and outreach programs.', category: 'Social', tagline: 'Not me, but you', department: 'Social Work', member_count: 55, analytics: { total_members: 55, active_events: 6 } },
-];
 
-export const ClubListView: React.FC = () => {
+interface ClubListViewProps {
+  mode?: string;
+  onViewChange?: (view: string) => void;
+}
+
+export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onViewChange }) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [clubs, setClubs] = useState<ClubData[]>([]);
@@ -94,13 +90,23 @@ export const ClubListView: React.FC = () => {
       try {
         const res = await fetch(`${API_BASE}/clubs`, { headers: getAuthHeaders() });
         const data = await res.json();
-        if (data.success && data.clubs.length > 0) {
-          setClubs(data.clubs);
-        } else {
-          setClubs(MOCK_CLUBS);
+        
+        let fetchedClubs = data.success ? (data.clubs || []) : [];
+        
+        if (mode === 'my-clubs' && user?.role === 'Student') {
+            const dashRes = await fetch(`${API_BASE}/students/dashboard`, { headers: getAuthHeaders() });
+            const dashData = await dashRes.json();
+            if (dashData.success && dashData.dashboard?.joinedClubs) {
+                const joinedIds = dashData.dashboard.joinedClubs.map((c: any) => c._id);
+                fetchedClubs = fetchedClubs.filter((c: any) => joinedIds.includes(c._id));
+            } else {
+                fetchedClubs = [];
+            }
         }
+        
+        setClubs(fetchedClubs);
       } catch {
-        setClubs(MOCK_CLUBS);
+        // API unreachable — show empty state
       } finally {
         setLoading(false);
       }
@@ -114,14 +120,13 @@ export const ClubListView: React.FC = () => {
           setIntakeStatus(data);
         }
       } catch {
-        // Fallback: show intake as open for demo
-        setIntakeStatus({ is_open: true, max_preferences: 3 });
+        // API unreachable — keep default closed state
       }
     };
 
     fetchClubs();
     fetchIntake();
-  }, []);
+  }, [mode, user?.role]);
 
   // Filter clubs
   const filteredClubs = clubs.filter(club => {
@@ -179,6 +184,22 @@ export const ClubListView: React.FC = () => {
       setSubmittingPref(false);
     }
   };
+  const handleEnroll = async (clubId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/clubs/register/${clubId}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || 'Successfully applied to club!');
+      } else {
+        toast.error(data.message || 'Failed to apply to club.');
+      }
+    } catch {
+      toast.error('Could not connect to server.');
+    }
+  };
 
   const style = (cat: string) => categoryStyles[cat] || categoryStyles.Other;
 
@@ -195,7 +216,9 @@ export const ClubListView: React.FC = () => {
               <Building2 size={20} className="text-teal-600" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">All Clubs</h2>
+              <h2 className="font-bold text-gray-900 text-lg">
+                {mode === 'my-clubs' ? 'My Registered Clubs' : 'Explore All Clubs'}
+              </h2>
               <p className="text-xs text-gray-500">{clubs.length} active clubs available</p>
             </div>
           </div>
@@ -211,6 +234,15 @@ export const ClubListView: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            {mode === 'my-clubs' && !!onViewChange && (
+              <button
+                onClick={() => onViewChange('clubs')}
+                className="px-4 py-2.5 bg-indigo-50 text-indigo-600 font-bold rounded-xl text-sm hover:bg-indigo-100 transition-colors whitespace-nowrap"
+              >
+                Explore All Clubs
+              </button>
+            )}
 
             {/* Preference form button */}
             {user?.role === 'Student' && intakeStatus.is_open && (
@@ -291,8 +323,20 @@ export const ClubListView: React.FC = () => {
       ) : filteredClubs.length === 0 ? (
         <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50">
           <Search size={48} className="text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-500">No clubs found</h3>
-          <p className="text-sm text-gray-400 mt-1">Try a different search term or category</p>
+          <h3 className="text-lg font-bold text-gray-500">
+            {mode === 'my-clubs' ? 'You are not enrolled in any clubs yet' : 'No clubs found'}
+          </h3>
+          <p className="text-sm text-gray-400 mt-1">
+            {mode === 'my-clubs' ? 'Explore all clubs to view intake windows and submit preferences.' : 'Try a different search term or category'}
+          </p>
+          {mode === 'my-clubs' && !!onViewChange && (
+            <button
+               onClick={() => onViewChange('clubs')}
+               className="mt-6 px-6 py-2.5 bg-teal-500 text-white rounded-xl font-bold shadow-lg shadow-teal-200 hover:bg-teal-600 transition-colors"
+            >
+               Explore Clubs Now
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -386,6 +430,14 @@ export const ClubListView: React.FC = () => {
                         >
                           <Globe size={14} />
                         </a>
+                      )}
+                      {user?.role === 'Student' && mode === 'clubs' && (
+                        <button
+                           onClick={() => handleEnroll(club._id)}
+                           className="px-3 py-1.5 bg-teal-50 text-teal-600 font-bold rounded-lg text-xs hover:bg-teal-100 transition-colors whitespace-nowrap"
+                        >
+                           Apply to Join
+                        </button>
                       )}
                     </div>
                   </div>

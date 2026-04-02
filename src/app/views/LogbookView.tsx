@@ -85,17 +85,6 @@ export const LogbookView: React.FC = () => {
       }
     } catch (err) {
       console.error('Error loading logbook data:', err);
-      // Fallback mock data
-      setLogs([
-        { _id: '1', student_id: '', club_id: { _id: 'c1', club_name: 'Robotics Club' }, activity_description: 'Write your activity description here', date: '2026-02-20', hours: 4, status: 'Approved', createdAt: '2026-02-20' },
-        { _id: '2', student_id: '', club_id: { _id: 'c2', club_name: 'Coding Club' }, activity_description: 'Participated in weekly competitive programming contest', date: '2026-02-25', hours: 3, status: 'Pending', createdAt: '2026-02-25' },
-        { _id: '3', student_id: '', club_id: { _id: 'c1', club_name: 'Robotics Club' }, activity_description: 'Organized the freshman orientation event for new members', date: '2026-02-28', hours: 5, status: 'Rejected', rejection_reason: 'Hours seem inflated. Please resubmit with accurate hours.', createdAt: '2026-02-28' },
-      ]);
-      setClubs([
-        { _id: 'c1', club_name: 'Robotics Club' },
-        { _id: 'c2', club_name: 'Coding Club' },
-        { _id: 'c3', club_name: 'Debate Society' },
-      ]);
     } finally {
       setLoading(false);
     }

@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Student'] },
 
     // ── Student only ──────────────────────────────
-    { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin', 'Student'] },
+    { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin'] },
     { id: 'my-clubs', label: 'My Clubs', icon: GraduationCap, roles: ['Student'] },
     { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student'] },
     { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student'] },
@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     // ── Admin only ────────────────────────────────
     { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
     { id: 'student-mgmt', label: 'All Members', icon: Users, roles: ['Admin'] },
+    { id: 'manage-notices', label: 'Notices', icon: Bell, roles: ['Admin'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['Admin'] },
 
     // ── Club only ─────────────────────────────────

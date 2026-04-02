@@ -57,11 +57,7 @@ const levelStyles: Record<string, { bg: string; text: string; glow: string }> = 
   International: { bg: 'bg-pink-50', text: 'text-pink-700', glow: 'shadow-pink-100' },
 };
 
-const MOCK_ACHIEVEMENTS: AchievementData[] = [
-  { _id: 'a1', student_id: '', club_id: { _id: 'c1', club_name: 'Robotics Club' }, title: 'Won 1st Place in ISRO Robotics Challenge', description: 'Led the team to build an autonomous rover that navigated the simulated Mars terrain. Competed against 120+ teams from across India.', level: 'National', date: '2026-01-15', verification_status: 'Verified', createdAt: '2026-01-15' },
-  { _id: 'a2', student_id: '', club_id: { _id: 'c2', club_name: 'Coding Club' }, title: 'Published Research Paper on ML-based Optimization', description: 'Co-authored a paper on reinforcement learning approaches for real-time drone path optimization, accepted at IEEE conference.', level: 'International', date: '2026-02-10', certificate_url: 'https://ieee.org/paper/12345', verification_status: 'Pending', createdAt: '2026-02-10' },
-  { _id: 'a3', student_id: '', club_id: { _id: 'c3', club_name: 'Debate Society' }, title: 'Best Speaker Award — State Parliamentary Debate', description: 'Awarded best individual speaker in the state-level parliamentary debate championship held at MIT-WPU.', level: 'State', date: '2026-02-20', verification_status: 'Verified', createdAt: '2026-02-20' },
-];
+
 
 export const AchievementView: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -88,9 +84,7 @@ export const AchievementView: React.FC = () => {
       const achRes = await fetch(`${API_BASE}/achievements/mine`, { headers: getAuthHeaders() });
       const achData = await achRes.json();
       if (achData.success) {
-        setAchievements(achData.achievements);
-      } else {
-        setAchievements(MOCK_ACHIEVEMENTS);
+        setAchievements(achData.achievements || []);
       }
 
       const dashRes = await fetch(`${API_BASE}/students/dashboard`, { headers: getAuthHeaders() });
@@ -99,12 +93,7 @@ export const AchievementView: React.FC = () => {
         setClubs(dashData.dashboard.joinedClubs.map((c: any) => ({ _id: c._id, club_name: c.club_name })));
       }
     } catch {
-      setAchievements(MOCK_ACHIEVEMENTS);
-      setClubs([
-        { _id: 'c1', club_name: 'Robotics Club' },
-        { _id: 'c2', club_name: 'Coding Club' },
-        { _id: 'c3', club_name: 'Debate Society' },
-      ]);
+      // API unreachable — show empty state
     } finally {
       setLoading(false);
     }
