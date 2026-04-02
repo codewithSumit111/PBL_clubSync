@@ -2,26 +2,11 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const { protect } = require('../middleware/auth');
-
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+const File = require('../models/File');
 
 // Configure multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = path.extname(file.originalname);
-        cb(null, `${req.user.id}-${uniqueSuffix}${ext}`);
-    },
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = [
@@ -47,26 +32,57 @@ const upload = multer({
 
 // @route   POST /api/uploads
 // @desc    Upload a file (any authenticated user)
-router.post('/', protect, upload.single('file'), (req, res) => {
+router.post('/', protect, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const fileUrl = `/uploads/${req.file.filename}`;
+        // Save file to MongoDB
+        const newFile = new File({
+            student_id: req.user.id,
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            data: req.file.buffer
+        });
+        
+        await newFile.save();
+
+        const fileUrl = `/api/uploads/${newFile._id}`;
 
         res.json({
             success: true,
             file: {
                 url: fileUrl,
-                originalName: req.file.originalname,
-                size: req.file.size,
-                mimetype: req.file.mimetype,
+                originalName: newFile.originalname,
+                size: newFile.size,
+                mimetype: newFile.mimetype,
             },
         });
     } catch (err) {
         console.error('Upload error:', err);
         res.status(500).json({ success: false, message: 'Upload failed' });
+    }
+});
+
+// @route   GET /api/uploads/:id
+// @desc    Retrieve an uploaded file by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const fileDoc = await File.findById(req.params.id);
+        
+        if (!fileDoc) {
+            return res.status(404).json({ success: false, message: 'File not found' });
+        }
+        
+        res.set('Content-Type', fileDoc.mimetype);
+        // Optionally add a header so the browser knows the original filename
+        res.set('Content-Disposition', `inline; filename="${fileDoc.originalname}"`);
+        res.send(fileDoc.data);
+    } catch (err) {
+        console.error('File retrieval error:', err);
+        res.status(500).json({ success: false, message: 'File retrieval failed' });
     }
 });
 
