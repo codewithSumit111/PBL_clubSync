@@ -15,6 +15,10 @@ const registeredClubSchema = new mongoose.Schema({
     preference_order: {
         type: Number
     }, // For preference allocation during registration
+    appliedAt: {
+        type: Date,
+        default: Date.now
+    },
 
     cca_hours: {
         type: Number,

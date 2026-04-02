@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, TrendingUp } from 'lucide-react';
+import { Clock, TrendingUp, Award } from 'lucide-react';
 import type { CCAProgress } from '../../services/studentApi';
 
 interface Props {
@@ -89,23 +89,36 @@ export const CCAProgressBar: React.FC<Props> = ({ progress, loading }) => {
                 </div>
             </div>
 
-            {/* Hours Label */}
-            <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">
-                    <span className="font-bold text-gray-900 text-lg">{progress.completed}</span>
-                    <span className="mx-1">/</span>
-                    <span className="font-semibold">{progress.mandated}</span>
-                    <span className="ml-1">Hours Completed</span>
-                </span>
-                {progress.percentage >= 100 ? (
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1">
-                        ✓ Mandate Met
+            {/* Hours and Marks Labels */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">
+                        <span className="font-bold text-gray-900 text-lg">{progress.completed}</span>
+                        <span className="mx-1">/</span>
+                        <span className="font-semibold">{progress.mandated}</span>
+                        <span className="ml-1 text-xs uppercase tracking-wider font-bold text-teal-600">Hours Completed</span>
                     </span>
-                ) : (
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        {progress.mandated - progress.completed} hrs remaining
-                    </span>
-                )}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2">
+                            <Award size={14} className="text-purple-500" />
+                            <span className="text-lg font-bold text-gray-900">{progress.totalMarks || 0}</span>
+                            <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Total Marks</span>
+                        </div>
+                    </div>
+
+                    {progress.percentage >= 100 ? (
+                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1">
+                            ✓ Mandate Met
+                        </span>
+                    ) : (
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                            {progress.mandated - progress.completed} hrs remaining
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Shimmer keyframe injected inline */}

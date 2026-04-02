@@ -25,6 +25,7 @@ import {
   Download,
 } from 'lucide-react';
 import { StudentDashboard } from './StudentDashboard';
+import { ClubDashboard } from './club/ClubDashboard';
 import { toast } from 'sonner';
 
 const API = 'http://localhost:5000/api';
@@ -83,6 +84,11 @@ export const DashboardOverview: React.FC = () => {
   // Render student-specific dashboard if role is Student
   if (user?.role === 'Student') {
     return <StudentDashboard />;
+  }
+
+  // Render club-specific dashboard if role is Club
+  if (user?.role === 'Club') {
+    return <ClubDashboard />;
   }
 
   // Admin dashboard state

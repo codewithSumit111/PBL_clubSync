@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
     { id: 'my-clubs', label: 'My Clubs', icon: GraduationCap, roles: ['Student'] },
     { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student'] },
     { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student'] },
-    { id: 'analytics', label: 'CCA Progress', icon: ShieldCheck, roles: ['Student'] },
+    { id: 'cca-progress', label: 'CCA Progress', icon: ShieldCheck, roles: ['Student'] },
 
     // ── Admin only ────────────────────────────────
     { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
@@ -101,10 +101,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
       <div className="p-4 border-t border-gray-100 space-y-4">
         <div className="px-4 py-3 bg-gray-50 rounded-xl flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
-            {user?.name.charAt(0)}
+            {(user?.name || (user as any)?.club_name || '?').charAt(0)}
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || (user as any)?.club_name || 'User'}</p>
             <p className="text-xs text-gray-500 truncate">{user?.role}</p>
           </div>
         </div>

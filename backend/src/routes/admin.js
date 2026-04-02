@@ -365,4 +365,67 @@ router.get('/cca-report', protect, async (req, res) => {
     }
 });
 
+// ─────────────────────────────────────────────
+// PUT /api/admin/students/:student_id/cca
+// Admin manual override for CCA hours/marks
+// Body: { club_id, cca_hours, rubric_marks }
+// ─────────────────────────────────────────────
+
+router.put('/students/:student_id/cca', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Admin') {
+            return res.status(403).json({ success: false, message: 'Admin only access' });
+        }
+
+        const { club_id, cca_hours, rubric_marks } = req.body;
+        if (!club_id) {
+            return res.status(400).json({ success: false, message: 'Club ID is required to update student CCA data' });
+        }
+
+        const student = await Student.findById(req.params.student_id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        const entry = student.registered_clubs.find(
+            rc => rc.club.toString() === club_id.toString()
+        );
+
+        if (!entry) {
+            return res.status(404).json({ success: false, message: 'Student is not registered for this club' });
+        }
+
+        // Apply manual overrides
+        if (cca_hours !== undefined) entry.cca_hours = Math.max(0, cca_hours);
+
+        if (rubric_marks) {
+            entry.cca_marks.participation = Math.min(5, Math.max(0, rubric_marks.participation || 0));
+            entry.cca_marks.leadership = Math.min(5, Math.max(0, rubric_marks.leadership || 0));
+            entry.cca_marks.discipline = Math.min(5, Math.max(0, rubric_marks.discipline || 0));
+            entry.cca_marks.skill_development = Math.min(5, Math.max(0, rubric_marks.skill_development || 0));
+            entry.cca_marks.impact = Math.min(5, Math.max(0, rubric_marks.impact || 0));
+            entry.cca_marks.total =
+                entry.cca_marks.participation +
+                entry.cca_marks.leadership +
+                entry.cca_marks.discipline +
+                entry.cca_marks.skill_development +
+                entry.cca_marks.impact;
+        }
+
+        await student.save();
+
+        res.json({
+            success: true,
+            message: 'Student CCA data manually updated by Admin',
+            updated_cca: {
+                hours: entry.cca_hours,
+                total_marks: entry.cca_marks.total
+            }
+        });
+    } catch (err) {
+        console.error('[ADMIN MANUAL CCA OVERRIDE ERROR]', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

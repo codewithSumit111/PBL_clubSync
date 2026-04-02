@@ -155,8 +155,9 @@ export const LogbookView: React.FC = () => {
   const pendingCount = logs.filter(l => l.status === 'Pending').length;
 
   const getClubName = (log: LogEntry) => {
-    if (typeof log.club_id === 'object' && log.club_id !== null) return log.club_id.club_name;
-    return clubs.find(c => c._id === log.club_id)?.club_name || 'Unknown Club';
+    if (typeof log.club_id === 'object' && log.club_id !== null) return (log.club_id as any).club_name;
+    const found = clubs.find(c => c._id?.toString() === log.club_id?.toString());
+    return found?.club_name || 'Unknown Club';
   };
 
   return (

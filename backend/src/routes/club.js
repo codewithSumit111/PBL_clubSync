@@ -144,7 +144,6 @@ router.post('/preferences', protect, async (req, res) => {
 
 // @route   POST /api/clubs/register/:club_id
 // @desc    Student registers for a club
-// POST /api/clubs/register/:club_id — Student registers for a club
 router.post('/register/:club_id', protect, async (req, res) => {
     try {
         if (req.user.role !== 'Student') {
@@ -166,7 +165,8 @@ router.post('/register/:club_id', protect, async (req, res) => {
         student.registered_clubs.push({
             club: req.params.club_id,
             status: 'Pending',
-            preference_order: preference_order || (student.registered_clubs.length + 1)
+            preference_order: preference_order || (student.registered_clubs.length + 1),
+            appliedAt: new Date()
         });
         await student.save();
 
@@ -232,7 +232,6 @@ router.get('/members', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        // Find students who have Approved status for this club
         const students = await Student.find({
             registered_clubs: { $elemMatch: { club: req.user.id, status: 'Approved' } }
         }).select('name roll_no department year email registered_clubs');
@@ -255,7 +254,6 @@ router.get('/members', protect, async (req, res) => {
                     skill_development: entry.cca_marks?.skill_development || 0,
                     impact: entry.cca_marks?.impact || 0,
                 } : {},
-                logbooks_pending: 0,
             };
         });
 
@@ -287,6 +285,7 @@ router.get('/pending', protect, async (req, res) => {
                 year: s.year,
                 email: s.email,
                 preference_order: entry ? entry.preference_order : null,
+                appliedAt: entry ? entry.appliedAt : null
             };
         });
 
@@ -384,6 +383,120 @@ router.get('/events', protect, async (req, res) => {
         res.json({ success: true, events: sorted });
     } catch (err) {
         console.error('Error fetching club events:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// CLUB DASHBOARD DATA ROUTES
+// ─────────────────────────────────────────────────────────────────
+
+// GET /api/clubs/stats — Club-specific summary stats and engagement data
+router.get('/stats', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const club = await Club.findById(req.user.id).lean();
+        if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
+
+        const [pendingCount, allMembers] = await Promise.all([
+            Student.countDocuments({ registered_clubs: { $elemMatch: { club: req.user.id, status: 'Pending' } } }),
+            Student.find({ registered_clubs: { $elemMatch: { club: req.user.id, status: 'Approved' } } }).select('registered_clubs').lean(),
+        ]);
+
+        let totalHours = 0;
+        allMembers.forEach(s => {
+            const entry = s.registered_clubs.find(rc => rc.club.toString() === req.user.id);
+            totalHours += (entry?.cca_hours || 0);
+        });
+
+        const activeEvents = club.events ? club.events.filter(e => new Date(e.date) >= new Date()).length : 0;
+
+        // Engagement data for graphs (last 6 months)
+        const Logbook = require('../models/Logbook');
+        const now = new Date();
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        
+        const logbooks = await Logbook.find({ 
+            club_id: req.user.id, 
+            status: 'Approved',
+            date: { $gte: sixMonthsAgo } 
+        }).select('date hours').lean();
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyData = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const m = d.getMonth();
+            const y = d.getFullYear();
+            
+            const monthLogs = logbooks.filter(l => {
+                const ld = new Date(l.date);
+                return ld.getMonth() === m && ld.getFullYear() === y;
+            });
+
+            monthlyData.push({
+                name: monthNames[m],
+                hours: monthLogs.reduce((sum, l) => sum + (l.hours || 0), 0),
+                sessions: monthLogs.length
+            });
+        }
+
+        res.json({
+            success: true,
+            stats: {
+                totalMembers: allMembers.length,
+                pendingRequests: pendingCount,
+                totalHours: Math.round(totalHours),
+                activeEvents
+            },
+            monthlyData
+        });
+    } catch (err) {
+        console.error('Error fetching club stats:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/clubs/activity — Recent activity for this club
+router.get('/activity', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const Logbook = require('../models/Logbook');
+        const [recentApps, recentLogs] = await Promise.all([
+            Student.find({ registered_clubs: { $elemMatch: { club: req.user.id, status: 'Pending' } } })
+                .sort({ createdAt: -1 }).limit(5).select('name department createdAt').lean(),
+            Logbook.find({ club_id: req.user.id })
+                .sort({ createdAt: -1 }).limit(5).populate('student_id', 'name department').lean()
+        ]);
+
+        const activities = [
+            ...recentApps.map(s => ({
+                name: s.name,
+                department: s.department || 'General',
+                message: 'Applied to join the club',
+                status: 'Pending',
+                date: s.createdAt,
+                type: 'registration'
+            })),
+            ...recentLogs.map(l => ({
+                name: l.student_id?.name || 'Unknown',
+                department: l.student_id?.department || '',
+                message: `Submitted logbook: "${l.activity_description}"`,
+                status: l.status,
+                date: l.createdAt,
+                type: 'logbook'
+            }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+
+        res.json({ success: true, activities });
+    } catch (err) {
+        console.error('Error fetching club activity:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

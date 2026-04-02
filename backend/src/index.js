@@ -55,3 +55,5 @@ app.listen(PORT, () => {
     console.log(`   Health: http://localhost:${PORT}/api/health`);
     console.log(`   Auth:   http://localhost:${PORT}/api/auth/login\n`);
 });
+
+// Application successfully initialized.

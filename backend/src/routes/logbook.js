@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Logbook = require('../models/Logbook');
 const { protect } = require('../middleware/auth');
+const Student = require('../models/Student');
 
 // @route   POST /api/logbooks
 // @desc    Submit a new logbook entry (Student only)
@@ -13,8 +14,20 @@ router.post('/', protect, async (req, res) => {
 
         const { club_id, activity_description, date, hours, report_file } = req.body;
 
+        // Validation
         if (!club_id || !activity_description || !date || hours === undefined) {
             return res.status(400).json({ success: false, message: 'Please provide all required fields' });
+        }
+
+        // Verify the student is actually in this club and Approved
+        const studentRecord = await Student.findById(req.user.id);
+        const membership = studentRecord.registered_clubs.find(
+            rc => rc.club.toString() === club_id.toString() && rc.status === 'Approved'
+        );
+
+        if (!membership) {
+            console.warn(`[LOGBOOK REJECT] Student ${req.user.id} attempted to submit for unauthorized club ${club_id}`);
+            return res.status(403).json({ success: false, message: 'You are not an approved member of this club' });
         }
 
         const newLogbook = new Logbook({
@@ -27,6 +40,7 @@ router.post('/', protect, async (req, res) => {
         });
 
         await newLogbook.save();
+        console.log(`[LOGBOOK SUCCESS] New logbook created: Student ${req.user.id} -> Club ${club_id} (${hours}h)`);
         res.status(201).json({ success: true, logbook: newLogbook });
 
     } catch (err) {
@@ -98,6 +112,21 @@ router.put('/:id/status', protect, async (req, res) => {
         }
 
         await logbook.save();
+
+        // If approved, update student's total hours for this club
+        if (status === 'Approved') {
+            const Student = require('../models/Student');
+            const student = await Student.findById(logbook.student_id);
+            if (student) {
+                const clubEntry = student.registered_clubs.find(
+                    rc => rc.club.toString() === logbook.club_id.toString()
+                );
+                if (clubEntry) {
+                    clubEntry.cca_hours = (clubEntry.cca_hours || 0) + (logbook.hours || 0);
+                    await student.save();
+                }
+            }
+        }
         res.json({ success: true, logbook });
 
     } catch (err) {

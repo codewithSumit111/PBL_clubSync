@@ -121,6 +121,7 @@ export const ClubCCAManagement: React.FC = () => {
             if (!res.ok) throw new Error(data.message || 'Failed to update logbook');
             toast.success(`Logbook ${status.toLowerCase()}`);
             setLogbooks(prev => prev.map(l => l._id === logId ? { ...l, status } : l));
+            fetchMembers(); // Refresh hours in student list
         } catch (err: any) {
             toast.error(err.message);
         }

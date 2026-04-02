@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSelector, Provider } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useSelector, Provider, useDispatch } from 'react-redux';
 import { store, RootState } from './store';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -19,12 +19,53 @@ import { ClubAchievements } from './views/club/ClubAchievements';
 import { ClubEventsNotifications } from './views/club/ClubEventsNotifications';
 import { ClubAnalytics } from './views/club/ClubAnalytics';
 import { ClubReports } from './views/club/ClubReports';
+import { StudentCCAView } from './views/StudentCCAView';
 import { SettingsView } from './views/SettingsView';
+import { setUser, logout } from './features/authSlice';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user, token } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const [isVerifying, setIsVerifying] = useState(!!token && !isAuthenticated);
+
   const defaultView = user?.role === 'Club' ? 'club-students' : 'dashboard';
   const [currentView, setCurrentView] = useState(defaultView);
+
+  useEffect(() => {
+    const verifySession = async () => {
+      if (token && !isAuthenticated) {
+        try {
+          const res = await fetch('http://localhost:5000/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            dispatch(setUser({ user: data.user, token }));
+          } else {
+            dispatch(logout());
+          }
+        } catch (err) {
+          console.error('Session verification failed:', err);
+          // Don't logout on network error, but stop loading
+        } finally {
+          setIsVerifying(false);
+        }
+      } else {
+        setIsVerifying(false);
+      }
+    };
+
+    verifySession();
+  }, [token, isAuthenticated, dispatch]);
+
+  if (isVerifying) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 to-indigo-50">
+        <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-teal-800 font-bold animate-pulse">Restoring your session...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -45,6 +86,9 @@ const AppContent: React.FC = () => {
         return <ManageClubLeads />;
       case 'manage-notices':
         return <ManageNotices />;
+      case 'cca-progress':
+        return <StudentCCAView />;
+      // ── Admin only ───────────────────────────
       case 'analytics':
         return <CCAAnalytics />;
       // ── Club Role Views ──────────────────────
@@ -82,6 +126,7 @@ const AppContent: React.FC = () => {
       'manage-notices': 'Manage Notices',
       logbook: 'Activity Logbook',
       achievements: 'Student Achievements',
+      'cca-progress': 'Your CCA Progress',
       analytics: 'Institutional Analytics',
       settings: 'Account Settings',
       // Club views

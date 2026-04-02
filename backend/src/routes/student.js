@@ -27,7 +27,7 @@ router.get('/dashboard', protect, async (req, res) => {
         const joinedClubs = student.registered_clubs
             .filter(rc => rc.status === 'Approved')
             .map(rc => ({
-                _id: rc.club?._id,
+                _id: rc.club?._id || rc.club,
                 club_name: rc.club?.club_name || 'Unknown Club',
                 description: rc.club?.description || '',
                 department: rc.club?.department || '',
@@ -35,11 +35,14 @@ router.get('/dashboard', protect, async (req, res) => {
                 cca_marks: rc.cca_marks || {}
             }));
 
-        // 3. Calculate CCA hours progress
-        const totalCCAHours = joinedClubs.reduce((sum, c) => sum + c.cca_hours, 0);
+        // 3. Calculate CCA progress metrics
+        const totalCCAHours = joinedClubs.reduce((sum, c) => sum + (c.cca_hours || 0), 0);
+        const totalCCAMarks = joinedClubs.reduce((sum, c) => sum + (c.cca_marks?.total || 0), 0);
         const mandatedHours = 30; // College mandate
+
         const ccaProgress = {
             completed: totalCCAHours,
+            totalMarks: totalCCAMarks,
             mandated: mandatedHours,
             percentage: Math.min(Math.round((totalCCAHours / mandatedHours) * 100), 100)
         };
@@ -56,7 +59,9 @@ router.get('/dashboard', protect, async (req, res) => {
                 type: 'allocation',
                 message: `Accept preference allocation for ${rc.club?.club_name || 'a club'}`,
                 club_name: rc.club?.club_name || 'Unknown',
-                date: rc._id?.getTimestamp?.() || new Date()
+                date: (rc._id && typeof rc._id.getTimestamp === 'function') 
+                    ? rc._id.getTimestamp() 
+                    : new Date()
             }));
 
         // Clubs where no logbook submitted this week

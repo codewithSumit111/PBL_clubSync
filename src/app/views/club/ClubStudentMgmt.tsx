@@ -17,6 +17,7 @@ interface PendingStudent {
     year: number;
     email: string;
     preference_order?: number;
+    appliedAt?: string;
 }
 
 interface Member {
@@ -28,6 +29,13 @@ interface Member {
     email: string;
     cca_hours: number;
     cca_marks: number;
+    rubric_marks?: {
+        participation: number;
+        leadership: number;
+        discipline: number;
+        skill_development: number;
+        impact: number;
+    };
 }
 
 const YEAR_LABELS: Record<number, string> = {
@@ -35,6 +43,92 @@ const YEAR_LABELS: Record<number, string> = {
 };
 
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
+
+const CCAModal: React.FC<{
+    member: Member;
+    onClose: () => void;
+    onSave: (stats: { cca_hours: number; rubric_marks: any }) => void;
+    isSaving: boolean;
+}> = ({ member, onClose, onSave, isSaving }) => {
+    const [hours, setHours] = useState(member.cca_hours);
+    const [marks, setMarks] = useState(member.rubric_marks || {
+        participation: 0,
+        leadership: 0,
+        discipline: 0,
+        skill_development: 0,
+        impact: 0,
+    });
+
+    const categories = [
+        { key: 'participation', label: 'Participation' },
+        { key: 'leadership', label: 'Leadership & Initiative' },
+        { key: 'discipline', label: 'Discipline & Conduct' },
+        { key: 'skill_development', label: 'Skill Development' },
+        { key: 'impact', label: 'Impact & Achievement' },
+    ];
+
+    const total = Object.values(marks).reduce((s, v) => s + v, 0);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className={`${cardClass} w-full max-w-md p-8 shadow-2xl relative overflow-hidden`}>
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 to-indigo-500" />
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Manage CCA Stats</h3>
+                <p className="text-sm text-gray-500 mb-6">Updating stats for <span className="text-teal-600 font-semibold">{member.name}</span></p>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Total Hours</label>
+                        <div className="flex items-center gap-3">
+                            <Clock size={16} className="text-gray-400" />
+                            <input
+                                type="number"
+                                value={hours}
+                                onChange={e => setHours(Math.max(0, parseInt(e.target.value) || 0))}
+                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-teal-400 transition-all font-semibold"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Performance Rubric (0-5)</label>
+                        {categories.map(cat => (
+                            <div key={cat.key} className="flex items-center justify-between gap-4">
+                                <span className="text-sm font-medium text-gray-700">{cat.label}</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    value={marks[cat.key as keyof typeof marks]}
+                                    onChange={e => setMarks({ ...marks, [cat.key]: Math.min(5, Math.max(0, parseInt(e.target.value) || 0)) })}
+                                    className="w-16 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-center font-bold text-teal-600 outline-none focus:border-teal-400 transition-all"
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">Total Outcome</p>
+                            <p className="text-2xl font-bold text-gray-900">{total} <span className="text-sm text-gray-400">/ 25</span></p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all">Cancel</button>
+                            <button
+                                onClick={() => onSave({ cca_hours: hours, rubric_marks: marks })}
+                                disabled={isSaving}
+                                className="px-6 py-2.5 bg-teal-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-500/30 hover:bg-teal-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isSaving ? <RefreshCw size={16} className="animate-spin" /> : 'Save stats'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export const ClubStudentMgmt: React.FC = () => {
     const { token } = useSelector((state: RootState) => state.auth);
@@ -46,6 +140,7 @@ export const ClubStudentMgmt: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
@@ -87,13 +182,31 @@ export const ClubStudentMgmt: React.FC = () => {
             toast.success(`Application ${status.toLowerCase()} successfully!`);
             setPending(prev => prev.filter(s => s._id !== studentId));
             if (status === 'Approved') {
-                // Refetch members to pick up the newly approved student
-                const memRes = await fetch(`${API}/clubs/members`, { headers });
-                const memData = await memRes.json();
-                if (memData.success) setMembers(memData.members || []);
+                fetchAll();
             }
         } catch (err: any) {
             toast.error(err.message || 'Action failed');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleUpdateCCA = async (data: { cca_hours: number; rubric_marks: any }) => {
+        if (!editingMember) return;
+        setActionLoading('updating-cca');
+        try {
+            const res = await fetch(`${API}/clubs/students/${editingMember._id}/cca`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(data),
+            });
+            const resData = await res.json();
+            if (!res.ok) throw new Error(resData.message || 'Update failed');
+            toast.success('CCA stats updated successfully!');
+            setEditingMember(null);
+            fetchAll();
+        } catch (err: any) {
+            toast.error(err.message || 'Update failed');
         } finally {
             setActionLoading(null);
         }
@@ -126,6 +239,15 @@ export const ClubStudentMgmt: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            {editingMember && (
+                <CCAModal
+                    member={editingMember}
+                    onClose={() => setEditingMember(null)}
+                    onSave={handleUpdateCCA}
+                    isSaving={actionLoading === 'updating-cca'}
+                />
+            )}
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -207,7 +329,7 @@ export const ClubStudentMgmt: React.FC = () => {
                                         <th className="px-6 py-4">Roll No</th>
                                         <th className="px-6 py-4">Department</th>
                                         <th className="px-6 py-4">Year</th>
-                                        <th className="px-6 py-4">Preference</th>
+                                        <th className="px-6 py-4">Applied On</th>
                                         <th className="px-6 py-4 text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -233,9 +355,10 @@ export const ClubStudentMgmt: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {s.preference_order
-                                                    ? <span className="text-xs font-bold text-gray-500">#{s.preference_order}</span>
-                                                    : '—'}
+                                                <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+                                                    <Clock size={12} className="text-amber-400" />
+                                                    {s.appliedAt ? new Date(s.appliedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recently'}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
@@ -281,6 +404,7 @@ export const ClubStudentMgmt: React.FC = () => {
                                         <th className="px-6 py-4">Year</th>
                                         <th className="px-6 py-4">CCA Hours</th>
                                         <th className="px-6 py-4">CCA Marks</th>
+                                        <th className="px-6 py-4 text-center">Manage</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 text-sm">
@@ -316,6 +440,14 @@ export const ClubStudentMgmt: React.FC = () => {
                                                     </div>
                                                     <span className="text-xs font-bold text-gray-700">{m.cca_marks ?? 0}/25</span>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => setEditingMember(m)}
+                                                    className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
+                                                >
+                                                    Manage CCA
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

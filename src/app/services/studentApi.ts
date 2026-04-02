@@ -29,6 +29,7 @@ export interface CCAProgress {
     completed: number;
     mandated: number;
     percentage: number;
+    totalMarks?: number;
 }
 
 export interface ActionItem {
