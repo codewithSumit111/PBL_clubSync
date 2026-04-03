@@ -1,22 +1,41 @@
 // api/index.js — Vercel Serverless Function entry point
 // This wraps the Express backend for Vercel's serverless environment.
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) { /* no .env on Vercel */ }
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('../backend/src/db');
-const authRoutes = require('../backend/src/routes/auth');
 
 const app = express();
 
 // ── Middleware ──────────────────────────────
 app.use(cors({
-    origin: true, // Allow all origins in production (Vercel handles security)
+    origin: true,
     credentials: true,
 }));
 app.use(express.json());
 
-// ── Routes ──────────────────────────────────
-app.use('/api/auth', authRoutes);
+// ── DB Connection (cached across warm invocations) ──
+let dbReady = false;
+const ensureDB = async () => {
+    if (!dbReady) {
+        await connectDB();
+        dbReady = true;
+    }
+};
+
+// Ensure DB is connected BEFORE any route handler runs
+app.use(async (req, res, next) => {
+    try {
+        await ensureDB();
+        next();
+    } catch (err) {
+        console.error('[DB CONNECTION ERROR]', err.message);
+        res.status(500).json({ success: false, message: 'Database connection failed. Check MONGO_URI env variable.' });
+    }
+});
+
+// ── Routes (AFTER DB middleware) ────────────
+app.use('/api/auth', require('../backend/src/routes/auth'));
 app.use('/api/clubs', require('../backend/src/routes/club'));
 app.use('/api/logbooks', require('../backend/src/routes/logbook'));
 app.use('/api/achievements', require('../backend/src/routes/achievement'));
@@ -25,9 +44,6 @@ app.use('/api/notices', require('../backend/src/routes/notice'));
 app.use('/api/uploads', require('../backend/src/routes/upload'));
 app.use('/api/events', require('../backend/src/routes/event'));
 app.use('/api/admin', require('../backend/src/routes/admin'));
-
-// Connect to MongoDB
-connectDB();
 
 // Health check
 app.get('/api/health', (req, res) => {
