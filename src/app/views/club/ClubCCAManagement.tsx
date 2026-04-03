@@ -6,8 +6,7 @@ import {
     RefreshCw, BookOpen, Star, Target, Users, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../../config';
 
 interface Rubric {
     name: string; maxMarks: number; icon: React.ElementType;

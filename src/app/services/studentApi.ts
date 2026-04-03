@@ -1,5 +1,5 @@
 // API service for student dashboard
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../config';
 
 function getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('clubsync_token');

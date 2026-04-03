@@ -7,8 +7,8 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_BASE as API } from '../config';
 
-const API = 'http://localhost:5000/api';
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
 
 type TabType = 'profile' | 'security' | 'notifications' | 'appearance';

@@ -27,8 +27,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../config';
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('clubsync_token');

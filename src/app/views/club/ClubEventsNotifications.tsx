@@ -6,8 +6,7 @@ import {
     Send, CheckCircle2, Megaphone, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../../config';
 
 interface ClubEvent {
     _id: string; title: string; description: string;

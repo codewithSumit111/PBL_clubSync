@@ -3,8 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { Bell, Trash2, Send, AlertCircle, RefreshCw, Calendar, Info } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../config';
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('clubsync_token');

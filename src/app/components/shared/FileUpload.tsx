@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Upload, X, FileText, Image, Loader2, Link2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+import { API_BASE } from '../../config';
 
 interface FileUploadProps {
     /** Called with the URL (either uploaded file path or external link) */

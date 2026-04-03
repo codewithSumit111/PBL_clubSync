@@ -22,6 +22,7 @@ import { ClubReports } from './views/club/ClubReports';
 import { StudentCCAView } from './views/StudentCCAView';
 import { SettingsView } from './views/SettingsView';
 import { setUser, logout } from './features/authSlice';
+import { API_BASE } from './config';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user, token } = useSelector((state: RootState) => state.auth);
@@ -36,7 +37,7 @@ const AppContent: React.FC = () => {
     const verifySession = async () => {
       if (token && !isAuthenticated) {
         try {
-          const res = await fetch('http://localhost:5000/api/auth/me', {
+          const res = await fetch(`${API_BASE}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await res.json();

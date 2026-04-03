@@ -6,8 +6,7 @@ import {
     Award, Star, Globe, Building2, ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../../config';
 
 const LEVELS = ['All', 'College', 'State', 'National', 'International'];
 const LEVEL_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {

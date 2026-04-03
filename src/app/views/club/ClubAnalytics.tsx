@@ -7,8 +7,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, Clock, Award, ArrowUpRight, Trophy, Activity, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-
-const API = 'http://localhost:5000/api';
+import { API_BASE as API } from '../../config';
 const COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ec4899', '#10b981'];
 const tooltipStyle = { borderRadius: '12px', border: 'none', boxShadow: '0 10px 24px rgba(0,0,0,0.08)', fontSize: '12px' };
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';

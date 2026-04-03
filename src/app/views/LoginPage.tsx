@@ -8,8 +8,9 @@ import {
   User, Hash, Building2, Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_BASE } from '../config';
 
-const API_BASE = 'http://localhost:5000/api/auth';
+const API_AUTH = `${API_BASE}/auth`;
 
 export const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -51,7 +52,7 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/login`, {
+      const res = await fetch(`${API_AUTH}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword, role: selectedRole }),
@@ -75,7 +76,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       const fullName = `${signupFirstName} ${signupLastName}`.trim();
-      const res = await fetch(`${API_BASE}/register`, {
+      const res = await fetch(`${API_AUTH}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -3,8 +3,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { toast } from 'sonner';
 import { Building2, Mail, Lock, FileText, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
+import { API_BASE } from '../config';
 
-const API_BASE = 'http://localhost:5000/api/auth';
+const API_AUTH = `${API_BASE}/auth`;
 
 export const ManageClubLeads: React.FC = () => {
   const token = useSelector((state: RootState) => state.auth.token);
@@ -21,7 +22,7 @@ export const ManageClubLeads: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/add-club-lead`, {
+      const res = await fetch(`${API_AUTH}/add-club-lead`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
