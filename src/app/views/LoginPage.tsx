@@ -148,7 +148,7 @@ export const LoginPage: React.FC = () => {
         ref={containerRef}
         onMouseMove={handleMouseMove}
         style={{
-          width: '100%', height: '100vh', overflow: 'hidden', position: 'relative',
+          width: '100%', height: '100vh', overflowX: 'hidden', overflowY: 'auto', position: 'relative',
           background: 'linear-gradient(170deg, #07080f 0%, #0d1224 30%, #0f1633 60%, #0a0f20 100%)',
           fontFamily: "'Inter', -apple-system, sans-serif",
           display: 'flex', flexDirection: 'column',
@@ -199,6 +199,7 @@ export const LoginPage: React.FC = () => {
 
         {/* ══════ TOP BAR ══════ */}
         <motion.div
+          className="top-bar"
           initial={{ opacity: 0, y: -20 }}
           animate={isLoaded ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.1 }}
@@ -223,7 +224,7 @@ export const LoginPage: React.FC = () => {
                 <path d="M2 12l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </motion.div>
-            <span style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, letterSpacing: '-0.3px' }}>
+            <span className="logo-text" style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, letterSpacing: '-0.3px' }}>
               Club<span style={{ color: '#818cf8' }}>Sync</span>
             </span>
           </div>
@@ -231,6 +232,7 @@ export const LoginPage: React.FC = () => {
           {/* Only show "Create Account" button for Students */}
           {selectedRole === 'Student' && (
             <motion.button
+              className="create-btn"
               onClick={() => setIsSignUp(true)}
               whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.3)' }}
               whileTap={{ scale: 0.97 }}
@@ -246,7 +248,7 @@ export const LoginPage: React.FC = () => {
         </motion.div>
 
         {/* ══════ CENTERED FORM ══════ */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 10, paddingBottom: '80px' }}>
+        <div className="form-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 10, padding: '20px 0 120px 0', minHeight: 'min-content' }}>
 
           {/* Animated Logo/Icon */}
           <motion.div
@@ -317,6 +319,7 @@ export const LoginPage: React.FC = () => {
                 <motion.button
                   key={role}
                   type="button"
+                  className="role-btn"
                   onClick={() => setSelectedRole(role)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
@@ -531,7 +534,7 @@ export const LoginPage: React.FC = () => {
               animate={isSignUp ? { y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.5 } } : { y: 30, opacity: 0 }}
             >
               {/* Name Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+              <div className="grid-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                 <div style={{ position: 'relative' }}>
                   <User size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
                   <input type="text" required placeholder="First name" value={signupFirstName} onChange={e => setSignupFirstName(e.target.value)} className="signup-input" style={signupInputStyle} />
@@ -555,7 +558,7 @@ export const LoginPage: React.FC = () => {
               </div>
 
               {/* Department + Year Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+              <div className="grid-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                 <div style={{ position: 'relative' }}>
                   <Building2 size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)', zIndex: 2 }} />
                   <input type="text" required placeholder="Department" value={signupDepartment} onChange={e => setSignupDepartment(e.target.value)} className="signup-input" style={signupInputStyle} />
@@ -719,6 +722,19 @@ export const LoginPage: React.FC = () => {
 
         /* INPUT PLACEHOLDERS */
         input::placeholder { color: rgba(255,255,255,0.2) !important; }
+
+        /* RESPONSIVE STYLES */
+        @media (max-width: 600px) {
+          .top-bar { padding: 16px 20px !important; }
+          .logo-text { display: none; }
+          .create-btn { padding: 6px 12px !important; font-size: 10px !important; }
+          .form-wrapper { padding: 20px 16px 120px 16px !important; justify-content: flex-start !important; }
+          .role-btn { padding: 10px 4px !important; font-size: 11px !important; }
+          .grid-row { grid-template-columns: 1fr !important; }
+        }
+        @media (max-height: 700px) {
+          .form-wrapper { justify-content: flex-start !important; padding-top: 20px !important; padding-bottom: 120px !important; }
+        }
       `}</style>
     </>
   );

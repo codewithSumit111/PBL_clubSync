@@ -1,20 +1,30 @@
 import React from 'react';
-import { Search, Bell, HelpCircle } from 'lucide-react';
+import { Search, Bell, HelpCircle, Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
-export const Header: React.FC<{ title: string }> = ({ title }) => {
+export const Header: React.FC<{ title: string, onMenuClick?: () => void }> = ({ title, onMenuClick }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
-    <header className="h-16 border-b border-white/50 bg-white/40 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-8">
-      {user?.role !== 'Club' ? (
-        <div>
-          <p className="text-xs text-teal-600 font-medium">Welcome back, {user?.name} 👋</p>
-          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-        </div>
-      ) : (
-        <div />
-      )}
+    <header className="h-16 border-b border-white/50 bg-white/40 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 md:px-8">
+      <div className="flex items-center gap-3">
+        {onMenuClick && (
+          <button 
+            onClick={onMenuClick}
+            className="p-2 -ml-2 text-gray-500 hover:bg-white/50 rounded-lg lg:hidden"
+          >
+            <Menu size={24} />
+          </button>
+        )}
+        {user?.role !== 'Club' ? (
+          <div>
+            <p className="text-xs text-teal-600 font-medium hidden sm:block">Welcome back, {user?.name} 👋</p>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">{title}</h1>
+          </div>
+        ) : (
+          <div />
+        )}
+      </div>
 
       <div className="flex items-center gap-6">
         <div className="relative hidden md:block">

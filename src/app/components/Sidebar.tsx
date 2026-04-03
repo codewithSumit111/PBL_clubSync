@@ -26,9 +26,11 @@ import { twMerge } from 'tailwind-merge';
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, onClose }) => {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -64,8 +66,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
   const filteredItems = menuItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <aside className="w-64 h-screen bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col sticky top-0" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.03)' }}>
-      <div className="p-6 border-b border-gray-100">
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside 
+        className={twMerge(
+          "w-64 h-screen bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col fixed lg:sticky top-0 z-50 transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )} 
+        style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.03)' }}
+      >
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-teal-500/30">
             C
@@ -117,5 +134,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
         </button>
       </div>
     </aside>
+    </>
   );
 };

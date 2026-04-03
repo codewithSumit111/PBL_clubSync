@@ -30,6 +30,7 @@ const AppContent: React.FC = () => {
 
   const defaultView = user?.role === 'Club' ? 'club-students' : 'dashboard';
   const [currentView, setCurrentView] = useState(defaultView);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -144,11 +145,16 @@ const AppContent: React.FC = () => {
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div className="flex min-h-screen font-['Inter',sans-serif]" style={{ background: 'linear-gradient(135deg, #e0f2f1 0%, #e8eaf6 35%, #f3e5f5 65%, #e0f2f1 100%)' }}>
-        <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+        <Sidebar 
+          currentView={currentView} 
+          onViewChange={(view) => { setCurrentView(view); setSidebarOpen(false); }} 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+        />
 
         <main className="flex-1 flex flex-col min-w-0">
-          <Header title={getTitle()} />
-          <div className="flex-1 overflow-y-auto p-8">
+          <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} />
+          <div className="flex-1 overflow-y-auto p-4 md:p-8">
             <div className="max-w-7xl mx-auto">
               {renderView()}
             </div>
