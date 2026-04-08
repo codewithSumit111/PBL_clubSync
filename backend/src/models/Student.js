@@ -109,6 +109,6 @@ studentSchema.pre('save', function () {
     }
 });
 
-const Student = mongoose.model('Student', studentSchema);
+const Student = mongoose.models.Student || mongoose.model('Student', studentSchema);
 
 module.exports = Student;

@@ -80,6 +80,6 @@ const clubSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const Club = mongoose.model('Club', clubSchema);
+const Club = mongoose.models.Club || mongoose.model('Club', clubSchema);
 
 module.exports = Club;

@@ -41,6 +41,6 @@ const logbookSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const Logbook = mongoose.model('Logbook', logbookSchema);
+const Logbook = mongoose.models.Logbook || mongoose.model('Logbook', logbookSchema);
 
 module.exports = Logbook;

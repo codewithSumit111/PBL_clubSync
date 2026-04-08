@@ -26,6 +26,6 @@ const fileSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const File = mongoose.model('File', fileSchema);
+const File = mongoose.models.File || mongoose.model('File', fileSchema);
 
 module.exports = File;

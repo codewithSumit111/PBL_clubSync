@@ -28,6 +28,6 @@ const noticeSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const Notice = mongoose.model('Notice', noticeSchema);
+const Notice = mongoose.models.Notice || mongoose.model('Notice', noticeSchema);
 
 module.exports = Notice;

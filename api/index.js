@@ -26,11 +26,25 @@ const ensureDB = async () => {
 // Ensure DB is connected BEFORE any route handler runs
 app.use(async (req, res, next) => {
     try {
+        if (!process.env.MONGO_URI) {
+            console.error('[CRITICAL] MONGO_URI is not set in environment variables.');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Internal configuration error: MONGO_URI missing.',
+                tip: 'Ensure MONGO_URI is added to your Vercel Project Settings > Environment Variables.'
+            });
+        }
         await ensureDB();
         next();
     } catch (err) {
         console.error('[DB CONNECTION ERROR]', err.message);
-        res.status(500).json({ success: false, message: 'Database connection failed. Check MONGO_URI env variable.' });
+        // On Vercel, this often happens if the MongoDB IP allowlist is not set to 0.0.0.0/0
+        res.status(500).json({ 
+            success: false, 
+            message: 'Database connection failed.', 
+            error: err.message,
+            tip: 'Check your MONGO_URI and ensure MongoDB Atlas IP Allowlist includes 0.0.0.0/0' 
+        });
     }
 });
 
