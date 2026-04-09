@@ -130,7 +130,7 @@ const CCAModal: React.FC<{
 };
 
 export const ClubStudentMgmt: React.FC = () => {
-    const { token } = useSelector((state: RootState) => state.auth);
+    const { token, user } = useSelector((state: RootState) => state.auth);
     const [tab, setTab] = useState<'pending' | 'members'>('pending');
     const [pending, setPending] = useState<PendingStudent[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
@@ -144,6 +144,10 @@ export const ClubStudentMgmt: React.FC = () => {
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
     const fetchAll = useCallback(async () => {
+        if (!token || user?.role !== 'Club') {
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         try {
@@ -164,7 +168,7 @@ export const ClubStudentMgmt: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [token]);
+    }, [token, user?.role]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 

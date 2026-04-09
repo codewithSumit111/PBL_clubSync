@@ -51,6 +51,7 @@ app.use(async (req, res, next) => {
 // ── Routes (AFTER DB middleware) ────────────
 app.use('/api/auth', require('../backend/src/routes/auth'));
 app.use('/api/clubs', require('../backend/src/routes/club'));
+app.use('/api/clubs', require('../backend/src/routes/attendance'));
 app.use('/api/logbooks', require('../backend/src/routes/logbook'));
 app.use('/api/achievements', require('../backend/src/routes/achievement'));
 app.use('/api/students', require('../backend/src/routes/student'));
