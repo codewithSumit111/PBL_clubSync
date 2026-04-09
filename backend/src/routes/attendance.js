@@ -17,7 +17,7 @@ function getMembershipEntry(student, clubId) {
 
 // @route   POST /api/clubs/events/:eventId/qr
 // @desc    Generate a signed QR token for a club event
-router.post('/events/:eventId/qr', protect, qrGenerationLimiter, async (req, res) => {
+router.post('/clubs/events/:eventId/qr', protect, qrGenerationLimiter, async (req, res) => {
     try {
         if (req.user.role !== 'Club') {
             return res.status(403).json({ success: false, message: 'Only clubs can generate event QR codes' });
@@ -68,7 +68,7 @@ router.post('/events/:eventId/qr', protect, qrGenerationLimiter, async (req, res
 
 // @route   GET /api/clubs/events/:eventId/attendance
 // @desc    Get attendance list for a club event
-router.get('/events/:eventId/attendance', protect, async (req, res) => {
+router.get('/clubs/events/:eventId/attendance', protect, async (req, res) => {
     try {
         if (!['Club', 'Admin'].includes(req.user.role)) {
             return res.status(403).json({ success: false, message: 'Not authorized' });
@@ -113,7 +113,7 @@ router.get('/events/:eventId/attendance', protect, async (req, res) => {
 
 // @route   POST /api/clubs/events/:eventId/check-in
 // @desc    Student self check-in with signed QR token
-router.post('/events/:eventId/check-in', protect, checkInLimiter, async (req, res) => {
+router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (req, res) => {
     try {
         if (req.user.role !== 'Student') {
             return res.status(403).json({ success: false, message: 'Only students can check in' });
