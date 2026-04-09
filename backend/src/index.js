@@ -19,6 +19,7 @@ app.use(express.json());
 // ── Routes ──────────────────────────────────
 app.use('/api/auth', authRoutes); // Auth routes connected to DB
 app.use('/api/clubs', require('./routes/club'));
+app.use('/api/clubs', require('./routes/attendance'));
 app.use('/api/logbooks', require('./routes/logbook'));
 app.use('/api/achievements', require('./routes/achievement'));
 app.use('/api/students', require('./routes/student'));

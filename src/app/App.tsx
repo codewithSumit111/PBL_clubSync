@@ -19,6 +19,8 @@ import { ClubAchievements } from './views/club/ClubAchievements';
 import { ClubEventsNotifications } from './views/club/ClubEventsNotifications';
 import { ClubAnalytics } from './views/club/ClubAnalytics';
 import { ClubReports } from './views/club/ClubReports';
+import { EventAttendanceView } from './views/EventAttendanceView';
+import { StudentAttendanceHistoryView } from './views/StudentAttendanceHistoryView';
 import { StudentCCAView } from './views/StudentCCAView';
 import { SettingsView } from './views/SettingsView';
 import { setUser, logout } from './features/authSlice';
@@ -82,6 +84,10 @@ const AppContent: React.FC = () => {
         return <ClubListView mode={currentView} onViewChange={setCurrentView} />;
       case 'logbook':
         return <LogbookView />;
+      case 'qr-attendance':
+        return <EventAttendanceView />;
+      case 'attendance-history':
+        return <StudentAttendanceHistoryView />;
       case 'achievements':
         return <AchievementView />;
       case 'add-club-lead':
@@ -127,6 +133,8 @@ const AppContent: React.FC = () => {
       'add-club-lead': 'Add Club Lead',
       'manage-notices': 'Manage Notices',
       logbook: 'Activity Logbook',
+      'qr-attendance': 'QR Attendance',
+      'attendance-history': 'My Check-In History',
       achievements: 'Student Achievements',
       'cca-progress': 'Your CCA Progress',
       analytics: 'Institutional Analytics',

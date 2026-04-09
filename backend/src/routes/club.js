@@ -5,6 +5,33 @@ const Student = require('../models/Student');
 const Admin = require('../models/Admin');
 const { protect } = require('../middleware/auth');
 
+function buildEventStart(dateValue, timeValue) {
+    const eventDate = new Date(dateValue);
+
+    if (!timeValue) {
+        return eventDate;
+    }
+
+    const match = String(timeValue).match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+    if (!match) {
+        return eventDate;
+    }
+
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    const meridiem = match[3]?.toUpperCase();
+
+    if (meridiem === 'PM' && hours < 12) {
+        hours += 12;
+    }
+    if (meridiem === 'AM' && hours === 12) {
+        hours = 0;
+    }
+
+    eventDate.setHours(hours, minutes, 0, 0);
+    return eventDate;
+}
+
 // @route   GET /api/clubs
 // @desc    Get all clubs with category, tagline, and member count
 router.get('/', async (req, res) => {
@@ -350,7 +377,7 @@ router.post('/events', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const { title, description, date, time, venue } = req.body;
+        const { title, description, date, time, venue, cca_hours } = req.body;
         if (!title || !date) {
             return res.status(400).json({ success: false, message: 'Title and date are required' });
         }
@@ -358,7 +385,23 @@ router.post('/events', protect, async (req, res) => {
         const club = await Club.findById(req.user.id);
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
-        club.events.push({ title, description: description || '', date: new Date(date), attendees: [] });
+        const eventStart = buildEventStart(date, time);
+        const checkInOpensAt = new Date(eventStart.getTime() - 30 * 60 * 1000);
+        const checkInClosesAt = new Date(eventStart.getTime() + 3 * 60 * 60 * 1000);
+
+        club.events.push({
+            title,
+            description: description || '',
+            date: new Date(date),
+            time: time || '',
+            venue: venue || '',
+            cca_hours: Number(cca_hours || 0),
+            check_in: {
+                opens_at: checkInOpensAt,
+                closes_at: checkInClosesAt,
+            },
+            attendees: []
+        });
         await club.save();
 
         const newEvent = club.events[club.events.length - 1];

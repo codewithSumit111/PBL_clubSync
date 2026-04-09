@@ -67,6 +67,13 @@ const clubSchema = new mongoose.Schema({
         title: { type: String, required: true },
         description: { type: String },
         date: { type: Date, required: true },
+        time: { type: String, default: '' },
+        venue: { type: String, default: '' },
+        cca_hours: { type: Number, default: 0, min: 0 },
+        check_in: {
+            opens_at: { type: Date },
+            closes_at: { type: Date }
+        },
         attendees: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Student'

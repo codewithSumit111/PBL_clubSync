@@ -3,14 +3,17 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
     Bell, Calendar, Plus, X, Users, RefreshCw,
-    Send, CheckCircle2, Megaphone, AlertCircle
+    Send, CheckCircle2, Megaphone, AlertCircle, QrCode, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE as API } from '../../config';
+import { EventQrModal } from '../../components/club/EventQrModal';
+import { OrganizerAttendanceMonitor } from '../../components/club/OrganizerAttendanceMonitor';
+import { fetchEventQr } from '../../services/attendanceApi';
 
 interface ClubEvent {
     _id: string; title: string; description: string;
-    date: string; time?: string; venue?: string; attendees?: any[];
+    date: string; time?: string; venue?: string; attendees?: any[]; cca_hours?: number; club_name?: string;
 }
 
 interface Notification {
@@ -46,11 +49,15 @@ export const ClubEventsNotifications: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showEventForm, setShowEventForm] = useState(false);
     const [showNotifForm, setShowNotifForm] = useState(false);
+    const [qrEvent, setQrEvent] = useState<ClubEvent | null>(null);
+    const [qrToken, setQrToken] = useState('');
+    const [qrLoading, setQrLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedEventForMonitor, setSelectedEventForMonitor] = useState<string | null>(null);
 
-    const [eventForm, setEventForm] = useState({ title: '', description: '', date: '', time: '', venue: '' });
+    const [eventForm, setEventForm] = useState({ title: '', description: '', date: '', time: '', venue: '', cca_hours: '0' });
     const [notifForm, setNotifForm] = useState({ title: '', message: '' });
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -86,11 +93,24 @@ export const ClubEventsNotifications: React.FC = () => {
             toast.success('Event created successfully!');
             setEvents(prev => [data.event, ...prev]);
             setShowEventForm(false);
-            setEventForm({ title: '', description: '', date: '', time: '', venue: '' });
+            setEventForm({ title: '', description: '', date: '', time: '', venue: '', cca_hours: '0' });
         } catch (err: any) {
             toast.error(err.message);
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const openQrForEvent = async (event: ClubEvent) => {
+        setQrLoading(true);
+        try {
+            const data = await fetchEventQr(event._id);
+            setQrEvent(data.event as ClubEvent);
+            setQrToken(data.qrToken);
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setQrLoading(false);
         }
     };
 
@@ -169,7 +189,7 @@ export const ClubEventsNotifications: React.FC = () => {
                                 <span className="w-2 h-2 bg-teal-500 rounded-full" /> Upcoming ({upcomingEvents.length})
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {upcomingEvents.map(ev => <EventCard key={ev._id} event={ev} isUpcoming />)}
+                                {upcomingEvents.map(ev => <EventCard key={ev._id} event={ev} isUpcoming onGenerateQr={() => openQrForEvent(ev)} qrLoading={qrLoading} onShowMonitor={() => setSelectedEventForMonitor(ev._id)} />)}
                             </div>
                         </div>
                     )}
@@ -179,7 +199,7 @@ export const ClubEventsNotifications: React.FC = () => {
                                 <span className="w-2 h-2 bg-gray-300 rounded-full" /> Past Events ({pastEvents.length})
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {pastEvents.map(ev => <EventCard key={ev._id} event={ev} isUpcoming={false} />)}
+                                {pastEvents.map(ev => <EventCard key={ev._id} event={ev} isUpcoming={false} onGenerateQr={() => openQrForEvent(ev)} qrLoading={qrLoading} onShowMonitor={() => setSelectedEventForMonitor(ev._id)} />)}
                             </div>
                         </div>
                     )}
@@ -247,6 +267,11 @@ export const ClubEventsNotifications: React.FC = () => {
                                     className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-400" />
                             </FormField>
                         </div>
+                        <FormField label="CCA Hours *">
+                            <input required type="number" min="0" step="0.5" value={eventForm.cca_hours} onChange={e => setEventForm(p => ({ ...p, cca_hours: e.target.value }))}
+                                placeholder="e.g. 2"
+                                className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-400" />
+                        </FormField>
                         <FormField label="Venue">
                             <input value={eventForm.venue} onChange={e => setEventForm(p => ({ ...p, venue: e.target.value }))}
                                 placeholder="e.g. Seminar Hall A"
@@ -285,11 +310,40 @@ export const ClubEventsNotifications: React.FC = () => {
                     </form>
                 </Modal>
             )}
+
+            {qrEvent && qrToken && (
+                <EventQrModal
+                    event={qrEvent.club_name ? qrEvent : { ...qrEvent, club_name: 'Current Club' }}
+                    qrToken={qrToken}
+                    onClose={() => { setQrEvent(null); setQrToken(''); }}
+                />
+            )}
+
+            {selectedEventForMonitor && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+                        <button 
+                            onClick={() => setSelectedEventForMonitor(null)} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+                        >
+                            <X size={20} />
+                        </button>
+                        {selectedEventForMonitor && events.find(e => e._id === selectedEventForMonitor) && (
+                            <OrganizerAttendanceMonitor 
+                                eventId={selectedEventForMonitor}
+                                clubId=""
+                                eventTitle={events.find(e => e._id === selectedEventForMonitor)?.title || 'Event'}
+                                onRefresh={fetchEvents}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-const EventCard: React.FC<{ event: ClubEvent; isUpcoming: boolean }> = ({ event, isUpcoming }) => (
+const EventCard: React.FC<{ event: ClubEvent; isUpcoming: boolean; onGenerateQr: () => void; qrLoading: boolean; onShowMonitor?: () => void }> = ({ event, isUpcoming, onGenerateQr, qrLoading, onShowMonitor }) => (
     <div className={`bg-white/60 backdrop-blur-xl rounded-2xl border ${isUpcoming ? 'border-teal-100' : 'border-white/50'} shadow-sm p-5`}>
         <div className="flex items-start justify-between gap-2 mb-2">
             <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-bold ${isUpcoming ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -304,5 +358,29 @@ const EventCard: React.FC<{ event: ClubEvent; isUpcoming: boolean }> = ({ event,
         <h4 className="font-bold text-gray-900 mb-1">{event.title}</h4>
         {event.description && <p className="text-sm text-gray-500 line-clamp-2">{event.description}</p>}
         {event.venue && <p className="text-xs text-gray-400 mt-2">📍 {event.venue}</p>}
+        <div className="mt-4 flex items-center justify-between gap-3">
+            <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full">
+                CCA Hours: {event.cca_hours || 0}
+            </span>
+            <div className="flex items-center gap-2">
+                {onShowMonitor && (
+                    <button
+                        onClick={onShowMonitor}
+                        className="inline-flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                        <Users size={12} />
+                        Monitor
+                    </button>
+                )}
+                <button
+                    onClick={onGenerateQr}
+                    className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-3 py-2 text-xs font-bold text-white hover:bg-teal-600 disabled:opacity-60"
+                    disabled={qrLoading}
+                >
+                    {qrLoading ? <Loader2 size={12} className="animate-spin" /> : <QrCode size={12} />}
+                    QR
+                </button>
+            </div>
+        </div>
     </div>
 );

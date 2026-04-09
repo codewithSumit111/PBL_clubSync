@@ -12,10 +12,12 @@ import {
   Building2,
   Award,
   CalendarDays,
+  QrCode,
   BarChart3,
   FileText,
   Star,
-  GraduationCap
+  GraduationCap,
+  History
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -42,6 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
     { id: 'clubs', label: 'All Clubs', icon: Building2, roles: ['Admin'] },
     { id: 'my-clubs', label: 'My Clubs', icon: GraduationCap, roles: ['Student'] },
     { id: 'logbook', label: 'Logbook', icon: BookOpen, roles: ['Student'] },
+    { id: 'qr-attendance', label: 'QR Attendance', icon: QrCode, roles: ['Student'] },
+    { id: 'attendance-history', label: 'Check-In History', icon: History, roles: ['Student'] },
     { id: 'achievements', label: 'Achievements', icon: Trophy, roles: ['Student'] },
     { id: 'cca-progress', label: 'CCA Progress', icon: ShieldCheck, roles: ['Student'] },
 
