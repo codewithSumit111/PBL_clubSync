@@ -15,11 +15,19 @@ app.use(cors({
 app.use(express.json());
 
 // ── DB Connection (cached across warm invocations) ──
-let dbReady = false;
+const mongoose = require('mongoose');
 const ensureDB = async () => {
-    if (!dbReady) {
+    const state = mongoose.connection.readyState;
+    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+    if (state === 0 || state === 3) {
         await connectDB();
-        dbReady = true;
+    }
+    // If state === 2 (connecting), wait for it to finish
+    if (mongoose.connection.readyState === 2) {
+        await new Promise((resolve, reject) => {
+            mongoose.connection.once('connected', resolve);
+            mongoose.connection.once('error', reject);
+        });
     }
 };
 
@@ -32,6 +40,14 @@ app.use(async (req, res, next) => {
                 success: false, 
                 message: 'Internal configuration error: MONGO_URI missing.',
                 tip: 'Ensure MONGO_URI is added to your Vercel Project Settings > Environment Variables.'
+            });
+        }
+        if (!process.env.JWT_SECRET) {
+            console.error('[CRITICAL] JWT_SECRET is not set in environment variables.');
+            return res.status(500).json({
+                success: false,
+                message: 'Internal configuration error: JWT_SECRET missing.',
+                tip: 'Ensure JWT_SECRET is added to your Vercel Project Settings > Environment Variables.'
             });
         }
         await ensureDB();

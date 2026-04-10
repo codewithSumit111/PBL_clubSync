@@ -42,6 +42,16 @@ const clubSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    department: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    role: {
+        type: String,
+        default: 'Club',
+        enum: ['Club']
+    },
     email: {
         type: String,
         required: true,
