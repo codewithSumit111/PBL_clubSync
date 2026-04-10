@@ -88,7 +88,13 @@ export async function checkInForEvent(eventId: string, token: string): Promise<a
         body: JSON.stringify({ token }),
     });
 
-    const data = await res.json();
+    let data;
+    try {
+        data = await res.json();
+    } catch {
+        throw new Error(`Server error (${res.status}). Please try again.`);
+    }
+
     if (!data.success) {
         throw new Error(data.message || 'Failed to check in');
     }

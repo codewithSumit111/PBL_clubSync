@@ -71,12 +71,18 @@ function verifyAttendanceToken(token) {
     const closesAt = payload.closesAt ? new Date(payload.closesAt).getTime() : null;
     const opensAt = payload.opensAt ? new Date(payload.opensAt).getTime() : null;
 
-    if (opensAt && now < opensAt - 5 * 60 * 1000) {
-        throw new Error('Attendance window has not opened yet');
+    // Allow check-in 5 minutes before official opening time
+    const EARLY_ARRIVAL_MS = 5 * 60 * 1000;
+    // Allow check-in 10 minutes after official closing time
+    const GRACE_PERIOD_MS = 10 * 60 * 1000;
+
+    if (opensAt && now < opensAt - EARLY_ARRIVAL_MS) {
+        const opensAtDate = new Date(opensAt);
+        throw new Error(`Check-in opens at ${opensAtDate.toLocaleString()} (early arrival not yet allowed)`);
     }
 
-    if (closesAt && now > closesAt + 10 * 60 * 1000) {
-        throw new Error('Attendance token has expired');
+    if (closesAt && now > closesAt + GRACE_PERIOD_MS) {
+        throw new Error('Check-in window has closed (grace period ended)');
     }
 
     return payload;

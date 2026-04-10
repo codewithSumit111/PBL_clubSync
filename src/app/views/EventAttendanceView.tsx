@@ -11,6 +11,7 @@ interface EventOption {
     eventDate: string;
     eventTime: string;
     ccaHours: number;
+    _sortTimestamp: number; // Internal field for sorting
 }
 
 export const EventAttendanceView: React.FC = () => {
@@ -24,17 +25,26 @@ export const EventAttendanceView: React.FC = () => {
     const [showEventPicker, setShowEventPicker] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
+
         const loadEvents = async () => {
             try {
                 setEventsLoading(true);
                 const data = await fetchAllClubsEvents();
+                if (!isMounted) return;
+
                 const allEvents: EventOption[] = [];
                 
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
                 data.clubs.forEach(club => {
                     (club.events || []).forEach((event: ClubEvent) => {
                         // Only show upcoming events or events from today
                         const eventDate = new Date(event.date);
-                        if (eventDate >= new Date(new Date().toDateString())) {
+                        eventDate.setHours(0, 0, 0, 0);
+                        
+                        if (eventDate.getTime() >= today.getTime()) {
                             allEvents.push({
                                 eventId: event._id,
                                 clubName: club.club_name,
@@ -42,37 +52,75 @@ export const EventAttendanceView: React.FC = () => {
                                 eventDate: new Date(event.date).toLocaleDateString('en-IN'),
                                 eventTime: event.time || 'TBD',
                                 ccaHours: event.cca_hours || 0,
+                                _sortTimestamp: eventDate.getTime(),
                             });
                         }
                     });
                 });
                 
                 // Sort by date ascending
-                allEvents.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+                allEvents.sort((a, b) => a._sortTimestamp - b._sortTimestamp);
                 setEvents(allEvents);
             } catch (err: any) {
-                toast.error('Failed to load available events');
+                if (isMounted) {
+                    toast.error('Failed to load available events');
+                }
             } finally {
-                setEventsLoading(false);
+                if (isMounted) {
+                    setEventsLoading(false);
+                }
             }
         };
 
         loadEvents();
+
+        // Refresh events every 30 seconds to catch any new events or time window changes
+        const interval = setInterval(loadEvents, 30000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, []);
 
-    const canSubmit = useMemo(() => eventId.trim().length > 0 && manualToken.trim().length > 0, [eventId, manualToken]);
+    const canSubmit = useMemo(() => manualToken.trim().length > 0, [manualToken]);
+
+    // Helper: extract eventId from a QR token payload (base64url encoded JSON before the dot)
+    const extractEventIdFromToken = (token: string): string | null => {
+        try {
+            const parts = token.trim().split('.');
+            if (parts.length !== 2) return null;
+            // base64url decode the payload part
+            const base64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+            const jsonStr = atob(base64);
+            const payload = JSON.parse(jsonStr);
+            return payload.eventId || null;
+        } catch {
+            return null;
+        }
+    };
 
     const handleScan = async (token: string) => {
-        if (!eventId.trim()) {
-            toast.error('Select an event first');
-            return;
-        }
-
         setLoading(true);
         setMessage(null);
 
+        // Determine eventId: use selected event, or auto-extract from token
+        let resolvedEventId = eventId.trim();
+        if (!resolvedEventId) {
+            const extracted = extractEventIdFromToken(token);
+            if (extracted) {
+                resolvedEventId = extracted;
+                setEventId(extracted);
+            } else {
+                setMessage('Could not determine event. Please select an event first.');
+                toast.error('Select an event or scan a valid QR code');
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            const result = await checkInForEvent(eventId.trim(), token.trim());
+            const result = await checkInForEvent(resolvedEventId, token.trim());
             setLastResponse(result);
             setMessage(result.alreadyCheckedIn ? 'You were already checked in for this event.' : 'Attendance marked successfully.');
             toast.success(result.alreadyCheckedIn ? 'Already checked in' : 'Attendance marked');
@@ -87,7 +135,7 @@ export const EventAttendanceView: React.FC = () => {
     const submitManualToken = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSubmit) {
-            toast.error('Select event and enter QR token');
+            toast.error('Enter QR token');
             return;
         }
 
@@ -207,30 +255,28 @@ export const EventAttendanceView: React.FC = () => {
                             </>
                         )}
 
-                        {/* QR Scanner */}
-                        {eventId && <QRCodeScanner active={true} onScan={handleScan} />}
+                        {/* QR Scanner — always visible */}
+                        <QRCodeScanner active={true} onScan={handleScan} />
 
-                        {/* Manual Token Fallback */}
-                        {eventId && (
-                            <form onSubmit={submitManualToken} className="space-y-3 pt-2">
-                                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Manual QR Token (if camera unavailable)</label>
-                                <textarea
-                                    value={manualToken}
-                                    onChange={e => setManualToken(e.target.value)}
-                                    rows={3}
-                                    placeholder="Paste QR token here"
-                                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-teal-400 resize-none"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={loading || !canSubmit}
-                                    className="inline-flex items-center gap-2 rounded-2xl bg-teal-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-200 transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                                    Mark Attendance
-                                </button>
-                            </form>
-                        )}
+                        {/* Manual Token Fallback — always visible */}
+                        <form onSubmit={submitManualToken} className="space-y-3 pt-2">
+                            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Manual QR Token (if camera unavailable)</label>
+                            <textarea
+                                value={manualToken}
+                                onChange={e => setManualToken(e.target.value)}
+                                rows={3}
+                                placeholder="Paste QR token here"
+                                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-teal-400 resize-none"
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading || !canSubmit}
+                                className="inline-flex items-center gap-2 rounded-2xl bg-teal-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-200 transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                                Mark Attendance
+                            </button>
+                        </form>
                     </div>
                 </section>
 
