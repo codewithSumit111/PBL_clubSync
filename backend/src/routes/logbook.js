@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Logbook = require('../models/Logbook');
 const { protect } = require('../middleware/auth');
 const Student = require('../models/Student');
@@ -17,6 +18,11 @@ router.post('/', protect, async (req, res) => {
         // Validation
         if (!club_id || !activity_description || !date || hours === undefined) {
             return res.status(400).json({ success: false, message: 'Please provide all required fields' });
+        }
+
+        // Validate club_id is valid ObjectId before using
+        if (!club_id || !mongoose.Types.ObjectId.isValid(club_id)) {
+            return res.status(400).json({ success: false, message: 'Invalid club ID' });
         }
 
         // Verify the student is actually in this club and Approved
@@ -111,22 +117,27 @@ router.put('/:id/status', protect, async (req, res) => {
             logbook.rejection_reason = rejection_reason || 'No reason provided';
         }
 
-        await logbook.save();
-
-        // If approved, update student's total hours for this club
-        if (status === 'Approved') {
-            const Student = require('../models/Student');
-            const student = await Student.findById(logbook.student_id);
-            if (student) {
-                const clubEntry = student.registered_clubs.find(
-                    rc => rc.club.toString() === logbook.club_id.toString()
-                );
-                if (clubEntry) {
-                    clubEntry.cca_hours = (clubEntry.cca_hours || 0) + (logbook.hours || 0);
-                    await student.save();
-                }
+        // Handle CCA hours updates atomically using $inc to prevent race conditions
+        if (status === 'Approved' && !logbook.hours_applied) {
+            const result = await Student.updateOne(
+                { _id: logbook.student_id, 'registered_clubs.club': logbook.club_id },
+                { $inc: { 'registered_clubs.$.cca_hours': logbook.hours || 0 } }
+            );
+            if (result.modifiedCount > 0) {
+                logbook.hours_applied = true;
+            }
+        } else if (status === 'Rejected' && logbook.hours_applied) {
+            // Rollback: subtract previously added hours atomically
+            const result = await Student.updateOne(
+                { _id: logbook.student_id, 'registered_clubs.club': logbook.club_id },
+                { $inc: { 'registered_clubs.$.cca_hours': -(logbook.hours || 0) } }
+            );
+            if (result.modifiedCount > 0) {
+                logbook.hours_applied = false;
             }
         }
+
+        await logbook.save();
         res.json({ success: true, logbook });
 
     } catch (err) {

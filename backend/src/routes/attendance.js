@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Club = require('../models/Club');
 const Student = require('../models/Student');
 const Attendance = require('../models/Attendance');
@@ -9,9 +10,7 @@ const { generateAttendanceToken, verifyAttendanceToken } = require('../utils/att
 
 // ============================================================================
 // PRODUCTION WARNING - REMOVE BEFORE DEPLOYMENT
-// This file contains a DEV-ONLY endpoint at lines 316-368 (/api/dev/fix-event-time)
-// that allows unauthorized modification of event check-in times.
-// DELETE lines 316-368 before production deployment!
+// This file contains no DEV-ONLY endpoints.
 // ============================================================================
 
 function getEventById(club, eventId) {
@@ -81,7 +80,11 @@ router.get('/clubs/events/:eventId/attendance', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const club = await Club.findById(req.user.role === 'Club' ? req.user.id : req.query.clubId).select('club_name events');
+        const clubId = req.user.role === 'Club' ? req.user.id : req.query.clubId;
+        if (!clubId || !mongoose.Types.ObjectId.isValid(clubId)) {
+            return res.status(400).json({ success: false, message: 'Invalid or missing club ID' });
+        }
+        const club = await Club.findById(clubId).select('club_name events');
         if (!club) {
             return res.status(404).json({ success: false, message: 'Club not found' });
         }
@@ -140,7 +143,7 @@ router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (r
             return res.status(400).json({ success: false, message: verifyErr.message || 'Invalid QR token' });
         }
 
-        if (payload.eventId !== req.params.eventId) {
+        if (String(payload.eventId) !== String(req.params.eventId)) {
             return res.status(400).json({ success: false, message: 'QR token does not match this event' });
         }
 
@@ -268,20 +271,32 @@ router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (r
             });
         }
 
+        // Atomic update to prevent race conditions - use $addToSet
         let eventUpdated = false;
-        if (!event.attendees.some(attendeeId => attendeeId.toString() === student._id.toString())) {
-            event.attendees.push(student._id);
-            await club.save();
-            eventUpdated = true;
+        try {
+            const updateResult = await Club.updateOne(
+                { _id: club._id, 'events._id': event._id },
+                { $addToSet: { 'events.$.attendees': student._id } }
+            );
+            eventUpdated = updateResult.modifiedCount > 0;
+        } catch (err) {
+            console.error('Error updating event attendees:', err);
+            throw err;
         }
 
         try {
-            membership.cca_hours = (membership.cca_hours || 0) + Number(event.cca_hours || 0);
-            await student.save();
+            // Atomic $inc to prevent race conditions on concurrent check-ins
+            await Student.updateOne(
+                { _id: student._id, 'registered_clubs.club': club._id },
+                { $inc: { 'registered_clubs.$.cca_hours': Number(event.cca_hours || 0) } }
+            );
         } catch (err) {
             if (eventUpdated) {
-                event.attendees = event.attendees.filter(attendeeId => attendeeId.toString() !== student._id.toString());
-                await club.save();
+                // Rollback: remove the attendee we just added
+                await Club.updateOne(
+                    { _id: club._id, 'events._id': event._id },
+                    { $pull: { 'events.$.attendees': student._id } }
+                );
             }
             await Attendance.findByIdAndDelete(attendance._id);
             throw err;
@@ -311,66 +326,12 @@ router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (r
                 _id: student._id,
                 name: student.name,
                 roll_no: student.roll_no,
-                cca_hours: membership.cca_hours,
+                // cca_hours omitted - fetch from /api/students/me for fresh data
             },
         });
     } catch (err) {
         console.error('Error checking in attendance:', err);
         res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// @route   POST /api/dev/fix-event-time
-// @desc    TEMPORARY: Fix test event check-in times (DEV ONLY)
-router.post('/dev/fix-event-time', async (req, res) => {
-    try {
-        const { eventId } = req.body;
-        
-        if (!eventId) {
-            // Find first event and fix it
-            const club = await Club.findOne({ 'events.0': { $exists: true } });
-            if (!club) {
-                return res.status(404).json({ error: 'No events found. Create an event first.' });
-            }
-            
-            const event = club.events[0];
-            const newOpen = new Date(Date.now() - 2 * 60 * 1000); // 2 min ago
-            const newClose = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours from now
-            
-            event.check_in = event.check_in || {};
-            event.check_in.opens_at = newOpen;
-            event.check_in.closes_at = newClose;
-            await club.save();
-            
-            return res.json({
-                success: true,
-                message: 'Event fixed!',
-                event: {
-                    id: event._id,
-                    title: event.title,
-                    opens_at: newOpen.toLocaleString(),
-                    closes_at: newClose.toLocaleString()
-                },
-                nextStep: 'Go to Club Dashboard → Generate new QR → Scan it'
-            });
-        }
-        
-        // Fix specific event
-        const club = await Club.findOne({ 'events._id': eventId });
-        const event = club?.events.id(eventId);
-        
-        if (!event) {
-            return res.status(404).json({ error: 'Event not found' });
-        }
-        
-        event.check_in = event.check_in || {};
-        event.check_in.opens_at = new Date(Date.now() - 2 * 60 * 1000);
-        event.check_in.closes_at = new Date(Date.now() + 2 * 60 * 60 * 1000);
-        await club.save();
-        
-        res.json({ success: true, message: 'Event fixed! Regenerate QR now.' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
     }
 });
 

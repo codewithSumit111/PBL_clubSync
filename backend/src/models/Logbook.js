@@ -36,6 +36,10 @@ const logbookSchema = new mongoose.Schema({
     report_file: {
         type: String, // Store URL or path to the uploaded .pdf
         required: false
+    },
+    hours_applied: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true
