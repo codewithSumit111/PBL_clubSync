@@ -72,9 +72,9 @@ function verifyAttendanceToken(token) {
     const opensAt = payload.opensAt ? new Date(payload.opensAt).getTime() : null;
 
     // Allow check-in 5 minutes before official opening time
-    const EARLY_ARRIVAL_MS = 5 * 60 * 1000;
+    const EARLY_ARRIVAL_MS = 1 * 60 * 1000;
     // Allow check-in 10 minutes after official closing time
-    const GRACE_PERIOD_MS = 10 * 60 * 1000;
+    const GRACE_PERIOD_MS = 1 * 60 * 1000;
 
     if (opensAt && now < opensAt - EARLY_ARRIVAL_MS) {
         const opensAtIST = new Date(opensAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });

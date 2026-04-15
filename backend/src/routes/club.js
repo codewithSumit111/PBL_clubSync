@@ -383,7 +383,7 @@ router.post('/events', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const { title, description, date, time, venue, cca_hours } = req.body;
+        const { title, description, date, time, venue, cca_hours, check_in_opens_at, check_in_closes_at } = req.body;
         if (!title || !date) {
             return res.status(400).json({ success: false, message: 'Title and date are required' });
         }
@@ -392,8 +392,19 @@ router.post('/events', protect, async (req, res) => {
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
         const eventStart = buildEventStart(date, time);
-        const checkInOpensAt = new Date(eventStart.getTime() - 30 * 60 * 1000);
-        const checkInClosesAt = new Date(eventStart.getTime() + 3 * 60 * 60 * 1000);
+        const defaultCheckInOpensAt = new Date(eventStart.getTime() - 30 * 60 * 1000);
+        const defaultCheckInClosesAt = new Date(eventStart.getTime() + 3 * 60 * 60 * 1000);
+
+        const checkInOpensAt = check_in_opens_at
+            ? buildEventStart(date, check_in_opens_at)
+            : defaultCheckInOpensAt;
+        const checkInClosesAt = check_in_closes_at
+            ? buildEventStart(date, check_in_closes_at)
+            : defaultCheckInClosesAt;
+
+        if (checkInClosesAt <= checkInOpensAt) {
+            return res.status(400).json({ success: false, message: 'Check-in close time must be after open time' });
+        }
 
         club.events.push({
             title,

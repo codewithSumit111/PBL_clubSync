@@ -36,6 +36,26 @@ router.post('/', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'You are not an approved member of this club' });
         }
 
+        // ⭐ NEW: For 1st year students, enforce primary club restriction
+        if (studentRecord.year === 1) {
+            if (!studentRecord.primary_club_id) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'You must set your primary club first before submitting logbooks',
+                    needsPrimaryClub: true
+                });
+            }
+
+            if (studentRecord.primary_club_id.toString() !== club_id.toString()) {
+                console.warn(`[LOGBOOK PRIMARY CLUB VIOLATION] Student ${req.user.id} (1st year) tried to submit to ${club_id}, but primary is ${studentRecord.primary_club_id}`);
+                return res.status(403).json({ 
+                    success: false, 
+                    message: `As a 1st year student, you can only submit logbooks to your primary club. Your primary club ID: ${studentRecord.primary_club_id}`,
+                    primaryClubId: studentRecord.primary_club_id
+                });
+            }
+        }
+
         const newLogbook = new Logbook({
             student_id: req.user.id,
             club_id,

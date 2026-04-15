@@ -213,10 +213,12 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
             )}
 
             {/* CCA Progress Bar (Full Width) */}
-            <CCAProgressBar
-                progress={data?.ccaProgress || { completed: 0, mandated: 30, percentage: 0 }}
-                loading={loading}
-            />
+                {data?.year === 1 && (
+                    <CCAProgressBar
+                        progress={data?.ccaProgress || { completed: 0, mandated: 30, percentage: 0 }}
+                        loading={loading}
+                    />
+                )}
 
             {/* Main Widgets Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
