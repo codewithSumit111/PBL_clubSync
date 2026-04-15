@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { API_BASE as API } from '../../config';
 import { EventQrModal } from '../../components/club/EventQrModal';
 import { OrganizerAttendanceMonitor } from '../../components/club/OrganizerAttendanceMonitor';
-import { fetchEventQr } from '../../services/attendanceApi';
+import { AttendanceEvent, fetchEventQr } from '../../services/attendanceApi';
 
 interface ClubEvent {
     _id: string; title: string; description: string;
@@ -49,7 +49,7 @@ export const ClubEventsNotifications: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showEventForm, setShowEventForm] = useState(false);
     const [showNotifForm, setShowNotifForm] = useState(false);
-    const [qrEvent, setQrEvent] = useState<ClubEvent | null>(null);
+    const [qrEvent, setQrEvent] = useState<AttendanceEvent | null>(null);
     const [qrToken, setQrToken] = useState('');
     const [qrLoading, setQrLoading] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -57,7 +57,16 @@ export const ClubEventsNotifications: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedEventForMonitor, setSelectedEventForMonitor] = useState<string | null>(null);
 
-    const [eventForm, setEventForm] = useState({ title: '', description: '', date: '', time: '', venue: '', cca_hours: '0' });
+    const [eventForm, setEventForm] = useState({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        venue: '',
+        cca_hours: '0',
+        check_in_opens_at: '',
+        check_in_closes_at: '',
+    });
     const [notifForm, setNotifForm] = useState({ title: '', message: '' });
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -93,7 +102,16 @@ export const ClubEventsNotifications: React.FC = () => {
             toast.success('Event created successfully!');
             setEvents(prev => [data.event, ...prev]);
             setShowEventForm(false);
-            setEventForm({ title: '', description: '', date: '', time: '', venue: '', cca_hours: '0' });
+            setEventForm({
+                title: '',
+                description: '',
+                date: '',
+                time: '',
+                venue: '',
+                cca_hours: '0',
+                check_in_opens_at: '',
+                check_in_closes_at: '',
+            });
         } catch (err: any) {
             toast.error(err.message);
         } finally {
@@ -105,7 +123,7 @@ export const ClubEventsNotifications: React.FC = () => {
         setQrLoading(true);
         try {
             const data = await fetchEventQr(event._id);
-            setQrEvent(data.event as ClubEvent);
+            setQrEvent(data.event);
             setQrToken(data.qrToken);
         } catch (err: any) {
             toast.error(err.message);
@@ -272,6 +290,16 @@ export const ClubEventsNotifications: React.FC = () => {
                                 placeholder="e.g. 2"
                                 className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-400" />
                         </FormField>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormField label="Check-in Opens">
+                                <input type="time" value={eventForm.check_in_opens_at} onChange={e => setEventForm(p => ({ ...p, check_in_opens_at: e.target.value }))}
+                                    className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-400" />
+                            </FormField>
+                            <FormField label="Check-in Closes">
+                                <input type="time" value={eventForm.check_in_closes_at} onChange={e => setEventForm(p => ({ ...p, check_in_closes_at: e.target.value }))}
+                                    className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-teal-400" />
+                            </FormField>
+                        </div>
                         <FormField label="Venue">
                             <input value={eventForm.venue} onChange={e => setEventForm(p => ({ ...p, venue: e.target.value }))}
                                 placeholder="e.g. Seminar Hall A"
@@ -313,7 +341,7 @@ export const ClubEventsNotifications: React.FC = () => {
 
             {qrEvent && qrToken && (
                 <EventQrModal
-                    event={qrEvent.club_name ? qrEvent : { ...qrEvent, club_name: 'Current Club' }}
+                    event={qrEvent}
                     qrToken={qrToken}
                     onClose={() => { setQrEvent(null); setQrToken(''); }}
                 />
