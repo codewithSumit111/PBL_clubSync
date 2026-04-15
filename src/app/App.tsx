@@ -85,7 +85,7 @@ const AppContent: React.FC = () => {
       case 'logbook':
         return <LogbookView />;
       case 'qr-attendance':
-        return <EventAttendanceView />;
+        return <EventAttendanceView onViewChange={setCurrentView} />;
       case 'attendance-history':
         return <StudentAttendanceHistoryView />;
       case 'achievements':

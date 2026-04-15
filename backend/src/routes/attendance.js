@@ -335,42 +335,209 @@ router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (r
     }
 });
 
-// @route   GET /api/students/attendance
-// @desc    Get attendance history for the logged-in student
-router.get('/students/attendance', protect, async (req, res) => {
+// @route   GET /api/clubs/event-analytics
+// @desc    Get aggregated event analytics for the logged-in club
+router.get('/clubs/event-analytics', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Student') {
-            return res.status(403).json({ success: false, message: 'Only students can access their attendance history' });
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Only clubs can access event analytics' });
         }
 
-        const student = await Student.findById(req.user.id);
-        if (!student) {
-            return res.status(404).json({ success: false, message: 'Student not found' });
+        const club = await Club.findById(req.user.id).select('club_name events').lean();
+        if (!club) {
+            return res.status(404).json({ success: false, message: 'Club not found' });
         }
 
-        const attendance = await Attendance.find({ student_id: student._id })
-            .populate('club_id', 'club_name')
-            .sort({ checked_in_at: -1 })
-            .lean();
+        const events = club.events || [];
+        const totalEvents = events.length;
 
-        const formattedAttendance = attendance.map(record => ({
-            _id: record._id,
-            event_title: record.event_title,
-            club_name: record.club_id?.club_name || 'Unknown Club',
-            cca_hours_awarded: record.cca_hours_awarded,
-            checked_in_at: record.checked_in_at,
-            checked_in_date: new Date(record.checked_in_at).toLocaleDateString('en-IN'),
-            checked_in_time: new Date(record.checked_in_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        }));
+        // Get all attendance records for this club
+        const allAttendance = await Attendance.find({ club_id: club._id }).lean();
+        const totalAttendance = allAttendance.length;
+        const totalCCAHoursAwarded = allAttendance.reduce((sum, a) => sum + (a.cca_hours_awarded || 0), 0);
+
+        // Monthly event count + attendance (last 12 months)
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const now = new Date();
+        const monthlyData = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const m = d.getMonth();
+            const y = d.getFullYear();
+            const monthStart = new Date(y, m, 1);
+            const monthEnd = new Date(y, m + 1, 0, 23, 59, 59);
+
+            const monthEvents = events.filter(e => {
+                const ed = new Date(e.date);
+                return ed >= monthStart && ed <= monthEnd;
+            });
+
+            const monthAttendance = allAttendance.filter(a => {
+                const ad = new Date(a.checked_in_at);
+                return ad >= monthStart && ad <= monthEnd;
+            });
+
+            monthlyData.push({
+                name: `${monthNames[m]} ${String(y).slice(2)}`,
+                month: m + 1,
+                year: y,
+                events: monthEvents.length,
+                attendance: monthAttendance.length,
+                ccaHours: monthAttendance.reduce((s, a) => s + (a.cca_hours_awarded || 0), 0),
+            });
+        }
+
+        // Yearly trend
+        const yearSet = new Set();
+        events.forEach(e => yearSet.add(new Date(e.date).getFullYear()));
+        allAttendance.forEach(a => yearSet.add(new Date(a.checked_in_at).getFullYear()));
+        const years = Array.from(yearSet).sort();
+        const yearlyData = years.map(yr => {
+            const yrEvents = events.filter(e => new Date(e.date).getFullYear() === yr);
+            const yrAtt = allAttendance.filter(a => new Date(a.checked_in_at).getFullYear() === yr);
+            return {
+                year: yr,
+                events: yrEvents.length,
+                attendance: yrAtt.length,
+                ccaHours: yrAtt.reduce((s, a) => s + (a.cca_hours_awarded || 0), 0),
+            };
+        });
+
+        // Per-event breakdown (for pie chart and table)
+        const perEvent = events.map(e => {
+            const eventAtt = allAttendance.filter(a => String(a.event_id) === String(e._id));
+            return {
+                _id: e._id,
+                title: e.title,
+                date: e.date,
+                time: e.time || '',
+                venue: e.venue || '',
+                cca_hours: e.cca_hours || 0,
+                attendanceCount: eventAtt.length,
+                ccaHoursAwarded: eventAtt.reduce((s, a) => s + (a.cca_hours_awarded || 0), 0),
+            };
+        }).sort((a, b) => b.attendanceCount - a.attendanceCount);
+
+        // Top 5 for pie chart
+        const topEvents = perEvent.slice(0, 5);
+        const othersCount = perEvent.slice(5).reduce((s, e) => s + e.attendanceCount, 0);
+        const participationDistribution = [
+            ...topEvents.map(e => ({ name: e.title, value: e.attendanceCount })),
+        ];
+        if (othersCount > 0) {
+            participationDistribution.push({ name: 'Others', value: othersCount });
+        }
 
         res.json({
             success: true,
-            attendance: formattedAttendance,
-            count: formattedAttendance.length,
-            total_cca_hours: formattedAttendance.reduce((sum, record) => sum + (record.cca_hours_awarded || 0), 0),
+            analytics: {
+                totalEvents,
+                totalAttendance,
+                avgAttendance: totalEvents > 0 ? parseFloat((totalAttendance / totalEvents).toFixed(1)) : 0,
+                totalCCAHoursAwarded,
+                monthlyData,
+                yearlyData,
+                perEvent,
+                participationDistribution,
+            },
         });
     } catch (err) {
-        console.error('Error fetching student attendance history:', err);
+        console.error('Error fetching event analytics:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// @route   GET /api/clubs/event-report
+// @desc    Get detailed event data for report generation (single, monthly, yearly)
+router.get('/clubs/event-report', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Only clubs can generate event reports' });
+        }
+
+        const club = await Club.findById(req.user.id).select('club_name events').lean();
+        if (!club) {
+            return res.status(404).json({ success: false, message: 'Club not found' });
+        }
+
+        const { type, eventId, month, year } = req.query;
+
+        let targetEvents = [];
+        let reportTitle = '';
+
+        if (type === 'single') {
+            if (!eventId) return res.status(400).json({ success: false, message: 'eventId is required for single event report' });
+            const event = (club.events || []).find(e => String(e._id) === String(eventId));
+            if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+            targetEvents = [event];
+            reportTitle = `Event Report: ${event.title}`;
+        } else if (type === 'monthly') {
+            if (!month || !year) return res.status(400).json({ success: false, message: 'month and year are required' });
+            const m = parseInt(month) - 1;
+            const y = parseInt(year);
+            const monthStart = new Date(y, m, 1);
+            const monthEnd = new Date(y, m + 1, 0, 23, 59, 59);
+            targetEvents = (club.events || []).filter(e => {
+                const ed = new Date(e.date);
+                return ed >= monthStart && ed <= monthEnd;
+            });
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            reportTitle = `Monthly Report: ${monthNames[m]} ${y}`;
+        } else if (type === 'yearly') {
+            if (!year) return res.status(400).json({ success: false, message: 'year is required' });
+            const y = parseInt(year);
+            targetEvents = (club.events || []).filter(e => new Date(e.date).getFullYear() === y);
+            reportTitle = `Yearly Report: ${y}`;
+        } else {
+            return res.status(400).json({ success: false, message: 'type must be single, monthly, or yearly' });
+        }
+
+        // Fetch attendance for all target events
+        const eventIds = targetEvents.map(e => e._id);
+        const attendance = await Attendance.find({
+            club_id: club._id,
+            event_id: { $in: eventIds },
+        })
+            .populate('student_id', 'name roll_no department year')
+            .sort({ checked_in_at: -1 })
+            .lean();
+
+        // Build per-event data with attendees
+        const eventsWithAttendees = targetEvents.map(event => {
+            const eventAtt = attendance.filter(a => String(a.event_id) === String(event._id));
+            return {
+                _id: event._id,
+                title: event.title,
+                description: event.description || '',
+                date: event.date,
+                time: event.time || '',
+                venue: event.venue || '',
+                cca_hours: event.cca_hours || 0,
+                attendanceCount: eventAtt.length,
+                attendees: eventAtt.map(a => ({
+                    name: a.student_id?.name || a.student_name,
+                    roll_no: a.student_id?.roll_no || a.student_roll_no,
+                    department: a.student_id?.department || '',
+                    cca_hours_awarded: a.cca_hours_awarded,
+                    checked_in_at: a.checked_in_at,
+                })),
+            };
+        });
+
+        res.json({
+            success: true,
+            report: {
+                title: reportTitle,
+                clubName: club.club_name,
+                generatedAt: new Date().toISOString(),
+                totalEvents: eventsWithAttendees.length,
+                totalAttendance: attendance.length,
+                totalCCAHours: attendance.reduce((s, a) => s + (a.cca_hours_awarded || 0), 0),
+                events: eventsWithAttendees,
+            },
+        });
+    } catch (err) {
+        console.error('Error generating event report:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

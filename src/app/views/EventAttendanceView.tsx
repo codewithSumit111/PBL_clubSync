@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { CheckCircle2, Loader2, QrCode, ShieldCheck, Ticket, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Loader2, QrCode, ShieldCheck, Ticket, ChevronDown, History, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeScanner } from '../components/student/QRCodeScanner';
 import { checkInForEvent, fetchAllClubsEvents, ClubEvent } from '../services/attendanceApi';
@@ -14,7 +14,11 @@ interface EventOption {
     _sortTimestamp: number; // Internal field for sorting
 }
 
-export const EventAttendanceView: React.FC = () => {
+interface EventAttendanceViewProps {
+    onViewChange?: (view: string) => void;
+}
+
+export const EventAttendanceView: React.FC<EventAttendanceViewProps> = ({ onViewChange }) => {
     const [eventId, setEventId] = useState('');
     const [manualToken, setManualToken] = useState('');
     const [loading, setLoading] = useState(false);
@@ -23,6 +27,7 @@ export const EventAttendanceView: React.FC = () => {
     const [events, setEvents] = useState<EventOption[]>([]);
     const [eventsLoading, setEventsLoading] = useState(true);
     const [showEventPicker, setShowEventPicker] = useState(true);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -123,7 +128,13 @@ export const EventAttendanceView: React.FC = () => {
             const result = await checkInForEvent(resolvedEventId, token.trim());
             setLastResponse(result);
             setMessage(result.alreadyCheckedIn ? 'You were already checked in for this event.' : 'Attendance marked successfully.');
-            toast.success(result.alreadyCheckedIn ? 'Already checked in' : 'Attendance marked');
+            
+            // Remove event from list if successful
+            if (!result.alreadyCheckedIn) {
+                setEvents(prev => prev.filter(e => e.eventId !== resolvedEventId));
+            }
+            
+            setShowModal(true);
         } catch (error: any) {
             setMessage(error.message);
             toast.error(error.message);
@@ -306,6 +317,78 @@ export const EventAttendanceView: React.FC = () => {
                     </div>
                 </aside>
             </div>
+
+            {/* Success Modal Popup */}
+            {showModal && lastResponse && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative flex flex-col items-center text-center transform scale-100 animate-in zoom-in-95 duration-300">
+                        <button 
+                            onClick={() => {
+                                setShowModal(false);
+                                setEventId('');
+                                setManualToken('');
+                                setShowEventPicker(true);
+                            }} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"
+                        >
+                            <X size={20} />
+                        </button>
+                        
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg ${lastResponse.alreadyCheckedIn ? 'bg-blue-100 text-blue-500 shadow-blue-500/20' : 'bg-emerald-100 text-emerald-500 shadow-emerald-500/20'}`}>
+                            {lastResponse.alreadyCheckedIn ? < ShieldCheck size={40} /> : <CheckCircle2 size={44} />}
+                        </div>
+                        
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">
+                            {lastResponse.alreadyCheckedIn ? 'Already Recorded' : 'Success!'}
+                        </h3>
+                        
+                        <p className="text-sm text-gray-500 mb-6 font-medium">
+                            {lastResponse.alreadyCheckedIn 
+                                ? 'Your attendance for this event was already marked previously.' 
+                                : 'Your attendance has been successfully recorded.'}
+                        </p>
+
+                        <div className="w-full bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 text-left">
+                            <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Student</p>
+                            <p className="font-semibold text-gray-900 mb-3">{lastResponse.student?.name}</p>
+                            
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Credited</p>
+                                    <p className="font-black text-emerald-600">+{lastResponse.event?.cca_hours || 0} Hours</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total</p>
+                                    <p className="font-bold text-gray-900">{lastResponse.student?.cca_hours} Hrs</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="w-full space-y-3">
+                            <button
+                                onClick={() => {
+                                    setShowModal(false);
+                                    if (onViewChange) onViewChange('attendance-history');
+                                }}
+                                className="w-full py-3 bg-teal-500 text-white rounded-xl font-bold hover:bg-teal-600 shadow-lg shadow-teal-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <History size={18} /> View Check-In History
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowModal(false);
+                                    setEventId('');
+                                    setManualToken('');
+                                    setShowEventPicker(true);
+                                }}
+                                className="w-full py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                            >
+                                <QrCode size={18} /> Scan Another Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

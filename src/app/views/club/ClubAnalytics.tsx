@@ -3,12 +3,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, AreaChart, Area, Legend
+    PieChart, Pie, Cell, AreaChart, Area, Legend, LineChart, Line
 } from 'recharts';
-import { TrendingUp, Users, Clock, Award, ArrowUpRight, Trophy, Activity, RefreshCw, AlertCircle } from 'lucide-react';
+import { TrendingUp, Users, Clock, Award, ArrowUpRight, Trophy, Activity, RefreshCw, AlertCircle, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE as API } from '../../config';
-const COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ec4899', '#10b981'];
+const COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ec4899', '#10b981', '#14b8a6', '#8b5cf6'];
 const tooltipStyle = { borderRadius: '12px', border: 'none', boxShadow: '0 10px 24px rgba(0,0,0,0.08)', fontSize: '12px' };
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
 
@@ -21,6 +21,17 @@ interface AnalyticsData {
     marksDistribution: { range: string; count: number }[];
     achievementsByLevel: { level: string; count: number }[];
     topMembers: { name: string; roll_no: string; cca_marks: number; cca_hours: number }[];
+}
+
+interface EventAnalyticsData {
+    totalEvents: number;
+    totalAttendance: number;
+    avgAttendance: number;
+    totalCCAHoursAwarded: number;
+    monthlyData: any[];
+    yearlyData: any[];
+    perEvent: any[];
+    participationDistribution: any[];
 }
 
 const LEVELS = ['College', 'State', 'National', 'International'];
@@ -70,8 +81,10 @@ function computeAnalytics(members: any[], achievements: any[]): AnalyticsData {
 export const ClubAnalytics: React.FC = () => {
     const { token, user } = useSelector((state: RootState) => state.auth);
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [eventAnalytics, setEventAnalytics] = useState<EventAnalyticsData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'members' | 'events'>('members');
 
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -79,16 +92,19 @@ export const ClubAnalytics: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [memRes, achRes] = await Promise.all([
+            const [memRes, achRes, evRes] = await Promise.all([
                 fetch(`${API}/clubs/members`, { headers }),
                 fetch(`${API}/achievements/club`, { headers }),
+                fetch(`${API}/clubs/event-analytics`, { headers }),
             ]);
-            const [memData, achData] = await Promise.all([memRes.json(), achRes.json()]);
+            const [memData, achData, evData] = await Promise.all([memRes.json(), achRes.json(), evRes.json()]);
 
             if (!memRes.ok) throw new Error(memData.message || 'Failed to fetch member data');
             if (!achRes.ok) throw new Error(achData.message || 'Failed to fetch achievement data');
+            if (!evRes.ok) throw new Error(evData.message || 'Failed to fetch event analytics');
 
             setAnalytics(computeAnalytics(memData.members || [], achData.achievements || []));
+            setEventAnalytics(evData.analytics || null);
         } catch (err: any) {
             setError(err.message);
             toast.error(err.message);
@@ -138,8 +154,30 @@ export const ClubAnalytics: React.FC = () => {
                 </button>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Tabs */}
+            <div className={`${cardClass} p-1 flex gap-1 w-fit mb-6`}>
+                <button 
+                    onClick={() => setActiveTab('members')}
+                    className={`px-5 py-2 flex items-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        activeTab === 'members' ? 'bg-teal-500 text-white shadow' : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                    <Users size={16} /> Members
+                </button>
+                <button 
+                    onClick={() => setActiveTab('events')}
+                    className={`px-5 py-2 flex items-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        activeTab === 'events' ? 'bg-teal-500 text-white shadow' : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                    <Calendar size={16} /> Events & Activities
+                </button>
+            </div>
+
+            {activeTab === 'members' ? (
+                <>
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {kpis.map((kpi, i) => (
                     <div key={i} className={`${cardClass} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
                         <div className="flex items-center justify-between mb-3">
@@ -265,6 +303,142 @@ export const ClubAnalytics: React.FC = () => {
                     )}
                 </div>
             </div>
+            </>) : (
+                <>
+                    {/* Event Analytics Tab */}
+                    {eventAnalytics && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            {/* KPI Cards */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[
+                                    { label: 'Total Events', value: eventAnalytics.totalEvents, icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50', delta: 'conducted' },
+                                    { label: 'Total Attendance', value: eventAnalytics.totalAttendance, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50', delta: 'participants' },
+                                    { label: 'Avg Attendance', value: eventAnalytics.avgAttendance, icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50', delta: 'per event' },
+                                    { label: 'CCA Hours Awarded', value: eventAnalytics.totalCCAHoursAwarded, icon: Award, color: 'text-pink-600', bg: 'bg-pink-50', delta: 'total credited' },
+                                ].map((kpi, i) => (
+                                    <div key={i} className={`${cardClass} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className={`w-10 h-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center`}>
+                                                <kpi.icon size={20} />
+                                            </div>
+                                            <span className="text-xs text-gray-400">{kpi.delta}</span>
+                                        </div>
+                                        <p className="text-2xl font-black text-gray-900">{kpi.value}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{kpi.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Monthly Bar Chart */}
+                                <div className={`${cardClass} p-6`}>
+                                    <h3 className="font-bold text-gray-900 mb-1">Monthly Events</h3>
+                                    <p className="text-xs text-gray-400 mb-4">Events conducted over the last 12 months</p>
+                                    <div className="h-64">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={eventAnalytics.monthlyData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                                                <Bar dataKey="events" name="Events" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={24} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Yearly Trend Line Chart */}
+                                <div className={`${cardClass} p-6`}>
+                                    <h3 className="font-bold text-gray-900 mb-1">Yearly Attendance Trend</h3>
+                                    <p className="text-xs text-gray-400 mb-4">Total attendance numbers year over year</p>
+                                    <div className="h-64">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={eventAnalytics.yearlyData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                                <Tooltip contentStyle={tooltipStyle} />
+                                                <Line type="monotone" dataKey="attendance" name="Total Attendance" stroke="#0d9488" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Participation Distribution Pie Chart */}
+                                <div className={`${cardClass} p-6`}>
+                                    <h3 className="font-bold text-gray-900 mb-1">Participation</h3>
+                                    <p className="text-xs text-gray-400 mb-4">Distribution across top events</p>
+                                    <div className="h-48">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie data={eventAnalytics.participationDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                                                    {eventAnalytics.participationDistribution.map((d, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                                </Pie>
+                                                <Tooltip contentStyle={tooltipStyle} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="mt-4 space-y-1.5 max-h-32 overflow-y-auto pr-2">
+                                        {eventAnalytics.participationDistribution.map((d, i) => (
+                                            <div key={i} className="flex items-center justify-between text-xs">
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                    <span className="text-gray-600 truncate">{d.name}</span>
+                                                </div>
+                                                <span className="font-bold text-gray-900 shrink-0 ml-2">{d.value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Event List Table */}
+                                <div className={`${cardClass} p-0 lg:col-span-2 overflow-hidden flex flex-col`}>
+                                    <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 mb-1">Events Breakdown</h3>
+                                            <p className="text-xs text-gray-400">Detailed stats for all conducted events</p>
+                                        </div>
+                                    </div>
+                                    <div className="overflow-x-auto flex-1">
+                                        <table className="w-full text-left whitespace-nowrap">
+                                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider sticky top-0 uppercase">
+                                                <tr>
+                                                    <th className="px-5 py-3 font-semibold">Event Name</th>
+                                                    <th className="px-5 py-3 font-semibold">Date</th>
+                                                    <th className="px-5 py-3 font-semibold">Attendance</th>
+                                                    <th className="px-5 py-3 font-semibold">CCA Hrs Given</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50 text-sm">
+                                                {eventAnalytics.perEvent.length === 0 ? (
+                                                    <tr><td colSpan={4} className="text-center py-8 text-gray-400">No events found</td></tr>
+                                                ) : (
+                                                    eventAnalytics.perEvent.map((ev, i) => (
+                                                        <tr key={ev._id || i} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="px-5 py-3.5 font-semibold text-gray-900">{ev.title}</td>
+                                                            <td className="px-5 py-3.5 text-gray-500 text-xs">
+                                                                {new Date(ev.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            </td>
+                                                            <td className="px-5 py-3.5">
+                                                                <span className="px-2.5 py-1 bg-teal-50 text-teal-700 rounded-lg font-bold text-xs">
+                                                                    <Users size={12} className="inline mr-1" /> {ev.attendanceCount}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-5 py-3.5 font-medium text-gray-600">{ev.ccaHoursAwarded}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 };
