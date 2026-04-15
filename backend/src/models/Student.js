@@ -80,6 +80,18 @@ const studentSchema = new mongoose.Schema({
     // Array to track all registered clubs and their specific stats for this student
     registered_clubs: [registeredClubSchema],
 
+    // Primary club for CCA hours (mandatory for 1st year students)
+    primary_club_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Club',
+        default: null
+    },
+    // Track when primary club was set (to enforce once-per-semester rule)
+    primary_club_set_date: {
+        type: Date,
+        default: null
+    },
+
     // References to other collections
     achievements: [{
         type: mongoose.Schema.Types.ObjectId,

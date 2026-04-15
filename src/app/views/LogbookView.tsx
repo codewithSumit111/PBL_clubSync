@@ -159,6 +159,21 @@ export const LogbookView: React.FC = () => {
     return found?.club_name || 'Unknown Club';
   };
 
+    // Only 1st year students should access logbook
+    if (user?.year !== '1') {
+      return (
+        <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+            <CheckCircle size={32} className="text-emerald-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Logbook Requirement Completed</h2>
+          <p className="text-gray-600 text-center max-w-md">
+            You've completed your logbook submission requirement! This section is only for 1st year students.
+          </p>
+        </div>
+      );
+    }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
       {/* Header */}

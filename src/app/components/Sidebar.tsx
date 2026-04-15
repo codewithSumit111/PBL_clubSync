@@ -67,7 +67,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Student', 'Club'] },
   ];
 
-  const filteredItems = menuItems.filter(item => user && item.roles.includes(user.role));
+    // For students, hide logbook and CCA progress if not in 1st year
+    const filteredItems = menuItems.filter(item => {
+      if (!user || !item.roles.includes(user.role)) return false;
+    
+      // Hide CCA-related items for non-1st year students
+      if ((item.id === 'logbook' || item.id === 'cca-progress') && user.role === 'Student') {
+        return user.year === '1';
+      }
+    
+      return true;
+    });
 
   return (
     <>

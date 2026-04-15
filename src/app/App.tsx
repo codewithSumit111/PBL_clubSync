@@ -83,7 +83,22 @@ const AppContent: React.FC = () => {
       case 'my-clubs':
         return <ClubListView mode={currentView} onViewChange={setCurrentView} />;
       case 'logbook':
-        return <LogbookView />;
+          return user?.year === '1' ? (
+            <LogbookView />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[70vh]">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Logbook Not Available</h2>
+              <p className="text-gray-600 text-center mb-6 max-w-md">
+                Logbook submissions are only required for 1st year students. As a {user?.year || 'N/A'} year student, you've completed this requirement.
+              </p>
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          );
       case 'qr-attendance':
         return <EventAttendanceView />;
       case 'attendance-history':
@@ -95,7 +110,22 @@ const AppContent: React.FC = () => {
       case 'manage-notices':
         return <ManageNotices />;
       case 'cca-progress':
-        return <StudentCCAView />;
+          return user?.year === '1' ? (
+            <StudentCCAView />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[70vh]">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">CCA Progress Not Available</h2>
+              <p className="text-gray-600 text-center mb-6 max-w-md">
+                CCA progress tracking is only for 1st year students. As a {user?.year || 'N/A'} year student, you've completed your CCA requirements.
+              </p>
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          );
       // ── Admin only ───────────────────────────
       case 'analytics':
         return <CCAAnalytics />;

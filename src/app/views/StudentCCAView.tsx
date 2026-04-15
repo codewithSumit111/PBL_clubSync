@@ -27,6 +27,21 @@ export const StudentCCAView: React.FC = () => {
         loadData();
     }, []);
 
+        // Only 1st year students should access CCA view
+        if (user?.year !== '1') {
+            return (
+                <div className="flex flex-col items-center justify-center h-[70vh]">
+                    <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-4">
+                        <ShieldCheck size={32} className="text-amber-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">CCA Requirement Completed</h2>
+                    <p className="text-gray-600 text-center mb-6 max-w-md">
+                        You've completed your CCA requirements! This section is only for 1st year students who are still accumulating CCA hours.
+                    </p>
+                </div>
+            );
+        }
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header */}
