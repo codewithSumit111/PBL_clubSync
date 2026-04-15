@@ -77,8 +77,8 @@ function verifyAttendanceToken(token) {
     const GRACE_PERIOD_MS = 10 * 60 * 1000;
 
     if (opensAt && now < opensAt - EARLY_ARRIVAL_MS) {
-        const opensAtDate = new Date(opensAt);
-        throw new Error(`Check-in opens at ${opensAtDate.toLocaleString()} (early arrival not yet allowed)`);
+        const opensAtIST = new Date(opensAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        throw new Error(`Check-in opens at ${opensAtIST} IST (early arrival not yet allowed)`);
     }
 
     if (closesAt && now > closesAt + GRACE_PERIOD_MS) {

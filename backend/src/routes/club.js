@@ -5,6 +5,9 @@ const Student = require('../models/Student');
 const Admin = require('../models/Admin');
 const { protect } = require('../middleware/auth');
 
+// IST offset: +5 hours 30 minutes
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 function buildEventStart(dateValue, timeValue) {
     const eventDate = new Date(dateValue);
 
@@ -28,8 +31,11 @@ function buildEventStart(dateValue, timeValue) {
         hours = 0;
     }
 
-    eventDate.setHours(hours, minutes, 0, 0);
-    return eventDate;
+    // Set the time as IST then convert to UTC for storage
+    // Use UTC methods to avoid server timezone dependency
+    eventDate.setUTCHours(hours, minutes, 0, 0);
+    // Subtract IST offset to convert IST → UTC
+    return new Date(eventDate.getTime() - IST_OFFSET_MS);
 }
 
 // @route   GET /api/clubs

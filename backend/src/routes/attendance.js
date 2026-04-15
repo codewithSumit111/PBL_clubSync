@@ -178,8 +178,8 @@ router.post('/clubs/events/:eventId/check-in', protect, checkInLimiter, async (r
         const closesAt = event.check_in?.closes_at ? new Date(event.check_in.closes_at).getTime() : null;
 
         if (opensAt && now < opensAt - 5 * 60 * 1000) {
-            const opensAtLocal = new Date(event.check_in.opens_at).toLocaleString();
-            return res.status(400).json({ success: false, message: `Check-in opens at ${opensAtLocal} (5-minute early arrival allowed)` });
+            const opensAtIST = new Date(event.check_in.opens_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+            return res.status(400).json({ success: false, message: `Check-in opens at ${opensAtIST} IST (5-minute early arrival allowed)` });
         }
 
         if (closesAt && now > closesAt + 10 * 60 * 1000) {
