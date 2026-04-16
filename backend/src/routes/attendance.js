@@ -7,6 +7,10 @@ const Attendance = require('../models/Attendance');
 const { protect } = require('../middleware/auth');
 const { checkInLimiter, qrGenerationLimiter } = require('../middleware/rateLimiter');
 const { generateAttendanceToken, verifyAttendanceToken } = require('../utils/attendanceQr');
+const {
+    resolveClubIdForAction,
+    canManageClubAction,
+} = require('../middleware/clubCouncilAuth');
 
 // ============================================================================
 // PRODUCTION WARNING - REMOVE BEFORE DEPLOYMENT
@@ -25,11 +29,21 @@ function getMembershipEntry(student, clubId) {
 // @desc    Generate a signed QR token for a club event
 router.post('/clubs/events/:eventId/qr', protect, qrGenerationLimiter, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Only clubs can generate event QR codes' });
+        if (req.user.role !== 'Club' && req.user.role !== 'Student') {
+            return res.status(403).json({ success: false, message: 'Only clubs/coordinators can generate event QR codes' });
         }
 
-        const club = await Club.findById(req.user.id).select('club_name events');
+        const clubId = await resolveClubIdForAction(req);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        const canGenerateQR = await canManageClubAction(req, clubId, 'ATTENDANCE_MANAGER');
+        if (!canGenerateQR) {
+            return res.status(403).json({ success: false, message: 'Not authorized to generate QR for this club' });
+        }
+
+        const club = await Club.findById(clubId).select('club_name events');
         if (!club) {
             return res.status(404).json({ success: false, message: 'Club not found' });
         }
@@ -76,14 +90,24 @@ router.post('/clubs/events/:eventId/qr', protect, qrGenerationLimiter, async (re
 // @desc    Get attendance list for a club event
 router.get('/clubs/events/:eventId/attendance', protect, async (req, res) => {
     try {
-        if (!['Club', 'Admin'].includes(req.user.role)) {
+        if (!['Club', 'Admin', 'Student'].includes(req.user.role)) {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const clubId = req.user.role === 'Club' ? req.user.id : req.query.clubId;
+        const clubId = req.user.role === 'Admin'
+            ? req.query.clubId
+            : await resolveClubIdForAction(req);
         if (!clubId || !mongoose.Types.ObjectId.isValid(clubId)) {
             return res.status(400).json({ success: false, message: 'Invalid or missing club ID' });
         }
+
+        if (req.user.role === 'Student') {
+            const canViewAttendance = await canManageClubAction(req, clubId, 'ATTENDANCE_MANAGER');
+            if (!canViewAttendance) {
+                return res.status(403).json({ success: false, message: 'Not authorized to view attendance for this club' });
+            }
+        }
+
         const club = await Club.findById(clubId).select('club_name events');
         if (!club) {
             return res.status(404).json({ success: false, message: 'Club not found' });

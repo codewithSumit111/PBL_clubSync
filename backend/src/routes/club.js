@@ -4,6 +4,17 @@ const Club = require('../models/Club');
 const Student = require('../models/Student');
 const Admin = require('../models/Admin');
 const { protect } = require('../middleware/auth');
+const {
+    COORDINATOR_SCOPES,
+    MEMBERSHIP_ROLES,
+    DEFAULT_DESIGNATION,
+    DEFAULT_MEMBERSHIP_ROLE,
+} = require('../utils/clubCouncil');
+const {
+    resolveClubIdForAction,
+    canManageClubAction,
+    ensureDefaultsOnApproval,
+} = require('../middleware/clubCouncilAuth');
 
 // IST offset: +5 hours 30 minutes
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
@@ -234,6 +245,13 @@ router.put('/applications/:student_id', protect, async (req, res) => {
         }
 
         application.status = status;
+        if (status === 'Approved') {
+            ensureDefaultsOnApproval(application);
+        } else if (status === 'Rejected') {
+            application.membership_role = DEFAULT_MEMBERSHIP_ROLE;
+            application.designation = DEFAULT_DESIGNATION;
+            application.coordinator_scopes = [];
+        }
         await student.save();
 
         if (status === 'Approved') {
@@ -280,6 +298,9 @@ router.get('/members', protect, async (req, res) => {
                 email: s.email,
                 cca_hours: entry ? entry.cca_hours || 0 : 0,
                 cca_marks: entry && entry.cca_marks ? entry.cca_marks.total || 0 : 0,
+                membership_role: entry?.membership_role || DEFAULT_MEMBERSHIP_ROLE,
+                designation: entry?.designation || DEFAULT_DESIGNATION,
+                coordinator_scopes: entry?.coordinator_scopes || [],
                 rubric_marks: entry ? {
                     participation: entry.cca_marks?.participation || 0,
                     leadership: entry.cca_marks?.leadership || 0,
@@ -293,6 +314,153 @@ router.get('/members', protect, async (req, res) => {
         res.json({ success: true, members });
     } catch (err) {
         console.error('Error fetching club members:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/clubs/council-config — designation templates for this club
+router.get('/council-config', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const club = await Club.findById(req.user.id).select('designation_templates');
+        if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
+
+        res.json({
+            success: true,
+            designation_templates: club.designation_templates?.length
+                ? club.designation_templates
+                : [DEFAULT_DESIGNATION],
+            scope_templates: COORDINATOR_SCOPES,
+        });
+    } catch (err) {
+        console.error('Error fetching council config:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// PUT /api/clubs/council-config — update designation templates
+router.put('/council-config', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const { designation_templates } = req.body;
+        if (!Array.isArray(designation_templates)) {
+            return res.status(400).json({ success: false, message: 'designation_templates must be an array' });
+        }
+
+        const cleaned = [...new Set(
+            designation_templates
+                .map(d => String(d || '').trim())
+                .filter(Boolean)
+        )];
+
+        if (!cleaned.includes(DEFAULT_DESIGNATION)) {
+            cleaned.unshift(DEFAULT_DESIGNATION);
+        }
+
+        if (cleaned.length === 0) {
+            return res.status(400).json({ success: false, message: 'At least one designation is required' });
+        }
+
+        const club = await Club.findById(req.user.id);
+        if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
+
+        club.designation_templates = cleaned;
+        await club.save();
+
+        res.json({ success: true, message: 'Council designation templates updated', designation_templates: club.designation_templates });
+    } catch (err) {
+        console.error('Error updating council config:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// PUT /api/clubs/members/:student_id/council — assign member role/designation/scopes
+router.put('/members/:student_id/council', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Club' && req.user.role !== 'Student') {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        const clubId = req.user.role === 'Club' ? req.user.id : (req.body?.club_id || req.query?.club_id);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        if (req.user.role === 'Student') {
+            const allowed = await canManageClubAction(req, clubId, 'MEMBER_ADMIN');
+            if (!allowed) {
+                return res.status(403).json({ success: false, message: 'Only member admins can update council roles' });
+            }
+        }
+
+        const { membership_role, designation, coordinator_scopes } = req.body;
+        if (membership_role && !MEMBERSHIP_ROLES.includes(membership_role)) {
+            return res.status(400).json({ success: false, message: 'Invalid membership_role' });
+        }
+
+        if (coordinator_scopes && !Array.isArray(coordinator_scopes)) {
+            return res.status(400).json({ success: false, message: 'coordinator_scopes must be an array' });
+        }
+
+        const club = await Club.findById(clubId).select('designation_templates');
+        if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
+
+        const student = await Student.findById(req.params.student_id);
+        if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+        const entry = student.registered_clubs.find(
+            rc => rc.club.toString() === clubId.toString() && rc.status === 'Approved'
+        );
+        if (!entry) {
+            return res.status(400).json({ success: false, message: 'Student is not an approved member of this club' });
+        }
+
+        if (membership_role) {
+            entry.membership_role = membership_role;
+        }
+
+        if (designation !== undefined) {
+            const normalizedDesignation = String(designation || '').trim() || DEFAULT_DESIGNATION;
+            const allowedDesignations = club.designation_templates?.length
+                ? club.designation_templates
+                : [DEFAULT_DESIGNATION];
+
+            if (!allowedDesignations.includes(normalizedDesignation)) {
+                return res.status(400).json({ success: false, message: 'Designation is not in this club\'s template list' });
+            }
+            entry.designation = normalizedDesignation;
+        }
+
+        if (coordinator_scopes !== undefined) {
+            const cleanedScopes = [...new Set(coordinator_scopes)]
+                .filter(scope => COORDINATOR_SCOPES.includes(scope));
+            entry.coordinator_scopes = cleanedScopes;
+        }
+
+        if (entry.membership_role !== 'coordinator') {
+            entry.coordinator_scopes = [];
+        }
+
+        await student.save();
+
+        res.json({
+            success: true,
+            message: 'Council role updated successfully',
+            member: {
+                student_id: student._id,
+                membership_role: entry.membership_role,
+                designation: entry.designation,
+                coordinator_scopes: entry.coordinator_scopes,
+            },
+        });
+    } catch (err) {
+        console.error('Error updating council role:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -332,8 +500,14 @@ router.get('/pending', protect, async (req, res) => {
 // PUT /api/clubs/students/:student_id/cca — Update CCA marks for a student
 router.put('/students/:student_id/cca', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
+        const clubId = await resolveClubIdForAction(req);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        const canManageCCA = await canManageClubAction(req, clubId, 'CCA_MANAGER');
+        if (!canManageCCA) {
+            return res.status(403).json({ success: false, message: 'Not authorized to update CCA stats' });
         }
 
         const { cca_hours, rubric_marks } = req.body;
@@ -341,7 +515,7 @@ router.put('/students/:student_id/cca', protect, async (req, res) => {
         if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
         const entry = student.registered_clubs.find(
-            rc => rc.club.toString() === req.user.id && rc.status === 'Approved'
+            rc => rc.club.toString() === clubId.toString() && rc.status === 'Approved'
         );
         if (!entry) {
             return res.status(403).json({ success: false, message: 'Student is not an approved member of your club' });
@@ -379,8 +553,14 @@ router.put('/students/:student_id/cca', protect, async (req, res) => {
 // POST /api/clubs/events — Create a new event
 router.post('/events', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
+        const clubId = await resolveClubIdForAction(req);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        const canManageEvents = await canManageClubAction(req, clubId, 'EVENT_MANAGER');
+        if (!canManageEvents) {
+            return res.status(403).json({ success: false, message: 'Not authorized to create events' });
         }
 
         const { title, description, date, time, venue, cca_hours, check_in_opens_at, check_in_closes_at } = req.body;
@@ -388,7 +568,7 @@ router.post('/events', protect, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Title and date are required' });
         }
 
-        const club = await Club.findById(req.user.id);
+        const club = await Club.findById(clubId);
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
         const eventStart = buildEventStart(date, time);
@@ -432,11 +612,17 @@ router.post('/events', protect, async (req, res) => {
 // GET /api/clubs/events — Get all events for this club
 router.get('/events', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
+        const clubId = await resolveClubIdForAction(req);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
         }
 
-        const club = await Club.findById(req.user.id).select('events');
+        const canViewEvents = await canManageClubAction(req, clubId, 'EVENT_MANAGER');
+        if (!canViewEvents) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view manage events' });
+        }
+
+        const club = await Club.findById(clubId).select('events');
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
         const sorted = [...club.events].sort((a, b) => new Date(b.date) - new Date(a.date));

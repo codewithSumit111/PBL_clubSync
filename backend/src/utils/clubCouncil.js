@@ -1,0 +1,18 @@
+const MEMBERSHIP_ROLES = ['member', 'coordinator'];
+const DEFAULT_MEMBERSHIP_ROLE = 'member';
+const DEFAULT_DESIGNATION = 'Member Only';
+
+const COORDINATOR_SCOPES = [
+    'EVENT_MANAGER',
+    'ATTENDANCE_MANAGER',
+    'CCA_MANAGER',
+    'LOGBOOK_REVIEWER',
+    'MEMBER_ADMIN',
+];
+
+module.exports = {
+    MEMBERSHIP_ROLES,
+    DEFAULT_MEMBERSHIP_ROLE,
+    DEFAULT_DESIGNATION,
+    COORDINATOR_SCOPES,
+};

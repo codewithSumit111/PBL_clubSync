@@ -14,6 +14,9 @@ export interface JoinedClub {
     club_name: string;
     description: string;
     department: string;
+    membership_role?: 'member' | 'coordinator';
+    designation?: string;
+    coordinator_scopes?: string[];
     cca_hours: number;
     cca_marks: {
         participation?: number;
@@ -33,10 +36,10 @@ export interface CCAProgress {
 }
 
 export interface ActionItem {
-    type: 'allocation' | 'logbook' | 'pending_review';
+    type: 'allocation' | 'logbook' | 'pending_review' | 'primary_club_required';
     message: string;
     club_name: string;
-    priority: 'high' | 'medium' | 'low';
+    priority: 'high' | 'medium' | 'low' | 'urgent';
     date?: string;
 }
 
@@ -54,6 +57,10 @@ export interface StudentDashboardData {
     ccaProgress: CCAProgress;
     actionItems: ActionItem[];
     notices: Notice[];
+    year?: number;
+    primaryClubId?: string | null;
+    primaryClubSetDate?: string | null;
+    isPrimaryClubRequired?: boolean;
 }
 
 export async function fetchStudentDashboard(): Promise<StudentDashboardData> {

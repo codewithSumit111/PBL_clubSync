@@ -28,6 +28,9 @@ interface Member {
     email: string;
     cca_hours: number;
     cca_marks: number;
+    membership_role: 'member' | 'coordinator';
+    designation: string;
+    coordinator_scopes: string[];
     rubric_marks?: {
         participation: number;
         leadership: number;
@@ -36,6 +39,14 @@ interface Member {
         impact: number;
     };
 }
+
+const COORDINATOR_SCOPES = [
+    'EVENT_MANAGER',
+    'ATTENDANCE_MANAGER',
+    'CCA_MANAGER',
+    'LOGBOOK_REVIEWER',
+    'MEMBER_ADMIN',
+];
 
 const YEAR_LABELS: Record<number, string> = {
     1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year',
@@ -129,6 +140,98 @@ const CCAModal: React.FC<{
     );
 };
 
+const CouncilModal: React.FC<{
+    member: Member;
+    designationTemplates: string[];
+    onClose: () => void;
+    onSave: (payload: { membership_role: 'member' | 'coordinator'; designation: string; coordinator_scopes: string[] }) => void;
+    isSaving: boolean;
+}> = ({ member, designationTemplates, onClose, onSave, isSaving }) => {
+    const [membershipRole, setMembershipRole] = useState<'member' | 'coordinator'>(member.membership_role || 'member');
+    const [designation, setDesignation] = useState(member.designation || 'Member Only');
+    const [scopes, setScopes] = useState<string[]>(member.coordinator_scopes || []);
+
+    const toggleScope = (scope: string) => {
+        setScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]);
+    };
+
+    useEffect(() => {
+        if (membershipRole === 'member') {
+            setScopes([]);
+        }
+    }, [membershipRole]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className={`${cardClass} w-full max-w-lg p-8 shadow-2xl relative overflow-hidden`}>
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-teal-500" />
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Council Role & Designation</h3>
+                <p className="text-sm text-gray-500 mb-6">Update role settings for <span className="text-indigo-600 font-semibold">{member.name}</span></p>
+
+                <div className="space-y-5">
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Membership Role</label>
+                        <select
+                            value={membershipRole}
+                            onChange={e => setMembershipRole(e.target.value as 'member' | 'coordinator')}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 transition-all font-semibold"
+                        >
+                            <option value="member">Member</option>
+                            <option value="coordinator">Coordinator</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Designation</label>
+                        <select
+                            value={designation}
+                            onChange={e => setDesignation(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 transition-all font-semibold"
+                        >
+                            {(designationTemplates.length ? designationTemplates : ['Member Only']).map(d => (
+                                <option key={d} value={d}>{d}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Coordinator Permissions</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {COORDINATOR_SCOPES.map(scope => (
+                                <label key={scope} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${membershipRole === 'coordinator' ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={scopes.includes(scope)}
+                                        onChange={() => toggleScope(scope)}
+                                        disabled={membershipRole !== 'coordinator'}
+                                    />
+                                    <span>{scope}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-50 flex items-center justify-end gap-3">
+                        <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all">Cancel</button>
+                        <button
+                            onClick={() => onSave({
+                                membership_role: membershipRole,
+                                designation,
+                                coordinator_scopes: membershipRole === 'coordinator' ? scopes : [],
+                            })}
+                            disabled={isSaving}
+                            className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSaving ? <RefreshCw size={16} className="animate-spin" /> : 'Save role'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export const ClubStudentMgmt: React.FC = () => {
     const { token, user } = useSelector((state: RootState) => state.auth);
     const [tab, setTab] = useState<'pending' | 'members'>('pending');
@@ -140,6 +243,8 @@ export const ClubStudentMgmt: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Member | null>(null);
+    const [editingCouncilMember, setEditingCouncilMember] = useState<Member | null>(null);
+    const [designationTemplates, setDesignationTemplates] = useState<string[]>(['Member Only']);
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
@@ -162,6 +267,12 @@ export const ClubStudentMgmt: React.FC = () => {
 
             setPending(pendData.students || []);
             setMembers(memData.members || []);
+
+            const configRes = await fetch(`${API}/clubs/council-config`, { headers });
+            const configData = await configRes.json();
+            if (configRes.ok && configData.success) {
+                setDesignationTemplates(configData.designation_templates || ['Member Only']);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to connect to server');
             toast.error(err.message || 'Failed to connect to server');
@@ -215,6 +326,26 @@ export const ClubStudentMgmt: React.FC = () => {
         }
     };
 
+    const handleUpdateCouncil = async (studentId: string, payload: { membership_role: 'member' | 'coordinator'; designation: string; coordinator_scopes: string[] }) => {
+        setActionLoading(`updating-council-${studentId}`);
+        try {
+            const res = await fetch(`${API}/clubs/members/${studentId}/council`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to update council role');
+            toast.success('Council role updated successfully!');
+            setEditingCouncilMember(null);
+            fetchAll();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update council role');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const allStudents = [...pending, ...members];
     const departments = ['All', ...Array.from(new Set(allStudents.map(s => s.department).filter(Boolean)))];
 
@@ -248,6 +379,15 @@ export const ClubStudentMgmt: React.FC = () => {
                     onClose={() => setEditingMember(null)}
                     onSave={handleUpdateCCA}
                     isSaving={actionLoading === 'updating-cca'}
+                />
+            )}
+            {editingCouncilMember && (
+                <CouncilModal
+                    member={editingCouncilMember}
+                    designationTemplates={designationTemplates}
+                    onClose={() => setEditingCouncilMember(null)}
+                    onSave={(payload) => handleUpdateCouncil(editingCouncilMember._id, payload)}
+                    isSaving={actionLoading === `updating-council-${editingCouncilMember._id}`}
                 />
             )}
 
@@ -402,6 +542,7 @@ export const ClubStudentMgmt: React.FC = () => {
                                 <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                                     <tr>
                                         <th className="px-6 py-4">Member</th>
+                                        <th className="px-6 py-4">Designation</th>
                                         <th className="px-6 py-4">Roll No</th>
                                         <th className="px-6 py-4">Department</th>
                                         <th className="px-6 py-4">Year</th>
@@ -422,6 +563,16 @@ export const ClubStudentMgmt: React.FC = () => {
                                                         <p className="font-semibold text-gray-900">{m.name}</p>
                                                         <p className="text-xs text-gray-400">{m.email}</p>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="space-y-1">
+                                                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                                                        {m.designation || 'Member Only'}
+                                                    </span>
+                                                    <p className="text-[11px] text-gray-500 uppercase tracking-wide">
+                                                        {m.membership_role || 'member'}
+                                                    </p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 font-mono text-gray-700 text-xs">{m.roll_no || '—'}</td>
@@ -445,12 +596,20 @@ export const ClubStudentMgmt: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => setEditingMember(m)}
-                                                    className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
-                                                >
-                                                    Manage CCA
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setEditingMember(m)}
+                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
+                                                    >
+                                                        Manage CCA
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingCouncilMember(m)}
+                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                                    >
+                                                        Council Role
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
