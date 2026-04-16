@@ -45,7 +45,10 @@ async function canManageClubAction(req, clubId, requiredScope) {
         return false;
     }
 
-    const student = await Student.findById(req.user.id).select('registered_clubs');
+    const studentQuery = Student.findById(req.user.id);
+    const student = typeof studentQuery?.select === 'function'
+        ? await studentQuery.select('registered_clubs')
+        : await studentQuery;
     if (!student) return false;
 
     const membership = getMembership(student, clubId, true);

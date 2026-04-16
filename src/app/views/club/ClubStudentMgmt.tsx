@@ -40,6 +40,11 @@ interface Member {
     };
 }
 
+interface Props {
+    clubId?: string;
+    embedded?: boolean;
+}
+
 const COORDINATOR_SCOPES = [
     'EVENT_MANAGER',
     'ATTENDANCE_MANAGER',
@@ -232,9 +237,10 @@ const CouncilModal: React.FC<{
     );
 };
 
-export const ClubStudentMgmt: React.FC = () => {
+export const ClubStudentMgmt: React.FC<Props> = ({ clubId, embedded = false }) => {
     const { token, user } = useSelector((state: RootState) => state.auth);
-    const [tab, setTab] = useState<'pending' | 'members'>('pending');
+    const isMissingClubContext = embedded && !clubId;
+    const [tab, setTab] = useState<'pending' | 'members'>(embedded ? 'members' : 'pending');
     const [pending, setPending] = useState<PendingStudent[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [search, setSearch] = useState('');
@@ -249,26 +255,40 @@ export const ClubStudentMgmt: React.FC = () => {
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
     const fetchAll = useCallback(async () => {
-        if (!token || user?.role !== 'Club') {
+        if (!token || !['Club', 'Student'].includes(user?.role || '')) {
+            return;
+        }
+
+        if (isMissingClubContext) {
+            setError('Club context is missing. Please open this workspace from a club action in your dashboard.');
+            setPending([]);
+            setMembers([]);
+            setDesignationTemplates(['Member Only']);
             return;
         }
 
         setIsLoading(true);
         setError(null);
         try {
-            const [pendRes, memRes] = await Promise.all([
-                fetch(`${API}/clubs/pending`, { headers }),
-                fetch(`${API}/clubs/members`, { headers }),
-            ]);
-            const [pendData, memData] = await Promise.all([pendRes.json(), memRes.json()]);
+            const memberQuery = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const memRes = await fetch(`${API}/clubs/members${memberQuery}`, { headers });
+            const memData = await memRes.json();
 
-            if (!pendRes.ok) throw new Error(pendData.message || 'Failed to fetch pending applications');
             if (!memRes.ok) throw new Error(memData.message || 'Failed to fetch members');
 
-            setPending(pendData.students || []);
             setMembers(memData.members || []);
 
-            const configRes = await fetch(`${API}/clubs/council-config`, { headers });
+            if (user?.role === 'Club' && !embedded) {
+                const pendRes = await fetch(`${API}/clubs/pending`, { headers });
+                const pendData = await pendRes.json();
+                if (!pendRes.ok) throw new Error(pendData.message || 'Failed to fetch pending applications');
+                setPending(pendData.students || []);
+            } else {
+                setPending([]);
+            }
+
+            const configQuery = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const configRes = await fetch(`${API}/clubs/council-config${configQuery}`, { headers });
             const configData = await configRes.json();
             if (configRes.ok && configData.success) {
                 setDesignationTemplates(configData.designation_templates || ['Member Only']);
@@ -279,9 +299,14 @@ export const ClubStudentMgmt: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [token, user?.role]);
+    }, [token, user?.role, clubId, embedded, isMissingClubContext]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => {
+        if (embedded) {
+            setTab('members');
+        }
+    }, [embedded]);
 
     const handleApplication = async (studentId: string, status: 'Approved' | 'Rejected') => {
         setActionLoading(studentId + status);
@@ -312,7 +337,7 @@ export const ClubStudentMgmt: React.FC = () => {
             const res = await fetch(`${API}/clubs/students/${editingMember._id}/cca`, {
                 method: 'PUT',
                 headers,
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, ...(clubId ? { club_id: clubId } : {}) }),
             });
             const resData = await res.json();
             if (!res.ok) throw new Error(resData.message || 'Update failed');
@@ -332,7 +357,7 @@ export const ClubStudentMgmt: React.FC = () => {
             const res = await fetch(`${API}/clubs/members/${studentId}/council`, {
                 method: 'PUT',
                 headers,
-                body: JSON.stringify(payload),
+                body: JSON.stringify({ ...payload, ...(clubId ? { club_id: clubId } : {}) }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to update council role');
@@ -341,6 +366,25 @@ export const ClubStudentMgmt: React.FC = () => {
             fetchAll();
         } catch (err: any) {
             toast.error(err.message || 'Failed to update council role');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSaveDesignationTemplates = async () => {
+        setActionLoading('saving-designations');
+        try {
+            const res = await fetch(`${API}/clubs/council-config`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ designation_templates: designationTemplates, ...(clubId ? { club_id: clubId } : {}) }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to save templates');
+            toast.success('Designation templates updated');
+            setDesignationTemplates(data.designation_templates || designationTemplates);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save templates');
         } finally {
             setActionLoading(null);
         }
@@ -364,15 +408,17 @@ export const ClubStudentMgmt: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
                 <AlertCircle size={40} className="text-red-400" />
                 <p className="text-gray-600 font-semibold">{error}</p>
-                <button onClick={fetchAll} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold hover:bg-teal-600 transition-colors">
-                    Retry
-                </button>
+                {!isMissingClubContext && (
+                    <button onClick={fetchAll} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold hover:bg-teal-600 transition-colors">
+                        Retry
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className={`space-y-6 animate-in fade-in duration-500 ${embedded ? 'max-w-none' : ''}`}>
             {editingMember && (
                 <CCAModal
                     member={editingMember}
@@ -395,7 +441,9 @@ export const ClubStudentMgmt: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Student Management</h2>
-                    <p className="text-gray-500 text-sm mt-1">Manage applications and club members</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                        {embedded ? 'Manage members and council roles for your club' : 'Manage applications and club members'}
+                    </p>
                 </div>
                 <button onClick={fetchAll}
                     className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
@@ -403,28 +451,72 @@ export const ClubStudentMgmt: React.FC = () => {
                 </button>
             </div>
 
-            {/* Stats Strip */}
-            <div className="grid grid-cols-2 gap-4">
-                {[
-                    { label: 'Pending Applications', value: pending.length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'Total Members', value: members.length, icon: UserCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
-                ].map((stat, i) => (
-                    <div key={i} className={`${cardClass} p-4 flex items-center gap-3`}>
-                        <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
-                            <stat.icon size={20} />
+            {!embedded && (
+                <div className="grid grid-cols-2 gap-4">
+                    {[
+                        { label: 'Pending Applications', value: pending.length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+                        { label: 'Total Members', value: members.length, icon: UserCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
+                    ].map((stat, i) => (
+                        <div key={i} className={`${cardClass} p-4 flex items-center gap-3`}>
+                            <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                                <stat.icon size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xl font-bold text-gray-900">{isLoading ? '...' : stat.value}</p>
+                                <p className="text-xs text-gray-500">{stat.label}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-xl font-bold text-gray-900">{isLoading ? '...' : stat.value}</p>
-                            <p className="text-xs text-gray-500">{stat.label}</p>
-                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Council Settings Panel */}
+            <div className={`${cardClass} p-5 space-y-4`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900">Council Designation Settings</h3>
+                        <p className="text-sm text-gray-500">Manage the designation list for your club members</p>
                     </div>
-                ))}
+                    <button
+                        onClick={handleSaveDesignationTemplates}
+                        disabled={actionLoading === 'saving-designations'}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                    >
+                        {actionLoading === 'saving-designations' ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        Save Templates
+                    </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {designationTemplates.map((designation, idx) => (
+                        <div key={`${designation}-${idx}`} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 border border-indigo-100">
+                            <input
+                                value={designation}
+                                onChange={(e) => setDesignationTemplates(prev => prev.map((item, index) => index === idx ? e.target.value : item))}
+                                className="bg-transparent outline-none min-w-[120px]"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setDesignationTemplates(prev => prev.filter((_, index) => index !== idx))}
+                                className="text-indigo-400 hover:text-indigo-700"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => setDesignationTemplates(prev => [...prev, ''])}
+                        className="inline-flex items-center gap-2 rounded-full border border-dashed border-indigo-200 bg-white px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50"
+                    >
+                        + Add designation
+                    </button>
+                </div>
             </div>
 
             {/* Tabs + Filters */}
             <div className={`${cardClass} p-4 flex flex-col sm:flex-row sm:items-center gap-3`}>
                 <div className="flex rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-1 gap-1">
-                    {(['pending', 'members'] as const).map(t => (
+                    {(embedded ? (['members'] as const) : (['pending', 'members'] as const)).map(t => (
                         <button key={t} onClick={() => setTab(t)}
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${tab === t ? 'bg-teal-500 text-white shadow' : 'text-gray-500 hover:text-gray-800'
                                 }`}>

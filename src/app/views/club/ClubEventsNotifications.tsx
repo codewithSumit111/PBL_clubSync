@@ -23,6 +23,11 @@ interface Notification {
 
 type TabType = 'events' | 'notifications';
 
+interface Props {
+    clubId?: string;
+    embedded?: boolean;
+}
+
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
 
 const FormField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -42,7 +47,7 @@ const Modal: React.FC<{ title: string; icon: React.ReactNode; onClose: () => voi
     </div>
 );
 
-export const ClubEventsNotifications: React.FC = () => {
+export const ClubEventsNotifications: React.FC<Props> = ({ clubId, embedded = false }) => {
     const { token } = useSelector((state: RootState) => state.auth);
     const [tab, setTab] = useState<TabType>('events');
     const [events, setEvents] = useState<ClubEvent[]>([]);
@@ -75,7 +80,8 @@ export const ClubEventsNotifications: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API}/clubs/events`, { headers });
+            const query = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const res = await fetch(`${API}/clubs/events${query}`, { headers });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to load events');
             setEvents(data.events || []);
@@ -85,7 +91,7 @@ export const ClubEventsNotifications: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, clubId]);
 
     useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
@@ -95,7 +101,7 @@ export const ClubEventsNotifications: React.FC = () => {
         try {
             const res = await fetch(`${API}/clubs/events`, {
                 method: 'POST', headers,
-                body: JSON.stringify(eventForm),
+                body: JSON.stringify({ ...eventForm, ...(clubId ? { club_id: clubId } : {}) }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to create event');
@@ -122,7 +128,7 @@ export const ClubEventsNotifications: React.FC = () => {
     const openQrForEvent = async (event: ClubEvent) => {
         setQrLoading(true);
         try {
-            const data = await fetchEventQr(event._id);
+            const data = await fetchEventQr(event._id, clubId);
             setQrEvent(data.event);
             setQrToken(data.qrToken);
         } catch (err: any) {
@@ -166,7 +172,7 @@ export const ClubEventsNotifications: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className={`space-y-6 animate-in fade-in duration-500 ${embedded ? '' : ''}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Events & Notifications</h2>
@@ -359,7 +365,7 @@ export const ClubEventsNotifications: React.FC = () => {
                         {selectedEventForMonitor && events.find(e => e._id === selectedEventForMonitor) && (
                             <OrganizerAttendanceMonitor 
                                 eventId={selectedEventForMonitor}
-                                clubId=""
+                                clubId={clubId || ''}
                                 eventTitle={events.find(e => e._id === selectedEventForMonitor)?.title || 'Event'}
                                 onRefresh={fetchEvents}
                             />

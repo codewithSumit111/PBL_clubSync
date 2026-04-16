@@ -279,16 +279,28 @@ router.put('/applications/:student_id', protect, async (req, res) => {
 // GET /api/clubs/members — All approved members for this club
 router.get('/members', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
+        let clubId = req.user.id;
+        if (req.user.role === 'Student') {
+            clubId = req.query.club_id || req.query.clubId;
+            if (!clubId) {
+                return res.status(400).json({ success: false, message: 'club_id is required' });
+            }
+
+            const allowed = await canManageClubAction(req, clubId, 'CCA_MANAGER');
+            const allowedAdmin = await canManageClubAction(req, clubId, 'MEMBER_ADMIN');
+            if (!allowed && !allowedAdmin) {
+                return res.status(403).json({ success: false, message: 'Not authorized' });
+            }
+        } else if (req.user.role !== 'Club') {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
         const students = await Student.find({
-            registered_clubs: { $elemMatch: { club: req.user.id, status: 'Approved' } }
+            registered_clubs: { $elemMatch: { club: clubId, status: 'Approved' } }
         }).select('name roll_no department year email registered_clubs');
 
         const members = students.map(s => {
-            const entry = s.registered_clubs.find(rc => rc.club.toString() === req.user.id);
+            const entry = s.registered_clubs.find(rc => rc.club.toString() === clubId.toString());
             return {
                 _id: s._id,
                 name: s.name,
@@ -321,11 +333,21 @@ router.get('/members', protect, async (req, res) => {
 // GET /api/clubs/council-config — designation templates for this club
 router.get('/council-config', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
+        const clubId = req.user.role === 'Club' ? req.user.id : (req.query.club_id || req.query.clubId);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        if (req.user.role === 'Student') {
+            const allowed = await canManageClubAction(req, clubId, 'MEMBER_ADMIN');
+            if (!allowed) {
+                return res.status(403).json({ success: false, message: 'Not authorized' });
+            }
+        } else if (req.user.role !== 'Club') {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const club = await Club.findById(req.user.id).select('designation_templates');
+        const club = await Club.findById(clubId).select('designation_templates');
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
         res.json({
@@ -344,7 +366,17 @@ router.get('/council-config', protect, async (req, res) => {
 // PUT /api/clubs/council-config — update designation templates
 router.put('/council-config', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
+        const clubId = req.user.role === 'Club' ? req.user.id : (req.body?.club_id || req.query?.club_id);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        if (req.user.role === 'Student') {
+            const allowed = await canManageClubAction(req, clubId, 'MEMBER_ADMIN');
+            if (!allowed) {
+                return res.status(403).json({ success: false, message: 'Not authorized' });
+            }
+        } else if (req.user.role !== 'Club') {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
@@ -367,7 +399,7 @@ router.put('/council-config', protect, async (req, res) => {
             return res.status(400).json({ success: false, message: 'At least one designation is required' });
         }
 
-        const club = await Club.findById(req.user.id);
+        const club = await Club.findById(clubId);
         if (!club) return res.status(404).json({ success: false, message: 'Club not found' });
 
         club.designation_templates = cleaned;

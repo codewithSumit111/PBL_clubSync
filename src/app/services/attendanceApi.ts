@@ -53,10 +53,11 @@ export interface ClubEvent {
     event_image?: string;
 }
 
-export async function fetchEventQr(eventId: string): Promise<{ qrToken: string; event: AttendanceEvent }> {
+export async function fetchEventQr(eventId: string, clubId?: string): Promise<{ qrToken: string; event: AttendanceEvent }> {
     const res = await fetch(`${API_BASE}/clubs/events/${eventId}/qr`, {
         method: 'POST',
         headers: getAuthHeaders(),
+        body: JSON.stringify(clubId ? { club_id: clubId } : {}),
     });
 
     const data = await res.json();
