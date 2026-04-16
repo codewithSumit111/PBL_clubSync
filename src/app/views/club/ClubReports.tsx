@@ -60,12 +60,13 @@ export const ClubReports: React.FC = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedEventYear, setSelectedEventYear] = useState(new Date().getFullYear());
 
-    const headers = { Authorization: `Bearer ${token}` };
+
 
     const fetchMembersAndEvents = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
+            const headers = { Authorization: `Bearer ${token}` };
             const [memRes, evRes] = await Promise.all([
                 fetch(`${API}/clubs/members`, { headers }),
                 fetch(`${API}/clubs/event-analytics`, { headers }) // Re-use analytics to get event list
@@ -74,6 +75,8 @@ export const ClubReports: React.FC = () => {
             const evData = await evRes.json();
             
             if (!memRes.ok) throw new Error(memData.message || 'Failed to load members');
+            if (!evRes.ok) throw new Error(evData.message || 'Failed to load event list');
+            
             setMembers(memData.members || []);
             setEventsList(evData.analytics?.perEvent || []);
         } catch (err: any) {
@@ -94,6 +97,7 @@ export const ClubReports: React.FC = () => {
             return;
         }
 
+        const headers = { Authorization: `Bearer ${token}` };
         let query = '';
         if (selectedReport === 'single_event') {
             if (!selectedEventId) { setEventReport(null); return; }
@@ -331,7 +335,7 @@ export const ClubReports: React.FC = () => {
                         currentY += 12;
                     }
 
-                    if (ev.attendees.length > 0) {
+                    if (ev.attendees && ev.attendees.length > 0) {
                         const tableData = ev.attendees.map((a: any) => [
                             a.roll_no || '—',
                             a.name,
@@ -373,7 +377,7 @@ export const ClubReports: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
                 <AlertCircle size={40} className="text-red-400" />
                 <p className="text-gray-600 font-semibold">{error}</p>
-                <button onClick={fetchMembers} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold">Retry</button>
+                <button onClick={fetchMembersAndEvents} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold">Retry</button>
             </div>
         );
     }
@@ -435,14 +439,14 @@ export const ClubReports: React.FC = () => {
                         <div className="relative">
                             <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
                                 className="pl-3 pr-8 py-2 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-teal-400 appearance-none cursor-pointer">
-                                {departments.map(d => <option key={d}>Dept: {d}</option>)}
+                                {departments.map(d => <option key={d} value={d}>{d === 'All' ? 'Dept: All' : `Dept: ${d}`}</option>)}
                             </select>
                             <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
                         <div className="relative">
                             <select value={yearFilter} onChange={e => setYearFilter(e.target.value)}
                                 className="pl-3 pr-8 py-2 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-teal-400 appearance-none cursor-pointer">
-                                {years.map(y => <option key={y}>Year: {y === 'All' ? 'All' : `${YEAR_LABELS[y]} Year`}</option>)}
+                                {years.map(y => <option key={y} value={y}>{y === 'All' ? 'Year: All' : `${YEAR_LABELS[y]} Year`}</option>)}
                             </select>
                             <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
@@ -679,7 +683,7 @@ export const ClubReports: React.FC = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-50">
-                                                        {ev.attendees.length === 0 ? (
+                                                        {!ev.attendees || ev.attendees.length === 0 ? (
                                                             <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-400">No attendance records</td></tr>
                                                         ) : (
                                                             ev.attendees.slice(0, 5).map((a: any, i: number) => (
@@ -690,7 +694,7 @@ export const ClubReports: React.FC = () => {
                                                                 </tr>
                                                             ))
                                                         )}
-                                                        {ev.attendees.length > 5 && (
+                                                        {ev.attendees && ev.attendees.length > 5 && (
                                                             <tr><td colSpan={3} className="px-3 py-2 text-center text-indigo-500 bg-indigo-50/30">...and {ev.attendees.length - 5} more elements. (Download PDF for full list)</td></tr>
                                                         )}
                                                     </tbody>
