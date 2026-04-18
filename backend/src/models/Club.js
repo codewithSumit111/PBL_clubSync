@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { DEFAULT_DESIGNATION } = require('../utils/clubCouncil');
 
 const memberSchema = new mongoose.Schema({
     student_id: {
@@ -69,6 +70,10 @@ const clubSchema = new mongoose.Schema({
         department: { type: String, required: true }
     }],
     council_members: [memberSchema],
+    designation_templates: [{
+        type: String,
+        trim: true,
+    }],
     registered_students: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student'
@@ -95,6 +100,14 @@ const clubSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+clubSchema.pre('save', function (next) {
+    if (!Array.isArray(this.designation_templates) || this.designation_templates.length === 0) {
+        this.designation_templates = [DEFAULT_DESIGNATION, 'Chairperson', 'Vice-Chairperson'];
+    }
+    this.designation_templates = [...new Set(this.designation_templates.map(d => String(d || '').trim()).filter(Boolean))];
+    next();
 });
 
 const Club = mongoose.models.Club || mongoose.model('Club', clubSchema);

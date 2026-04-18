@@ -4,6 +4,10 @@ const mongoose = require('mongoose');
 const Logbook = require('../models/Logbook');
 const { protect } = require('../middleware/auth');
 const Student = require('../models/Student');
+const {
+    resolveClubIdForAction,
+    canManageClubAction,
+} = require('../middleware/clubCouncilAuth');
 
 // @route   POST /api/logbooks
 // @desc    Submit a new logbook entry (Student only)
@@ -95,11 +99,21 @@ router.get('/mine', protect, async (req, res) => {
 // @desc    Get all logbooks submitted to the logged in club
 router.get('/club', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
+        if (req.user.role !== 'Club' && req.user.role !== 'Student') {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        const logbooks = await Logbook.find({ club_id: req.user.id }).populate('student_id', 'name roll_no department');
+        const clubId = await resolveClubIdForAction(req);
+        if (!clubId) {
+            return res.status(400).json({ success: false, message: 'club_id is required' });
+        }
+
+        const canReview = await canManageClubAction(req, clubId, 'LOGBOOK_REVIEWER');
+        if (!canReview) {
+            return res.status(403).json({ success: false, message: 'Not authorized to review logbooks' });
+        }
+
+        const logbooks = await Logbook.find({ club_id: clubId }).populate('student_id', 'name roll_no department');
         res.json({ success: true, logbooks });
     } catch (err) {
         console.error('Error fetching club logbooks:', err);
@@ -111,8 +125,8 @@ router.get('/club', protect, async (req, res) => {
 // @desc    Update logbook status (Club only)
 router.put('/:id/status', protect, async (req, res) => {
     try {
-        if (req.user.role !== 'Club') {
-            return res.status(403).json({ success: false, message: 'Only clubs can approve/reject logbooks' });
+        if (req.user.role !== 'Club' && req.user.role !== 'Student') {
+            return res.status(403).json({ success: false, message: 'Only clubs/coordinators can approve/reject logbooks' });
         }
 
         const { status, rejection_reason } = req.body;
@@ -127,8 +141,13 @@ router.put('/:id/status', protect, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Logbook not found' });
         }
 
+        const canReview = await canManageClubAction(req, logbook.club_id.toString(), 'LOGBOOK_REVIEWER');
+        if (!canReview) {
+            return res.status(403).json({ success: false, message: 'Not authorized to approve/reject this logbook' });
+        }
+
         // Verify the logbook belongs to this club
-        if (logbook.club_id.toString() !== req.user.id) {
+        if (req.user.role === 'Club' && logbook.club_id.toString() !== req.user.id) {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 

@@ -32,6 +32,9 @@ router.get('/dashboard', protect, async (req, res) => {
                 club_name: rc.club?.club_name || 'Unknown Club',
                 description: rc.club?.description || '',
                 department: rc.club?.department || '',
+                membership_role: rc.membership_role || 'member',
+                designation: rc.designation || 'Member Only',
+                coordinator_scopes: rc.coordinator_scopes || [],
                 cca_hours: rc.cca_hours || 0,
                 cca_marks: rc.cca_marks || {}
             }));

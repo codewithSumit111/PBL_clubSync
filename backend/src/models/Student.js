@@ -1,4 +1,10 @@
 const mongoose = require('mongoose');
+const {
+    MEMBERSHIP_ROLES,
+    DEFAULT_MEMBERSHIP_ROLE,
+    DEFAULT_DESIGNATION,
+    COORDINATOR_SCOPES,
+} = require('../utils/clubCouncil');
 
 // Schema for tracking a student's data within a specific club
 const registeredClubSchema = new mongoose.Schema({
@@ -12,6 +18,20 @@ const registeredClubSchema = new mongoose.Schema({
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending'
     },
+    membership_role: {
+        type: String,
+        enum: MEMBERSHIP_ROLES,
+        default: DEFAULT_MEMBERSHIP_ROLE,
+    },
+    designation: {
+        type: String,
+        trim: true,
+        default: DEFAULT_DESIGNATION,
+    },
+    coordinator_scopes: [{
+        type: String,
+        enum: COORDINATOR_SCOPES,
+    }],
     preference_order: {
         type: Number
     }, // For preference allocation during registration

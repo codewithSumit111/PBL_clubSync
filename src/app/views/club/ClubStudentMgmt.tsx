@@ -28,6 +28,9 @@ interface Member {
     email: string;
     cca_hours: number;
     cca_marks: number;
+    membership_role: 'member' | 'coordinator';
+    designation: string;
+    coordinator_scopes: string[];
     rubric_marks?: {
         participation: number;
         leadership: number;
@@ -36,6 +39,19 @@ interface Member {
         impact: number;
     };
 }
+
+interface Props {
+    clubId?: string;
+    embedded?: boolean;
+}
+
+const COORDINATOR_SCOPES = [
+    'EVENT_MANAGER',
+    'ATTENDANCE_MANAGER',
+    'CCA_MANAGER',
+    'LOGBOOK_REVIEWER',
+    'MEMBER_ADMIN',
+];
 
 const YEAR_LABELS: Record<number, string> = {
     1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year',
@@ -129,9 +145,102 @@ const CCAModal: React.FC<{
     );
 };
 
-export const ClubStudentMgmt: React.FC = () => {
+const CouncilModal: React.FC<{
+    member: Member;
+    designationTemplates: string[];
+    onClose: () => void;
+    onSave: (payload: { membership_role: 'member' | 'coordinator'; designation: string; coordinator_scopes: string[] }) => void;
+    isSaving: boolean;
+}> = ({ member, designationTemplates, onClose, onSave, isSaving }) => {
+    const [membershipRole, setMembershipRole] = useState<'member' | 'coordinator'>(member.membership_role || 'member');
+    const [designation, setDesignation] = useState(member.designation || 'Member Only');
+    const [scopes, setScopes] = useState<string[]>(member.coordinator_scopes || []);
+
+    const toggleScope = (scope: string) => {
+        setScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]);
+    };
+
+    useEffect(() => {
+        if (membershipRole === 'member') {
+            setScopes([]);
+        }
+    }, [membershipRole]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className={`${cardClass} w-full max-w-lg p-8 shadow-2xl relative overflow-hidden`}>
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-teal-500" />
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Council Role & Designation</h3>
+                <p className="text-sm text-gray-500 mb-6">Update role settings for <span className="text-indigo-600 font-semibold">{member.name}</span></p>
+
+                <div className="space-y-5">
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Membership Role</label>
+                        <select
+                            value={membershipRole}
+                            onChange={e => setMembershipRole(e.target.value as 'member' | 'coordinator')}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 transition-all font-semibold"
+                        >
+                            <option value="member">Member</option>
+                            <option value="coordinator">Coordinator</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Designation</label>
+                        <select
+                            value={designation}
+                            onChange={e => setDesignation(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 transition-all font-semibold"
+                        >
+                            {(designationTemplates.length ? designationTemplates : ['Member Only']).map(d => (
+                                <option key={d} value={d}>{d}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Coordinator Permissions</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {COORDINATOR_SCOPES.map(scope => (
+                                <label key={scope} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${membershipRole === 'coordinator' ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={scopes.includes(scope)}
+                                        onChange={() => toggleScope(scope)}
+                                        disabled={membershipRole !== 'coordinator'}
+                                    />
+                                    <span>{scope}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-50 flex items-center justify-end gap-3">
+                        <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all">Cancel</button>
+                        <button
+                            onClick={() => onSave({
+                                membership_role: membershipRole,
+                                designation,
+                                coordinator_scopes: membershipRole === 'coordinator' ? scopes : [],
+                            })}
+                            disabled={isSaving}
+                            className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSaving ? <RefreshCw size={16} className="animate-spin" /> : 'Save role'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const ClubStudentMgmt: React.FC<Props> = ({ clubId, embedded = false }) => {
     const { token, user } = useSelector((state: RootState) => state.auth);
-    const [tab, setTab] = useState<'pending' | 'members'>('pending');
+    const isMissingClubContext = embedded && !clubId;
+    const [tab, setTab] = useState<'pending' | 'members'>(embedded ? 'members' : 'pending');
     const [pending, setPending] = useState<PendingStudent[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [search, setSearch] = useState('');
@@ -140,37 +249,64 @@ export const ClubStudentMgmt: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Member | null>(null);
+    const [editingCouncilMember, setEditingCouncilMember] = useState<Member | null>(null);
+    const [designationTemplates, setDesignationTemplates] = useState<string[]>(['Member Only']);
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
     const fetchAll = useCallback(async () => {
-        if (!token || user?.role !== 'Club') {
+        if (!token || !['Club', 'Student'].includes(user?.role || '')) {
+            return;
+        }
+
+        if (isMissingClubContext) {
+            setError('Club context is missing. Please open this workspace from a club action in your dashboard.');
+            setPending([]);
+            setMembers([]);
+            setDesignationTemplates(['Member Only']);
             return;
         }
 
         setIsLoading(true);
         setError(null);
         try {
-            const [pendRes, memRes] = await Promise.all([
-                fetch(`${API}/clubs/pending`, { headers }),
-                fetch(`${API}/clubs/members`, { headers }),
-            ]);
-            const [pendData, memData] = await Promise.all([pendRes.json(), memRes.json()]);
+            const memberQuery = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const memRes = await fetch(`${API}/clubs/members${memberQuery}`, { headers });
+            const memData = await memRes.json();
 
-            if (!pendRes.ok) throw new Error(pendData.message || 'Failed to fetch pending applications');
             if (!memRes.ok) throw new Error(memData.message || 'Failed to fetch members');
 
-            setPending(pendData.students || []);
             setMembers(memData.members || []);
+
+            if (user?.role === 'Club' && !embedded) {
+                const pendRes = await fetch(`${API}/clubs/pending`, { headers });
+                const pendData = await pendRes.json();
+                if (!pendRes.ok) throw new Error(pendData.message || 'Failed to fetch pending applications');
+                setPending(pendData.students || []);
+            } else {
+                setPending([]);
+            }
+
+            const configQuery = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const configRes = await fetch(`${API}/clubs/council-config${configQuery}`, { headers });
+            const configData = await configRes.json();
+            if (configRes.ok && configData.success) {
+                setDesignationTemplates(configData.designation_templates || ['Member Only']);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to connect to server');
             toast.error(err.message || 'Failed to connect to server');
         } finally {
             setIsLoading(false);
         }
-    }, [token, user?.role]);
+    }, [token, user?.role, clubId, embedded, isMissingClubContext]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => {
+        if (embedded) {
+            setTab('members');
+        }
+    }, [embedded]);
 
     const handleApplication = async (studentId: string, status: 'Approved' | 'Rejected') => {
         setActionLoading(studentId + status);
@@ -201,7 +337,7 @@ export const ClubStudentMgmt: React.FC = () => {
             const res = await fetch(`${API}/clubs/students/${editingMember._id}/cca`, {
                 method: 'PUT',
                 headers,
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, ...(clubId ? { club_id: clubId } : {}) }),
             });
             const resData = await res.json();
             if (!res.ok) throw new Error(resData.message || 'Update failed');
@@ -210,6 +346,45 @@ export const ClubStudentMgmt: React.FC = () => {
             fetchAll();
         } catch (err: any) {
             toast.error(err.message || 'Update failed');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleUpdateCouncil = async (studentId: string, payload: { membership_role: 'member' | 'coordinator'; designation: string; coordinator_scopes: string[] }) => {
+        setActionLoading(`updating-council-${studentId}`);
+        try {
+            const res = await fetch(`${API}/clubs/members/${studentId}/council`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ ...payload, ...(clubId ? { club_id: clubId } : {}) }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to update council role');
+            toast.success('Council role updated successfully!');
+            setEditingCouncilMember(null);
+            fetchAll();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update council role');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSaveDesignationTemplates = async () => {
+        setActionLoading('saving-designations');
+        try {
+            const res = await fetch(`${API}/clubs/council-config`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ designation_templates: designationTemplates, ...(clubId ? { club_id: clubId } : {}) }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to save templates');
+            toast.success('Designation templates updated');
+            setDesignationTemplates(data.designation_templates || designationTemplates);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save templates');
         } finally {
             setActionLoading(null);
         }
@@ -233,15 +408,17 @@ export const ClubStudentMgmt: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
                 <AlertCircle size={40} className="text-red-400" />
                 <p className="text-gray-600 font-semibold">{error}</p>
-                <button onClick={fetchAll} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold hover:bg-teal-600 transition-colors">
-                    Retry
-                </button>
+                {!isMissingClubContext && (
+                    <button onClick={fetchAll} className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-semibold hover:bg-teal-600 transition-colors">
+                        Retry
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className={`space-y-6 animate-in fade-in duration-500 ${embedded ? 'max-w-none' : ''}`}>
             {editingMember && (
                 <CCAModal
                     member={editingMember}
@@ -250,12 +427,23 @@ export const ClubStudentMgmt: React.FC = () => {
                     isSaving={actionLoading === 'updating-cca'}
                 />
             )}
+            {editingCouncilMember && (
+                <CouncilModal
+                    member={editingCouncilMember}
+                    designationTemplates={designationTemplates}
+                    onClose={() => setEditingCouncilMember(null)}
+                    onSave={(payload) => handleUpdateCouncil(editingCouncilMember._id, payload)}
+                    isSaving={actionLoading === `updating-council-${editingCouncilMember._id}`}
+                />
+            )}
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Student Management</h2>
-                    <p className="text-gray-500 text-sm mt-1">Manage applications and club members</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                        {embedded ? 'Manage members and council roles for your club' : 'Manage applications and club members'}
+                    </p>
                 </div>
                 <button onClick={fetchAll}
                     className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
@@ -263,28 +451,72 @@ export const ClubStudentMgmt: React.FC = () => {
                 </button>
             </div>
 
-            {/* Stats Strip */}
-            <div className="grid grid-cols-2 gap-4">
-                {[
-                    { label: 'Pending Applications', value: pending.length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'Total Members', value: members.length, icon: UserCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
-                ].map((stat, i) => (
-                    <div key={i} className={`${cardClass} p-4 flex items-center gap-3`}>
-                        <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
-                            <stat.icon size={20} />
+            {!embedded && (
+                <div className="grid grid-cols-2 gap-4">
+                    {[
+                        { label: 'Pending Applications', value: pending.length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+                        { label: 'Total Members', value: members.length, icon: UserCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
+                    ].map((stat, i) => (
+                        <div key={i} className={`${cardClass} p-4 flex items-center gap-3`}>
+                            <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                                <stat.icon size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xl font-bold text-gray-900">{isLoading ? '...' : stat.value}</p>
+                                <p className="text-xs text-gray-500">{stat.label}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-xl font-bold text-gray-900">{isLoading ? '...' : stat.value}</p>
-                            <p className="text-xs text-gray-500">{stat.label}</p>
-                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Council Settings Panel */}
+            <div className={`${cardClass} p-5 space-y-4`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900">Council Designation Settings</h3>
+                        <p className="text-sm text-gray-500">Manage the designation list for your club members</p>
                     </div>
-                ))}
+                    <button
+                        onClick={handleSaveDesignationTemplates}
+                        disabled={actionLoading === 'saving-designations'}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                    >
+                        {actionLoading === 'saving-designations' ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        Save Templates
+                    </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {designationTemplates.map((designation, idx) => (
+                        <div key={`${designation}-${idx}`} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 border border-indigo-100">
+                            <input
+                                value={designation}
+                                onChange={(e) => setDesignationTemplates(prev => prev.map((item, index) => index === idx ? e.target.value : item))}
+                                className="bg-transparent outline-none min-w-[120px]"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setDesignationTemplates(prev => prev.filter((_, index) => index !== idx))}
+                                className="text-indigo-400 hover:text-indigo-700"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => setDesignationTemplates(prev => [...prev, ''])}
+                        className="inline-flex items-center gap-2 rounded-full border border-dashed border-indigo-200 bg-white px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50"
+                    >
+                        + Add designation
+                    </button>
+                </div>
             </div>
 
             {/* Tabs + Filters */}
             <div className={`${cardClass} p-4 flex flex-col sm:flex-row sm:items-center gap-3`}>
                 <div className="flex rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-1 gap-1">
-                    {(['pending', 'members'] as const).map(t => (
+                    {(embedded ? (['members'] as const) : (['pending', 'members'] as const)).map(t => (
                         <button key={t} onClick={() => setTab(t)}
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${tab === t ? 'bg-teal-500 text-white shadow' : 'text-gray-500 hover:text-gray-800'
                                 }`}>
@@ -402,6 +634,7 @@ export const ClubStudentMgmt: React.FC = () => {
                                 <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                                     <tr>
                                         <th className="px-6 py-4">Member</th>
+                                        <th className="px-6 py-4">Designation</th>
                                         <th className="px-6 py-4">Roll No</th>
                                         <th className="px-6 py-4">Department</th>
                                         <th className="px-6 py-4">Year</th>
@@ -422,6 +655,16 @@ export const ClubStudentMgmt: React.FC = () => {
                                                         <p className="font-semibold text-gray-900">{m.name}</p>
                                                         <p className="text-xs text-gray-400">{m.email}</p>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="space-y-1">
+                                                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                                                        {m.designation || 'Member Only'}
+                                                    </span>
+                                                    <p className="text-[11px] text-gray-500 uppercase tracking-wide">
+                                                        {m.membership_role || 'member'}
+                                                    </p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 font-mono text-gray-700 text-xs">{m.roll_no || '—'}</td>
@@ -445,12 +688,20 @@ export const ClubStudentMgmt: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => setEditingMember(m)}
-                                                    className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
-                                                >
-                                                    Manage CCA
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setEditingMember(m)}
+                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
+                                                    >
+                                                        Manage CCA
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingCouncilMember(m)}
+                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                                    >
+                                                        Council Role
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

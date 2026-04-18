@@ -34,9 +34,14 @@ interface Logbook {
     status: string;
 }
 
+interface Props {
+    clubId?: string;
+    embedded?: boolean;
+}
+
 const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
 
-export const ClubCCAManagement: React.FC = () => {
+export const ClubCCAManagement: React.FC<Props> = ({ clubId, embedded = false }) => {
     const { token } = useSelector((state: RootState) => state.auth);
     const [members, setMembers] = useState<MemberCCA[]>([]);
     const [logbooks, setLogbooks] = useState<Logbook[]>([]);
@@ -55,7 +60,8 @@ export const ClubCCAManagement: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API}/clubs/members`, { headers });
+            const query = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const res = await fetch(`${API}/clubs/members${query}`, { headers });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to load members');
             setMembers(data.members || []);
@@ -65,17 +71,18 @@ export const ClubCCAManagement: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, clubId]);
 
     const fetchLogbooks = useCallback(async () => {
         setLogLoading(true);
         try {
-            const res = await fetch(`${API}/logbooks/club`, { headers });
+            const query = clubId ? `?club_id=${encodeURIComponent(clubId)}` : '';
+            const res = await fetch(`${API}/logbooks/club${query}`, { headers });
             const data = await res.json();
             if (res.ok) setLogbooks(data.logbooks || []);
         } catch { /* logbooks are secondary — don't block */ }
         finally { setLogLoading(false); }
-    }, [token]);
+    }, [token, clubId]);
 
     useEffect(() => { fetchMembers(); fetchLogbooks(); }, [fetchMembers, fetchLogbooks]);
 
@@ -94,7 +101,7 @@ export const ClubCCAManagement: React.FC = () => {
             const res = await fetch(`${API}/clubs/students/${selected._id}/cca`, {
                 method: 'PUT',
                 headers,
-                body: JSON.stringify({ rubric_marks: editMarks, cca_hours: editHours }),
+                body: JSON.stringify({ rubric_marks: editMarks, cca_hours: editHours, ...(clubId ? { club_id: clubId } : {}) }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to save marks');
@@ -142,7 +149,7 @@ export const ClubCCAManagement: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className={`space-y-6 animate-in fade-in duration-500 ${embedded ? 'max-w-none' : ''}`}>
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">CCA & Marks Management</h2>
                 <p className="text-gray-500 text-sm mt-1">Update CCA hours and rubric-based marks for your members</p>

@@ -2,10 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { JoinedClubsWidget } from '../components/student/JoinedClubsWidget';
+import { CouncilActionsWidget } from '../components/student/CouncilActionsWidget';
 import { CCAProgressBar } from '../components/student/CCAProgressBar';
 import { ActionItemsWidget } from '../components/student/ActionItemsWidget';
 import { NoticeboardWidget } from '../components/student/NoticeboardWidget';
 import { EventCalendar } from '../components/student/EventCalendar';
+import { ClubEventsNotifications } from './club/ClubEventsNotifications';
+import { ClubCCAManagement } from './club/ClubCCAManagement';
+import { ClubStudentMgmt } from './club/ClubStudentMgmt';
 import {
     fetchStudentDashboard,
     type StudentDashboardData,
@@ -28,6 +32,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
     const [data, setData] = useState<StudentDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeCouncilAction, setActiveCouncilAction] = useState<{ clubId: string; clubName: string; action: 'events' | 'cca' | 'members' } | null>(null);
 
     const loadDashboard = async () => {
         setLoading(true);
@@ -224,11 +229,40 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                     />
                 )}
 
+                <CouncilActionsWidget
+                    clubs={data?.joinedClubs || []}
+                    onOpenAction={(club, action) => setActiveCouncilAction({ clubId: club._id, clubName: club.club_name, action })}
+                />
+
             {/* Main Widgets Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <JoinedClubsWidget clubs={data?.joinedClubs || []} loading={loading} />
                 <ActionItemsWidget items={data?.actionItems || []} loading={loading} />
             </div>
+
+                {activeCouncilAction && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                        <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-white/60">
+                            <button
+                                onClick={() => setActiveCouncilAction(null)}
+                                className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            >
+                                ×
+                            </button>
+                            <div className="mb-5 pr-10">
+                                <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Council Workspace</p>
+                                <h3 className="text-xl font-bold text-gray-900">{activeCouncilAction.clubName}</h3>
+                            </div>
+                            {activeCouncilAction.action === 'events' ? (
+                                <ClubEventsNotifications clubId={activeCouncilAction.clubId} embedded />
+                            ) : activeCouncilAction.action === 'members' ? (
+                                <ClubStudentMgmt clubId={activeCouncilAction.clubId} embedded />
+                            ) : (
+                                <ClubCCAManagement clubId={activeCouncilAction.clubId} embedded />
+                            )}
+                        </div>
+                    </div>
+                )}
 
             {/* Event Calendar (Full Width) */}
             <EventCalendar loading={loading} />
