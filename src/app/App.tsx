@@ -183,24 +183,36 @@ const AppContent: React.FC = () => {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-      <div className="flex min-h-screen font-['Inter',sans-serif]" style={{ background: 'linear-gradient(135deg, #e0f2f1 0%, #e8eaf6 35%, #f3e5f5 65%, #e0f2f1 100%)' }}>
-        <Sidebar 
-          currentView={currentView} 
-          onViewChange={(view) => { setCurrentView(view); setSidebarOpen(false); }} 
-          isOpen={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)} 
-        />
+      <div className="min-h-screen p-2 md:p-4 font-['Inter',sans-serif] bg-[#f0f4f8] relative overflow-hidden flex flex-col">
+        
+        {/* Dynamic Ambient Background Blobs */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-teal-400/40 blur-[120px] mix-blend-multiply animate-[pulse_8s_ease-in-out_infinite]" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/30 blur-[140px] mix-blend-multiply animate-[pulse_12s_ease-in-out_infinite_reverse]" />
+            <div className="absolute top-[30%] right-[15%] w-[35vw] h-[35vw] rounded-full bg-sky-300/30 blur-[100px] mix-blend-multiply animate-[pulse_10s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
+            <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-emerald-200/40 blur-[90px] mix-blend-multiply animate-[pulse_14s_ease-in-out_infinite]" style={{ animationDelay: '4s' }} />
+        </div>
 
-        <main className="flex-1 flex flex-col min-w-0">
-          <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} />
-          <div className="flex-1 overflow-y-auto p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              {renderView()}
+        {/* Glassmorphic Application Shell */}
+        <div className="flex relative z-10 w-full h-[calc(100vh-16px)] md:h-[calc(100vh-32px)] bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(31,56,104,0.1)]">
+          <Sidebar 
+            currentView={currentView} 
+            onViewChange={(view) => { setCurrentView(view); setSidebarOpen(false); }} 
+            isOpen={sidebarOpen} 
+            onClose={() => setSidebarOpen(false)} 
+          />
+
+          <main className="flex-1 flex flex-col min-w-0 bg-transparent">
+            <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} />
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+              <div className="max-w-7xl mx-auto">
+                {renderView()}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
 
-        <Toaster position="bottom-right" />
+          <Toaster position="bottom-right" richColors theme="light" />
+        </div>
       </div>
     </>
   );

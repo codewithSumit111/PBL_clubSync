@@ -146,8 +146,7 @@ export const ClubDashboard: React.FC = () => {
         {(loading ? [1, 2, 3, 4] : statCards).map((card: any, idx) => (
           <div 
             key={idx} 
-            className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all group"
-            style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
+            className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_30px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] transition-all duration-300 group"
           >
             {loading ? (
               <div className="space-y-3 animate-pulse">
@@ -157,13 +156,25 @@ export const ClubDashboard: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className={`w-12 h-12 rounded-xl ${card.bg} ${card.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <card.icon size={24} />
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-full flex-shrink-0 ${card.bg} ${card.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <card.icon size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] tracking-wider mb-1">
+                      {card.label}
+                    </h3>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-[28px] leading-tight font-bold text-[#1a1a2e]">
+                        {card.value}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{card.label}</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <p className="text-3xl font-bold text-gray-900">{card.value}</p>
-                  <p className="text-xs text-gray-400 font-medium">{card.sub}</p>
+                <div className="mt-3 pl-16">
+                  <span className="text-xs text-gray-500 font-medium">
+                    {card.sub}
+                  </span>
                 </div>
               </>
             )}
@@ -174,10 +185,10 @@ export const ClubDashboard: React.FC = () => {
       {/* Charts & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Engagement Graph */}
-        <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-sm overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="lg:col-span-2 bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] flex items-center gap-2">
                 <TrendingUp size={18} className="text-teal-600" />
                 Engagement Overview
               </h3>
@@ -222,9 +233,9 @@ export const ClubDashboard: React.FC = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-sm" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-gray-900">Recent Activity</h3>
+            <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Recent Activity</h3>
             <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full uppercase">Live Feed</span>
           </div>
 
@@ -254,13 +265,13 @@ export const ClubDashboard: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-bold text-gray-900 truncate">{item.name}</p>
+                      <p className="text-sm font-bold text-[#1a1a2e] truncate">{item.name}</p>
                       <span className="text-[10px] text-gray-400 whitespace-nowrap">
                         {new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-500 mb-1">{item.department}</p>
-                    <p className="text-xs text-gray-600 line-clamp-1">{item.message}</p>
+                    <p className="text-[13px] text-[#374151] line-clamp-1">{item.message}</p>
                     <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${getStatusColor(item.status)}`}>
                       {item.status}
                     </span>

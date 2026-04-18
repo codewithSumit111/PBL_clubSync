@@ -1,12 +1,12 @@
 import React from 'react';
-import { Search, Bell, HelpCircle, Menu } from 'lucide-react';
+import { Search, Bell, HelpCircle, Menu, Sparkles } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
 export const Header: React.FC<{ title: string, onMenuClick?: () => void }> = ({ title, onMenuClick }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
-    <header className="h-16 border-b border-white/50 bg-white/40 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 md:px-8">
+    <header className="h-[88px] bg-transparent sticky top-0 z-30 flex items-center justify-between px-4 md:px-8 pt-4 pb-2">
       <div className="flex items-center gap-3">
         {onMenuClick && (
           <button 
@@ -18,11 +18,14 @@ export const Header: React.FC<{ title: string, onMenuClick?: () => void }> = ({ 
         )}
         {user?.role !== 'Club' ? (
           <div>
-            <p className="text-xs text-teal-600 font-medium hidden sm:block">Welcome back, {user?.name} 👋</p>
-            <h1 className="text-lg md:text-xl font-bold text-gray-900">{title}</h1>
+            <p className="text-[14px] text-teal-600 mb-1 hidden sm:flex items-center gap-1.5">Welcome back, {user?.name} <Sparkles size={14} /></p>
+            <h1 className="text-[32px] font-bold text-[#1a1a2e] leading-tight">{title}</h1>
           </div>
         ) : (
-          <div />
+          <div>
+             <p className="text-[14px] text-teal-600 mb-1 hidden sm:flex items-center gap-1.5">Welcome back, {user?.name || (user as any)?.club_name} <Sparkles size={14} /></p>
+             <h1 className="text-[32px] font-bold text-[#1a1a2e] leading-tight">{title}</h1>
+          </div>
         )}
       </div>
 
@@ -36,14 +39,21 @@ export const Header: React.FC<{ title: string, onMenuClick?: () => void }> = ({ 
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors relative">
+        <div className="flex items-center gap-4">
+          <button className="p-2 text-gray-500 hover:bg-gray-200 rounded-full transition-colors relative">
             <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#f8fafc]"></span>
           </button>
-          <button className="p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
-            <HelpCircle size={20} />
-          </button>
+          
+          <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
+              {(user?.name || (user as any)?.club_name || '?').charAt(0)}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-900 leading-tight">{user?.name || (user as any)?.club_name || 'User'}</span>
+              <span className="text-xs text-gray-500 leading-tight">{user?.role}</span>
+            </div>
+          </div>
         </div>
       </div>
     </header>

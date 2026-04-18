@@ -22,7 +22,7 @@ export const JoinedClubsWidget: React.FC<Props> = ({ clubs, loading }) => {
 
     if (loading) {
         return (
-            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+            <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
                         <Building2 size={20} className="text-teal-600" />
@@ -39,7 +39,7 @@ export const JoinedClubsWidget: React.FC<Props> = ({ clubs, loading }) => {
     }
 
     return (
-        <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">

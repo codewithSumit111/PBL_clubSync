@@ -146,10 +146,7 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({ loading: parentLoa
 
     if (parentLoading || loading) {
         return (
-            <div
-                className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6"
-                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
-            >
+            <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                         <CalendarIcon size={20} className="text-indigo-600" />
@@ -162,10 +159,7 @@ export const EventCalendar: React.FC<EventCalendarProps> = ({ loading: parentLoa
     }
 
     return (
-        <div
-            className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6"
-            style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
-        >
+        <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
             {/* Header */}
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">

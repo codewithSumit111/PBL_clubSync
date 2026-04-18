@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
     Bell, Calendar, Plus, X, Users, RefreshCw,
-    Send, CheckCircle2, Megaphone, AlertCircle, QrCode, Loader2
+    Send, CheckCircle2, Megaphone, AlertCircle, QrCode, Loader2, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE as API } from '../../config';
@@ -23,7 +23,7 @@ interface Notification {
 
 type TabType = 'events' | 'notifications';
 
-const cardClass = 'bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-sm';
+const cardClass = 'bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)]';
 
 const FormField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <div>
@@ -169,31 +169,36 @@ export const ClubEventsNotifications: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Events & Notifications</h2>
-                    <p className="text-gray-500 text-sm mt-1">Schedule events and broadcast messages to your members</p>
+                    <h2 className="text-[32px] font-bold text-[#1a1a2e] tracking-tight">Events & Notifications</h2>
+                    <p className="text-[#6b7280] text-[14px] mt-1">Schedule events and broadcast messages to your members</p>
                 </div>
                 <div className="flex gap-3">
                     <button onClick={() => setShowNotifForm(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-50 hover:shadow-md transition-all duration-300">
                         <Megaphone size={15} /> Notify Members
                     </button>
                     <button onClick={() => setShowEventForm(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-teal-500 text-white rounded-xl text-sm font-bold hover:bg-teal-600 shadow-lg shadow-teal-200">
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#0d9488] text-white rounded-full text-sm font-bold hover:bg-[#0f766e] shadow-[0_4px_14px_rgba(13,148,136,0.39)] hover:-translate-y-0.5 transition-all duration-300">
                         <Plus size={16} /> Create Event
                     </button>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className={`${cardClass} p-1 flex gap-1 w-fit`}>
-                {(['events', 'notifications'] as TabType[]).map(t => (
-                    <button key={t} onClick={() => setTab(t)}
-                        className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${tab === t ? 'bg-teal-500 text-white shadow' : 'text-gray-500 hover:text-gray-800'
-                            }`}>
-                        {t === 'events' ? `📅 Events (${events.length})` : `🔔 Notifications (${notifications.length})`}
-                    </button>
-                ))}
-            </div>
+            {/* Tabs & Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left 2 Columns: Tabs and Main Lists */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Tabs */}
+                    <div className="bg-white p-1 flex gap-1 w-fit rounded-full shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-gray-100">
+                        {(['events', 'notifications'] as TabType[]).map(t => (
+                            <button key={t} onClick={() => setTab(t)}
+                                className={`flex items-center gap-1.5 px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${tab === t ? 'bg-[#0d9488] text-white shadow-md' : 'text-[#6b7280] hover:text-[#1a1a2e] hover:bg-gray-50'
+                                    }`}>
+                                {t === 'events' ? <><Calendar size={14} className="mt-[-1px]"/> Events ({events.length})</> : <><Bell size={14} className="mt-[-1px]"/> Notifications ({notifications.length})</>}
+                            </button>
+                        ))}
+                    </div>
 
             {loading ? (
                 <div className="flex items-center justify-center py-16 text-gray-400">
@@ -260,6 +265,29 @@ export const ClubEventsNotifications: React.FC = () => {
                     ))}
                 </div>
             )}
+            </div> {/* End Left Columns */}
+
+            {/* Right Column: Contextual Tip Box */}
+            <div className="space-y-6">
+                <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-[20px] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)] relative overflow-hidden border border-teal-100/50">
+                    <div className="absolute -right-6 -top-6 w-32 h-32 bg-teal-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
+                    <div className="absolute -left-6 -bottom-6 w-32 h-32 bg-emerald-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
+                    
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-teal-600">
+                            <Sparkles size={24} />
+                        </div>
+                        <h3 className="text-[16px] font-bold text-[#1a1a2e] mb-2">Setup your next event</h3>
+                        <p className="text-[13px] text-[#6b7280] leading-relaxed mb-6">
+                            Keep your members engaged by regularly scheduling workshops, meetings, or recruitment drives.
+                        </p>
+                        <button onClick={() => setShowEventForm(true)} className="w-full py-2.5 bg-white text-teal-700 text-sm font-bold rounded-xl shadow-sm hover:shadow hover:-translate-y-0.5 transition-all outline-none">
+                            Start creating
+                        </button>
+                    </div>
+                </div>
+            </div> {/* End Right Column */}
+        </div> {/* End Grid */}
 
             {/* Create Event Modal */}
             {showEventForm && (
@@ -372,42 +400,47 @@ export const ClubEventsNotifications: React.FC = () => {
 };
 
 const EventCard: React.FC<{ event: ClubEvent; isUpcoming: boolean; onGenerateQr: () => void; qrLoading: boolean; onShowMonitor?: () => void }> = ({ event, isUpcoming, onGenerateQr, qrLoading, onShowMonitor }) => (
-    <div className={`bg-white/60 backdrop-blur-xl rounded-2xl border ${isUpcoming ? 'border-teal-100' : 'border-white/50'} shadow-sm p-5`}>
-        <div className="flex items-start justify-between gap-2 mb-2">
-            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-bold ${isUpcoming ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500'}`}>
-                <Calendar size={11} />
-                {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                {event.time && ` · ${event.time}`}
+    <div className={`bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-transparent hover:border-teal-100 hover:shadow-[0_6px_30px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] transition-all duration-300 p-6 flex flex-col justify-between`}>
+        <div>
+            <div className="flex gap-4 mb-3">
+                <h4 className="font-bold text-[#1a1a2e] text-[16px] leading-tight flex-1 pt-1">{event.title}</h4>
+                <div className={`flex flex-col items-end gap-1 px-3 py-1.5 rounded-xl shrink-0 text-right ${isUpcoming ? 'bg-teal-50 text-teal-800' : 'bg-gray-50 text-gray-500'}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-wide opacity-80 flex items-center gap-1">
+                        <Calendar size={10} /> Date
+                    </span>
+                    <span className="text-[13px] font-bold">
+                        {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        {event.time && `, ${event.time}`}
+                    </span>
+                </div>
             </div>
-            {event.attendees !== undefined && (
-                <span className="text-xs text-gray-400 flex items-center gap-1"><Users size={11} /> {event.attendees.length}</span>
-            )}
+            {event.description && <p className="text-[13px] text-[#6b7280] line-clamp-2 mb-3">{event.description}</p>}
         </div>
-        <h4 className="font-bold text-gray-900 mb-1">{event.title}</h4>
-        {event.description && <p className="text-sm text-gray-500 line-clamp-2">{event.description}</p>}
-        {event.venue && <p className="text-xs text-gray-400 mt-2">📍 {event.venue}</p>}
-        <div className="mt-4 flex items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full">
-                CCA Hours: {event.cca_hours || 0}
-            </span>
-            <div className="flex items-center gap-2">
-                {onShowMonitor && (
+        
+        <div className="mt-auto">
+            {event.venue && <p className="text-[12px] font-medium text-gray-500 mb-4 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span> Venue: {event.venue}</p>}
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-50">
+                <div className="bg-teal-50 border border-teal-100 rounded-[10px] px-3 py-1.5 flex flex-col">
+                    <span className="text-[9px] font-bold text-teal-600 uppercase tracking-wide">CCA Hours</span>
+                    <span className="text-[14px] font-bold text-teal-900 leading-none mt-0.5">{event.cca_hours || 0} hrs</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    {onShowMonitor && (
+                        <button
+                            onClick={onShowMonitor}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[12px] font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                        >
+                            <Users size={14} /> Monitor
+                        </button>
+                    )}
                     <button
-                        onClick={onShowMonitor}
-                        className="inline-flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                        onClick={onGenerateQr}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#0d9488] px-3 py-1.5 text-[12px] font-bold text-white hover:bg-[#0f766e] disabled:opacity-60 transition-colors"
+                        disabled={qrLoading}
                     >
-                        <Users size={12} />
-                        Monitor
+                        {qrLoading ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />} QR
                     </button>
-                )}
-                <button
-                    onClick={onGenerateQr}
-                    className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-3 py-2 text-xs font-bold text-white hover:bg-teal-600 disabled:opacity-60"
-                    disabled={qrLoading}
-                >
-                    {qrLoading ? <Loader2 size={12} className="animate-spin" /> : <QrCode size={12} />}
-                    QR
-                </button>
+                </div>
             </div>
         </div>
     </div>

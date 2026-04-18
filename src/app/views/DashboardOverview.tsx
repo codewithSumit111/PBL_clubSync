@@ -239,7 +239,7 @@ export const DashboardOverview: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {(loading ? [1, 2, 3, 4] : statCards).map((stat: any, idx) => (
-          <div key={idx} className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+          <div key={idx} className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_30px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] transition-all duration-300" >
             {loading ? (
               <div className="space-y-3">
                 <div className="h-12 w-12 rounded-xl bg-gray-100 animate-pulse" />
@@ -248,16 +248,22 @@ export const DashboardOverview: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-full flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center`}>
                     <stat.icon size={24} />
                   </div>
-                  <span className="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                  <div>
+                    <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] tracking-wider mb-1">{stat.label}</h3>
+                    <div className="flex items-baseline gap-2">
+                       <p className="text-[28px] leading-tight font-bold text-[#1a1a2e]">{stat.value}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pl-16">
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
                     {stat.change}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
               </>
             )}
           </div>
@@ -266,9 +272,9 @@ export const DashboardOverview: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="lg:col-span-2 bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-gray-900">Engagement Overview</h3>
+            <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Engagement Overview</h3>
             <span className="text-xs text-gray-400">Last 6 months</span>
           </div>
           {loading ? (
@@ -296,8 +302,8 @@ export const DashboardOverview: React.FC = () => {
           )}
         </div>
 
-        <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
-          <h3 className="font-bold text-gray-900 mb-8">Members by Category</h3>
+        <div className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300">
+          <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] mb-8">Members by Category</h3>
           {loading ? (
             <div className="h-[250px] bg-gray-50 rounded-xl animate-pulse" />
           ) : (
@@ -345,9 +351,9 @@ export const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Recent Activity (Table) */}
-      <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+      <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900">Recent Activity</h3>
+          <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Recent Activity</h3>
           <span className="text-xs text-gray-400">{activities.length} recent updates</span>
         </div>
         {loading ? (
@@ -374,7 +380,7 @@ export const DashboardOverview: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-50 text-sm">
                 {activities.map((a, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={i} className="hover:bg-gray-50/50 transition-colors text-[13px] text-[#374151]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">
@@ -382,7 +388,7 @@ export const DashboardOverview: React.FC = () => {
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{a.name}</p>
-                          <p className="text-xs text-gray-500">{a.department}</p>
+                          <p className="text-[11px] text-gray-500">{a.department}</p>
                         </div>
                       </div>
                     </td>

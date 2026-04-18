@@ -31,7 +31,7 @@ function timeAgo(dateStr: string): string {
 export const NoticeboardWidget: React.FC<Props> = ({ notices, loading }) => {
     if (loading) {
         return (
-            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+            <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
                         <Megaphone size={20} className="text-purple-600" />
@@ -48,7 +48,7 @@ export const NoticeboardWidget: React.FC<Props> = ({ notices, loading }) => {
     }
 
     return (
-        <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+        <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">

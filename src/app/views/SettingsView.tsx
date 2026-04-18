@@ -4,7 +4,7 @@ import { RootState } from '../store';
 import {
     User, Lock, Bell, Palette, Save, RefreshCw,
     Mail, Shield, Building2, Hash, Eye, EyeOff,
-    CheckCircle2
+    CheckCircle2, XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE as API } from '../config';
@@ -200,8 +200,9 @@ export const SettingsView: React.FC = () => {
                                         placeholder="Re-enter new password"
                                     />
                                     {confirmPwd && newPwd && (
-                                        <p className={`text-xs mt-1 font-medium ${newPwd === confirmPwd ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {newPwd === confirmPwd ? '✓ Passwords match' : '✗ Passwords do not match'}
+                                        <p className={`text-xs mt-1 font-medium flex items-center gap-1 ${newPwd === confirmPwd ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {newPwd === confirmPwd ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                                            {newPwd === confirmPwd ? 'Passwords match' : 'Passwords do not match'}
                                         </p>
                                     )}
                                 </div>
@@ -260,9 +261,10 @@ export const SettingsView: React.FC = () => {
                                         }`} />
                                 </button>
                             </div>
-                            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+                                <Palette size={16} className="text-amber-600 shrink-0 mt-0.5" />
                                 <p className="text-xs text-amber-700 font-medium">
-                                    🎨 Theme customization is a work in progress. Your preference is saved and will take effect when theming is fully implemented.
+                                    Theme customization is a work in progress. Your preference is saved and will take effect when theming is fully implemented.
                                 </p>
                             </div>
                         </div>

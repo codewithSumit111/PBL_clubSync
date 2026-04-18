@@ -17,6 +17,8 @@ import {
     RefreshCw,
     Building2,
     ChevronRight,
+    Sparkles,
+    AlertTriangle
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = ({
@@ -99,8 +101,8 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
             {/* Welcome Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        Welcome back, {user?.name}! 👋
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        Welcome back, {user?.name}! <Sparkles className="text-teal-500" size={24} />
                     </h2>
                     <p className="text-gray-500">
                         Here's your student dashboard overview for today.
@@ -121,7 +123,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
             {/* Error Banner */}
             {error && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 flex items-center gap-2">
-                    <span>⚠️</span>
+                    <AlertTriangle size={18} className="text-amber-600 shrink-0" />
                     <span>Could not reach the server — showing preview data. {error}</span>
                 </div>
             )}
@@ -131,11 +133,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                 {(loading ? [1, 2] : quickStats).map((stat: any, idx) => (
                     <div
                         key={idx}
-                        className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-                        style={{
-                            boxShadow:
-                                '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)',
-                        }}
+                        className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_30px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] transition-all duration-300"
                     >
                         {loading ? (
                             <div className="space-y-3">
@@ -145,22 +143,28 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                             </div>
                         ) : (
                             <>
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-start gap-4">
                                     <div
-                                        className={`w-12 h-12 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}
+                                        className={`w-12 h-12 rounded-full flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center`}
                                     >
                                         <stat.icon size={24} />
                                     </div>
-                                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                    <div>
+                                        <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] tracking-wider mb-1">
+                                            {stat.label}
+                                        </h3>
+                                        <div className="flex items-baseline gap-2">
+                                            <p className="text-[28px] leading-tight font-bold text-[#1a1a2e]">
+                                                {stat.value}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-3 pl-16">
+                                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full inline-flex items-center gap-1">
                                         Active <ArrowUpRight size={12} />
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-500 font-medium">
-                                    {stat.label}
-                                </p>
-                                <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {stat.value}
-                                </p>
                             </>
                         )}
                     </div>
@@ -169,7 +173,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
 
             {/* Enrolled Clubs Quick Nav */}
             {!loading && data && data.joinedClubs.length > 0 && (
-                <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 p-6" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
+                <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
                             <Building2 size={20} className="text-purple-600" />
