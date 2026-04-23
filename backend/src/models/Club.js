@@ -102,12 +102,11 @@ const clubSchema = new mongoose.Schema({
     timestamps: true
 });
 
-clubSchema.pre('save', function (next) {
+clubSchema.pre('save', function () {
     if (!Array.isArray(this.designation_templates) || this.designation_templates.length === 0) {
         this.designation_templates = [DEFAULT_DESIGNATION, 'Chairperson', 'Vice-Chairperson'];
     }
     this.designation_templates = [...new Set(this.designation_templates.map(d => String(d || '').trim()).filter(Boolean))];
-    next();
 });
 
 const Club = mongoose.models.Club || mongoose.model('Club', clubSchema);
