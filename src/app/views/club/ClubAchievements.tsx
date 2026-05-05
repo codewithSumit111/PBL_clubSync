@@ -103,9 +103,9 @@ export const ClubAchievements: React.FC = () => {
     };
 
     const getStudentName = (sid: Achievement['student_id']) =>
-        typeof sid === 'object' ? sid.name : members.find(m => m._id === sid)?.name || 'Unknown';
+        (typeof sid === 'object' && sid !== null) ? sid.name : members.find(m => m._id === sid)?.name || 'Unknown';
     const getStudentRoll = (sid: Achievement['student_id']) =>
-        typeof sid === 'object' ? sid.roll_no : members.find(m => m._id === sid)?.roll_no || '';
+        (typeof sid === 'object' && sid !== null) ? sid.roll_no : members.find(m => m._id === sid)?.roll_no || '';
 
     const filtered = achievements.filter(a => {
         const name = getStudentName(a.student_id).toLowerCase();
