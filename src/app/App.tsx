@@ -187,14 +187,14 @@ const AppContent: React.FC = () => {
         
         {/* Dynamic Ambient Background Blobs */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-teal-400/40 blur-[120px] mix-blend-multiply animate-[pulse_8s_ease-in-out_infinite]" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/30 blur-[140px] mix-blend-multiply animate-[pulse_12s_ease-in-out_infinite_reverse]" />
-            <div className="absolute top-[30%] right-[15%] w-[35vw] h-[35vw] rounded-full bg-sky-300/30 blur-[100px] mix-blend-multiply animate-[pulse_10s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
-            <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-emerald-200/40 blur-[90px] mix-blend-multiply animate-[pulse_14s_ease-in-out_infinite]" style={{ animationDelay: '4s' }} />
+            <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-teal-400/50 blur-[120px] mix-blend-multiply animate-blob" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/40 blur-[140px] mix-blend-multiply animate-blob" style={{ animationDelay: '2s' }} />
+            <div className="absolute top-[20%] right-[10%] w-[35vw] h-[35vw] rounded-full bg-rose-300/40 blur-[100px] mix-blend-multiply animate-blob" style={{ animationDelay: '4s' }} />
+            <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-emerald-300/40 blur-[90px] mix-blend-multiply animate-blob" style={{ animationDelay: '6s' }} />
         </div>
 
         {/* Glassmorphic Application Shell */}
-        <div className="flex relative z-10 w-full h-[calc(100vh-16px)] md:h-[calc(100vh-32px)] bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[24px] overflow-hidden shadow-[0_8px_32px_rgba(31,56,104,0.1)]">
+        <div className="flex relative z-10 w-full h-[calc(100vh-16px)] md:h-[calc(100vh-32px)] bg-white/50 backdrop-blur-3xl border border-white/80 rounded-[32px] overflow-hidden" style={{ boxShadow: '0 8px 32px rgba(31,56,104,0.1), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
           <Sidebar 
             currentView={currentView} 
             onViewChange={(view) => { setCurrentView(view); setSidebarOpen(false); }} 
@@ -202,14 +202,14 @@ const AppContent: React.FC = () => {
             onClose={() => setSidebarOpen(false)} 
           />
 
-          <main className="flex-1 flex flex-col min-w-0 bg-transparent">
-            <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} />
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
-              <div className="max-w-7xl mx-auto">
+          <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+            <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} onViewChange={setCurrentView} />
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide animate-fade-in-up">
+              <div className="max-w-7xl mx-auto animate-fade-in-up">
                 {renderView()}
               </div>
-            </div>
-          </main>
+            </main>
+          </div>
 
           <Toaster position="bottom-right" richColors theme="light" />
         </div>

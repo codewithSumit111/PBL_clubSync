@@ -339,24 +339,31 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClubs.map(club => {
+          {filteredClubs.map((club, index) => {
             const catStyle = style(club.category);
             const isExpanded = expandedClub === club._id;
             return (
               <div
                 key={club._id}
-                className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)' }}
+                className="group bg-white/60 backdrop-blur-xl rounded-[20px] border border-white/60 overflow-hidden hover:shadow-[0_16px_40px_rgba(13,148,136,0.15)] hover:-translate-y-1.5 hover:scale-[1.01] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col animate-fade-in-up relative"
+                style={{ 
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
+                  animationDelay: `${index * 0.05}s`,
+                  animationFillMode: 'both'
+                }}
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10" />
+                
                 {/* Header gradient */}
-                <div className={`h-24 bg-gradient-to-br ${catStyle.headerBg} relative p-4 flex items-end`}>
+                <div className={`h-28 bg-gradient-to-br ${catStyle.headerBg} relative p-5 flex items-end overflow-hidden`}>
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="absolute top-3 right-3">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur`}>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur shadow-sm`}>
                       {club.category}
                     </span>
                   </div>
-                  <div className="absolute -bottom-5 left-5 w-10 h-10 bg-white rounded-xl shadow-lg border border-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span className="text-lg font-bold text-teal-600">{club.club_name.charAt(0)}</span>
+                  <div className="absolute -bottom-6 left-5 w-12 h-12 bg-white rounded-xl shadow-[0_8px_16px_rgba(0,0,0,0.08)] border border-gray-50 flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-3 transition-all duration-500 z-20">
+                    <span className="text-xl font-bold text-teal-600">{club.club_name.charAt(0)}</span>
                   </div>
                 </div>
 

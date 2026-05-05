@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const Logbook = require('../models/Logbook');
 const Notice = require('../models/Notice');
+const Attendance = require('../models/Attendance');
 const { protect } = require('../middleware/auth');
 
 // @route   GET /api/students/dashboard
@@ -232,6 +233,47 @@ router.post('/set-primary-club', protect, async (req, res) => {
 
     } catch (err) {
         console.error('Error setting primary club:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// @route   GET /api/students/attendance
+// @desc    Get attendance history for logged in student
+router.get('/attendance', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Student') {
+            return res.status(403).json({ success: false, message: 'Only students can view their attendance history' });
+        }
+
+        const attendanceRecords = await Attendance.find({ student_id: req.user.id })
+            .populate('club_id', 'club_name')
+            .sort({ checked_in_at: -1 })
+            .lean();
+
+        let total_cca_hours = 0;
+        
+        const attendance = attendanceRecords.map(record => {
+            total_cca_hours += (record.cca_hours_awarded || 0);
+            const dateObj = new Date(record.checked_in_at);
+            return {
+                _id: record._id,
+                event_title: record.event_title,
+                club_name: record.club_id?.club_name || 'Unknown Club',
+                cca_hours_awarded: record.cca_hours_awarded,
+                checked_in_at: record.checked_in_at,
+                checked_in_date: dateObj.toLocaleDateString('en-GB'),
+                checked_in_time: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            };
+        });
+
+        res.json({
+            success: true,
+            attendance,
+            count: attendance.length,
+            total_cca_hours
+        });
+    } catch (err) {
+        console.error('Error fetching student attendance history:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

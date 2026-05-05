@@ -18,6 +18,7 @@ interface Notice {
   title: string;
   message: string;
   category: 'Urgent' | 'Event' | 'General';
+  target_audience: 'All' | 'Student' | 'Club';
   posted_by: { name: string; _id: string };
   createdAt: string;
 }
@@ -31,6 +32,7 @@ export const ManageNotices: React.FC = () => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [category, setCategory] = useState<'Urgent' | 'Event' | 'General'>('General');
+  const [targetAudience, setTargetAudience] = useState<'All' | 'Student' | 'Club'>('All');
 
   // Load existing notices
   const loadNotices = async () => {
@@ -66,7 +68,7 @@ export const ManageNotices: React.FC = () => {
       const res = await fetch(`${API}/notices`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ title, message, category }),
+        body: JSON.stringify({ title, message, category, target_audience: targetAudience }),
       });
       const data = await res.json();
 
@@ -75,6 +77,7 @@ export const ManageNotices: React.FC = () => {
         setTitle('');
         setMessage('');
         setCategory('General');
+        setTargetAudience('All');
         loadNotices();
       } else {
         toast.error('Failed to publish notice: ' + data.message);
@@ -142,7 +145,7 @@ export const ManageNotices: React.FC = () => {
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
             <div className="md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-2">Notice Title</label>
               <input
@@ -164,6 +167,18 @@ export const ManageNotices: React.FC = () => {
                 <option value="General">General</option>
                 <option value="Event">Event</option>
                 <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Target Audience</label>
+              <select
+                value={targetAudience}
+                onChange={(e: any) => setTargetAudience(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium appearance-none cursor-pointer"
+              >
+                <option value="All">Everyone</option>
+                <option value="Student">Students Only</option>
+                <option value="Club">Clubs Only</option>
               </select>
             </div>
           </div>
@@ -223,6 +238,9 @@ export const ManageNotices: React.FC = () => {
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     {getCategoryBadge(notice.category)}
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase tracking-wide border border-slate-200">
+                      {notice.target_audience === 'All' ? 'Everyone' : notice.target_audience === 'Student' ? 'Students Only' : 'Clubs Only'}
+                    </span>
                     <span className="text-xs font-bold tracking-wide text-gray-400 uppercase">
                       {new Date(notice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>

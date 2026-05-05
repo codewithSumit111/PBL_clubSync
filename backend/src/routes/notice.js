@@ -5,10 +5,16 @@ const Notice = require('../models/Notice');
 const { protect } = require('../middleware/auth');
 
 // @route   GET /api/notices
-// @desc    Get all active notices
-router.get('/', async (req, res) => {
+// @desc    Get all active notices (Filtered by audience)
+router.get('/', protect, async (req, res) => {
     try {
-        const notices = await Notice.find({ is_active: true })
+        let filter = { is_active: true };
+        
+        if (req.user.role !== 'Admin') {
+            filter.target_audience = { $in: ['All', req.user.role] };
+        }
+
+        const notices = await Notice.find(filter)
             .populate('posted_by', 'name')
             .sort({ createdAt: -1 })
             .limit(20);
@@ -27,7 +33,7 @@ router.post('/', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Only admins can post notices' });
         }
 
-        const { title, message, category } = req.body;
+        const { title, message, category, target_audience } = req.body;
 
         if (!title || !message) {
             return res.status(400).json({ success: false, message: 'Title and message are required' });
@@ -37,6 +43,7 @@ router.post('/', protect, async (req, res) => {
             title,
             message,
             category: category || 'General',
+            target_audience: target_audience || 'All',
             posted_by: req.user.id
         });
 

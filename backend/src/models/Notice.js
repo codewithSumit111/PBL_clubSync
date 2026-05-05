@@ -15,6 +15,11 @@ const noticeSchema = new mongoose.Schema({
         enum: ['General', 'Academic', 'Event', 'Urgent'],
         default: 'General'
     },
+    target_audience: {
+        type: String,
+        enum: ['All', 'Student', 'Club'],
+        default: 'All'
+    },
     posted_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admin',

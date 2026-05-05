@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
         <div className="w-[240px] h-full flex flex-col">
           {/* Logo Section */}
           <div className="h-[88px] flex items-center px-4 shrink-0 mt-2">
-            <div className="min-w-[40px] w-[40px] h-[40px] bg-teal-600 rounded-[12px] flex items-center justify-center text-white font-black text-xl shadow-[0_4px_12px_rgba(13,148,136,0.4)] transition-all duration-500 group-hover:rotate-[360deg] group-hover:bg-teal-500 group-hover:shadow-[0_8px_20px_rgba(13,148,136,0.6)]">
+            <div className="min-w-[40px] w-[40px] h-[40px] bg-teal-600 rounded-[12px] flex items-center justify-center text-white font-black text-xl shadow-[0_4px_12px_rgba(13,148,136,0.4)] transition-all duration-500 group-hover:scale-110 group-hover:bg-teal-500 group-hover:shadow-[0_8px_20px_rgba(13,148,136,0.6)]">
               C
             </div>
             <span className="font-bold text-[#1a1a2e] text-xl ml-4 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 delay-75 whitespace-nowrap">

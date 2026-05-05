@@ -3,3 +3,21 @@ node_modules
 .env
 venv
 env.example
+
+# Selenium testing
+selenium_screenshots
+test_clubsync.py
+test_results.json
+test.png
+
+# Report generation scripts
+generate_report.py
+generate_final_report.py
+*.docx
+
+# Dev/test scripts
+fix-test-event.cjs
+start.ps1
+
+# Python cache
+__pycache__

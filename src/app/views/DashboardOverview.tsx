@@ -239,17 +239,18 @@ export const DashboardOverview: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {(loading ? [1, 2, 3, 4] : statCards).map((stat: any, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_30px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] transition-all duration-300" >
+          <div key={idx} className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(13,148,136,0.12)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden group border border-transparent hover:border-teal-100/50" >
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             {loading ? (
-              <div className="space-y-3">
+              <div className="space-y-3 relative z-10">
                 <div className="h-12 w-12 rounded-xl bg-gray-100 animate-pulse" />
                 <div className="h-4 w-24 rounded bg-gray-100 animate-pulse" />
                 <div className="h-6 w-16 rounded bg-gray-100 animate-pulse" />
               </div>
             ) : (
-              <>
+              <div className="relative z-10">
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-full flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-xl flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
                     <stat.icon size={24} />
                   </div>
                   <div>
@@ -260,11 +261,11 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-3 pl-16">
-                  <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-full inline-flex items-center gap-1 shadow-sm">
                     {stat.change}
                   </span>
                 </div>
-              </>
+              </div>
             )}
           </div>
         ))}
