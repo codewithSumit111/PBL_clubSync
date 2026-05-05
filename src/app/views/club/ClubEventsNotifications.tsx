@@ -401,14 +401,16 @@ export const ClubEventsNotifications: React.FC<Props> = ({ clubId, embedded = fa
                 />
             )}
 
-            {selectedEventForMonitor && (
-                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" style={{ top: 0, left: 0, width: '100vw', height: '100vh' }}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            {selectedEventForMonitor && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setSelectedEventForMonitor(null)}>
+                    <div className="bg-white rounded-3xl w-full max-w-2xl relative max-h-[90vh] overflow-hidden animate-fade-in-up" style={{ boxShadow: '0 32px 64px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+                        <div className="h-1 w-full bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-400" />
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-4px)]">
                         <button 
                             onClick={() => setSelectedEventForMonitor(null)} 
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+                            className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors z-10"
                         >
-                            <X size={20} />
+                            <X size={16} />
                         </button>
                         {selectedEventForMonitor && events.find(e => e._id === selectedEventForMonitor) && (
                             <OrganizerAttendanceMonitor 
@@ -418,8 +420,10 @@ export const ClubEventsNotifications: React.FC<Props> = ({ clubId, embedded = fa
                                 onRefresh={fetchEvents}
                             />
                         )}
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

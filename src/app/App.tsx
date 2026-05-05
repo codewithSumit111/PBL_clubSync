@@ -160,7 +160,7 @@ const AppContent: React.FC = () => {
       clubs: 'Explore All Clubs',
       'my-clubs': 'My Registered Clubs',
       'student-mgmt': 'Student Management',
-      'add-club-lead': 'Add Club Lead',
+      'add-club-lead': 'Add Club',
       'manage-notices': 'Manage Notices',
       logbook: 'Activity Logbook',
       'qr-attendance': 'QR Attendance',

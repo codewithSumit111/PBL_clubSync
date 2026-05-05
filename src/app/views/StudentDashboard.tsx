@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { JoinedClubsWidget } from '../components/student/JoinedClubsWidget';
@@ -242,8 +243,8 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                 <ActionItemsWidget items={data?.actionItems || []} loading={loading} />
             </div>
 
-                {activeCouncilAction && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                {activeCouncilAction && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setActiveCouncilAction(null)}>
                         <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-white/60">
                             <button
                                 onClick={() => setActiveCouncilAction(null)}
@@ -263,7 +264,8 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                                 <ClubCCAManagement clubId={activeCouncilAction.clubId} embedded />
                             )}
                         </div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
 
             {/* Event Calendar (Full Width) */}

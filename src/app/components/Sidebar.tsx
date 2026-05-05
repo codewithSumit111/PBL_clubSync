@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
     { id: 'cca-progress', label: 'CCA Progress', icon: ShieldCheck, roles: ['Student'] },
 
     // ── Admin only ────────────────────────────────
-    { id: 'add-club-lead', label: 'Add Club Lead', icon: Users, roles: ['Admin'] },
+    { id: 'add-club-lead', label: 'Add Club', icon: Users, roles: ['Admin'] },
     { id: 'student-mgmt', label: 'All Members', icon: Users, roles: ['Admin'] },
     { id: 'manage-notices', label: 'Notices', icon: Bell, roles: ['Admin'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['Admin'] },

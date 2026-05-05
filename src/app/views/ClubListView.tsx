@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import {
@@ -455,8 +456,8 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
       )}
 
       {/* Preference Form Modal */}
-      {showPrefForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      {showPrefForm && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setShowPrefForm(false)}>
           <div
             className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
             onClick={e => e.stopPropagation()}
@@ -586,7 +587,8 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

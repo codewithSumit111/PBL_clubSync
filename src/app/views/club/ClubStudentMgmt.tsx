@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
@@ -84,9 +85,9 @@ const CCAModal: React.FC<{
 
     const total = Object.values(marks).reduce((s, v) => s + v, 0);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className={`${cardClass} w-full max-w-md p-8 shadow-2xl relative overflow-hidden`}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+            <div className={`${cardClass} w-full max-w-md p-8 shadow-2xl relative overflow-hidden animate-fade-in-up`} style={{ boxShadow: '0 32px 64px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 to-indigo-500" />
                 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Manage CCA Stats</h3>
@@ -141,7 +142,8 @@ const CCAModal: React.FC<{
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -166,9 +168,9 @@ const CouncilModal: React.FC<{
         }
     }, [membershipRole]);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className={`${cardClass} w-full max-w-lg p-8 shadow-2xl relative overflow-hidden`}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+            <div className={`${cardClass} w-full max-w-lg p-8 shadow-2xl relative overflow-hidden animate-fade-in-up`} style={{ boxShadow: '0 32px 64px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-teal-500" />
 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Council Role & Designation</h3>
@@ -233,7 +235,8 @@ const CouncilModal: React.FC<{
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

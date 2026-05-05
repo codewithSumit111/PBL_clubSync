@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, Loader2, QrCode, ShieldCheck, Ticket, ChevronDown, History, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeScanner } from '../components/student/QRCodeScanner';
@@ -319,8 +320,8 @@ export const EventAttendanceView: React.FC<EventAttendanceViewProps> = ({ onView
             </div>
 
             {/* Success Modal Popup */}
-            {showModal && lastResponse && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+            {showModal && lastResponse && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }}>
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative flex flex-col items-center text-center transform scale-100 animate-in zoom-in-95 duration-300">
                         <button 
                             onClick={() => {
@@ -387,7 +388,8 @@ export const EventAttendanceView: React.FC<EventAttendanceViewProps> = ({ onView
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

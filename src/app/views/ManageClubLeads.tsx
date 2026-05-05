@@ -62,8 +62,8 @@ export const ManageClubLeads: React.FC = () => {
             <Plus size={20} className="text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add Club Lead</h1>
-            <p className="text-sm text-gray-500">Create a new club lead account to manage a club</p>
+            <h1 className="text-2xl font-bold text-gray-900">Add Club</h1>
+            <p className="text-sm text-gray-500">Create a new club account and assign a club lead</p>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@ export const ManageClubLeads: React.FC = () => {
             ) : (
               <>
                 <Plus size={16} />
-                Create Club Lead Account
+                Add Club
               </>
             )}
           </button>
@@ -162,7 +162,7 @@ export const ManageClubLeads: React.FC = () => {
         <div className="mt-8">
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
             <CheckCircle2 size={16} className="text-green-500" />
-            Recently Added Club Leads
+            Recently Added Clubs
           </h3>
           <div className="space-y-2">
             {recentlyAdded.map((club, i) => (

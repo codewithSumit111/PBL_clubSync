@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
@@ -223,13 +224,19 @@ export const ClubAchievements: React.FC = () => {
             )}
 
             {/* Modal */}
-            {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                        <button onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><X size={20} /></button>
-                        <h3 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
-                            <Trophy size={18} className="text-teal-600" /> Tag Achievement
-                        </h3>
+            {showForm && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setShowForm(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-md relative max-h-[85vh] overflow-hidden animate-fade-in-up" style={{ boxShadow: '0 32px 64px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+                        <div className="h-1 w-full bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-400" />
+                        <div className="p-6 overflow-y-auto max-h-[calc(85vh-4px)]">
+                        <div className="flex items-center justify-between mb-5">
+                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                <Trophy size={18} className="text-teal-600" /> Tag Achievement
+                            </h3>
+                            <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
+                                <X size={16} />
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-semibold text-gray-600 mb-1">Student *</label>
@@ -277,8 +284,10 @@ export const ClubAchievements: React.FC = () => {
                                 Tag Achievement
                             </button>
                         </form>
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
