@@ -40,23 +40,45 @@ router.get('/dashboard', protect, async (req, res) => {
                 cca_marks: rc.cca_marks || {}
             }));
 
-        // 3. Calculate CCA progress metrics
-        // ⭐ For 1st year students: only count hours from PRIMARY club
+        // 3. Calculate CCA progress metrics dynamically from Logbook and Attendance
+        const [approvedLogbooks, attendanceRecords] = await Promise.all([
+            Logbook.find({ student_id: req.user.id, status: 'Approved' }).lean(),
+            Attendance.find({ student_id: req.user.id }).lean()
+        ]);
+
         let totalCCAHours = 0;
         let totalCCAMarks = 0;
 
         if (student.year === 1 && student.primary_club_id) {
             // 1st year: Only aggregate hours from primary club
-            const primaryClub = joinedClubs.find(c => c._id.toString() === student.primary_club_id.toString());
-            if (primaryClub) {
-                totalCCAHours = primaryClub.cca_hours || 0;
-                totalCCAMarks = primaryClub.cca_marks?.total || 0;
-            }
+            const primaryId = student.primary_club_id.toString();
+            const logbookHours = approvedLogbooks
+                .filter(l => l.club_id.toString() === primaryId)
+                .reduce((sum, l) => sum + (l.hours || 0), 0);
+            const attendanceHours = attendanceRecords
+                .filter(a => a.club_id.toString() === primaryId)
+                .reduce((sum, a) => sum + (a.cca_hours_awarded || 0), 0);
+            
+            totalCCAHours = logbookHours + attendanceHours;
+            
+            const primaryClub = joinedClubs.find(c => c._id.toString() === primaryId);
+            if (primaryClub) totalCCAMarks = primaryClub.cca_marks?.total || 0;
         } else {
             // Other years or no primary club set: aggregate from all clubs
-            totalCCAHours = joinedClubs.reduce((sum, c) => sum + (c.cca_hours || 0), 0);
+            const logbookHours = approvedLogbooks.reduce((sum, l) => sum + (l.hours || 0), 0);
+            const attendanceHours = attendanceRecords.reduce((sum, a) => sum + (a.cca_hours_awarded || 0), 0);
+            
+            totalCCAHours = logbookHours + attendanceHours;
             totalCCAMarks = joinedClubs.reduce((sum, c) => sum + (c.cca_marks?.total || 0), 0);
         }
+
+        // Also update joinedClubs cca_hours with real data so individual club chips show correct hours
+        joinedClubs.forEach(club => {
+            const cId = club._id.toString();
+            const lHours = approvedLogbooks.filter(l => l.club_id.toString() === cId).reduce((s, l) => s + (l.hours || 0), 0);
+            const aHours = attendanceRecords.filter(a => a.club_id.toString() === cId).reduce((s, a) => s + (a.cca_hours_awarded || 0), 0);
+            club.cca_hours = lHours + aHours;
+        });
 
         const mandatedHours = 30; // College mandate
 
