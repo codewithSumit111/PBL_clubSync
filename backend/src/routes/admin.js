@@ -428,4 +428,118 @@ router.put('/students/:student_id/cca', protect, async (req, res) => {
     }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/all-students
+// Paginated, filterable list of all students
+// Query params: page, limit, search, department, year
+// ─────────────────────────────────────────────
+router.get('/all-students', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'Admin') {
+            return res.status(403).json({ success: false, message: 'Admin only' });
+        }
+
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
+        const skip = (page - 1) * limit;
+
+        const { search, department, year } = req.query;
+
+        // Build filter
+        const filter = {};
+
+        if (search) {
+            const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.$or = [
+                { name: { $regex: escaped, $options: 'i' } },
+                { roll_no: { $regex: escaped, $options: 'i' } },
+                { email: { $regex: escaped, $options: 'i' } },
+                { prn: { $regex: escaped, $options: 'i' } },
+            ];
+        }
+
+        if (department && department !== 'All') {
+            filter.department = department;
+        }
+
+        if (year && year !== 'All') {
+            filter.year = parseInt(year);
+        }
+
+        const [students, totalCount] = await Promise.all([
+            Student.find(filter)
+                .select('name email roll_no department year division mobile_no prn registered_clubs primary_club_id createdAt')
+                .populate('registered_clubs.club', 'club_name category')
+                .populate('primary_club_id', 'club_name')
+                .sort({ name: 1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Student.countDocuments(filter),
+        ]);
+
+        // Transform students for the frontend
+        const result = students.map(s => {
+            const approvedClubs = (s.registered_clubs || [])
+                .filter(rc => rc.status === 'Approved')
+                .map(rc => ({
+                    club_name: rc.club?.club_name || 'Unknown',
+                    category: rc.club?.category || '',
+                    membership_role: rc.membership_role || 'member',
+                    designation: rc.designation || 'Member Only',
+                    cca_hours: rc.cca_hours || 0,
+                    cca_marks_total: rc.cca_marks?.total || 0,
+                }));
+
+            const totalHours = approvedClubs.reduce((sum, c) => sum + c.cca_hours, 0);
+            const totalMarks = approvedClubs.reduce((sum, c) => sum + c.cca_marks_total, 0);
+
+            return {
+                _id: s._id,
+                name: s.name,
+                email: s.email,
+                roll_no: s.roll_no,
+                department: s.department,
+                year: s.year,
+                division: s.division || '',
+                mobile_no: s.mobile_no || '',
+                prn: s.prn || '',
+                clubs_count: approvedClubs.length,
+                clubs: approvedClubs,
+                total_cca_hours: totalHours,
+                total_cca_marks: totalMarks,
+                primary_club: s.primary_club_id?.club_name || null,
+                joined_at: s.createdAt,
+            };
+        });
+
+        // Get unique departments and year distribution for filter options
+        const [departments, yearDistribution] = await Promise.all([
+            Student.distinct('department'),
+            Student.aggregate([
+                { $group: { _id: '$year', count: { $sum: 1 } } },
+                { $sort: { _id: 1 } },
+            ]),
+        ]);
+
+        res.json({
+            success: true,
+            students: result,
+            pagination: {
+                page,
+                limit,
+                total: totalCount,
+                pages: Math.ceil(totalCount / limit),
+            },
+            filters: {
+                departments: departments.filter(Boolean).sort(),
+                years: yearDistribution.map(y => ({ year: y._id, count: y.count })),
+            },
+        });
+    } catch (err) {
+        console.error('[ADMIN ALL-STUDENTS ERROR]', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

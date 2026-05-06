@@ -11,6 +11,7 @@ import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
 import { ManageNotices } from './views/ManageNotices';
+import { AllMembersView } from './views/AllMembersView';
 import { Toaster } from 'sonner';
 // ── Club Role Views ──────────────────────────────────────────
 import { ClubStudentMgmt } from './views/club/ClubStudentMgmt';
@@ -127,6 +128,8 @@ const AppContent: React.FC = () => {
             </div>
           );
       // ── Admin only ───────────────────────────
+      case 'student-mgmt':
+        return <AllMembersView />;
       case 'analytics':
         return <CCAAnalytics />;
       // ── Club Role Views ──────────────────────
