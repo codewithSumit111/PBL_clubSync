@@ -84,7 +84,7 @@ const AppContent: React.FC = () => {
       case 'my-clubs':
         return <ClubListView mode={currentView} onViewChange={setCurrentView} />;
       case 'logbook':
-          return user?.year === '1' ? (
+          return String(user?.year) === '1' ? (
             <LogbookView />
           ) : (
             <div className="flex flex-col items-center justify-center h-[70vh]">
@@ -111,7 +111,7 @@ const AppContent: React.FC = () => {
       case 'manage-notices':
         return <ManageNotices />;
       case 'cca-progress':
-          return user?.year === '1' ? (
+          return String(user?.year) === '1' ? (
             <StudentCCAView />
           ) : (
             <div className="flex flex-col items-center justify-center h-[70vh]">

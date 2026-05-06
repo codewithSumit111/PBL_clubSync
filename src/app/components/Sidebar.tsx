@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
     
       // Hide CCA-related items for non-1st year students
       if ((item.id === 'logbook' || item.id === 'cca-progress') && user.role === 'Student') {
-        return user.year === '1';
+        return String(user.year) === '1';
       }
     
       return true;
