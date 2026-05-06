@@ -110,11 +110,11 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
                 <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white/5 rounded-full" />
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <p className="text-teal-100 text-sm font-medium mb-1">
-                            {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'} 👋
+                            {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}
                         </p>
                         <h2 className="text-3xl font-bold">{user?.name}</h2>
                         <p className="text-teal-100/80 text-sm mt-2 max-w-md">
@@ -148,7 +148,7 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                         className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(13,148,136,0.12)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden group border border-transparent hover:border-teal-100/50"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                        
+
                         {loading ? (
                             <div className="space-y-3 relative z-10">
                                 <div className="h-12 w-12 rounded-xl bg-gray-100 animate-pulse" />
@@ -231,17 +231,17 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
             )}
 
             {/* CCA Progress Bar (Full Width) */}
-                {data?.year === 1 && (
-                    <CCAProgressBar
-                        progress={data?.ccaProgress || { completed: 0, mandated: 30, percentage: 0 }}
-                        loading={loading}
-                    />
-                )}
-
-                <CouncilActionsWidget
-                    clubs={data?.joinedClubs || []}
-                    onOpenAction={(club, action) => setActiveCouncilAction({ clubId: club._id, clubName: club.club_name, action })}
+            {data?.year === 1 && (
+                <CCAProgressBar
+                    progress={data?.ccaProgress || { completed: 0, mandated: 30, percentage: 0 }}
+                    loading={loading}
                 />
+            )}
+
+            <CouncilActionsWidget
+                clubs={data?.joinedClubs || []}
+                onOpenAction={(club, action) => setActiveCouncilAction({ clubId: club._id, clubName: club.club_name, action })}
+            />
 
             {/* Main Widgets Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -249,30 +249,30 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
                 <ActionItemsWidget items={data?.actionItems || []} loading={loading} />
             </div>
 
-                {activeCouncilAction && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setActiveCouncilAction(null)}>
-                        <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-white/60">
-                            <button
-                                onClick={() => setActiveCouncilAction(null)}
-                                className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                            >
-                                ×
-                            </button>
-                            <div className="mb-5 pr-10">
-                                <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Council Workspace</p>
-                                <h3 className="text-xl font-bold text-gray-900">{activeCouncilAction.clubName}</h3>
-                            </div>
-                            {activeCouncilAction.action === 'events' ? (
-                                <ClubEventsNotifications clubId={activeCouncilAction.clubId} embedded />
-                            ) : activeCouncilAction.action === 'members' ? (
-                                <ClubStudentMgmt clubId={activeCouncilAction.clubId} embedded />
-                            ) : (
-                                <ClubCCAManagement clubId={activeCouncilAction.clubId} embedded />
-                            )}
+            {activeCouncilAction && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setActiveCouncilAction(null)}>
+                    <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-white/60">
+                        <button
+                            onClick={() => setActiveCouncilAction(null)}
+                            className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        >
+                            ×
+                        </button>
+                        <div className="mb-5 pr-10">
+                            <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Council Workspace</p>
+                            <h3 className="text-xl font-bold text-gray-900">{activeCouncilAction.clubName}</h3>
                         </div>
-                    </div>,
-                    document.body
-                )}
+                        {activeCouncilAction.action === 'events' ? (
+                            <ClubEventsNotifications clubId={activeCouncilAction.clubId} embedded />
+                        ) : activeCouncilAction.action === 'members' ? (
+                            <ClubStudentMgmt clubId={activeCouncilAction.clubId} embedded />
+                        ) : (
+                            <ClubCCAManagement clubId={activeCouncilAction.clubId} embedded />
+                        )}
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {/* Event Calendar (Full Width) */}
             <EventCalendar loading={loading} />
