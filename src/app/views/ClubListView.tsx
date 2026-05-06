@@ -386,7 +386,7 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-          {filteredClubs.map(club => {
+          {filteredClubs.map((club, index) => {
             const catStyle = style(club.category);
             const isExpanded = expandedClub === club._id;
             return (
