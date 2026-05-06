@@ -12,6 +12,7 @@ import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
 import { ManageNotices } from './views/ManageNotices';
 import { Toaster } from 'sonner';
+import { Plus } from 'lucide-react';
 // ── Club Role Views ──────────────────────────────────────────
 import { ClubStudentMgmt } from './views/club/ClubStudentMgmt';
 import { ClubCCAManagement } from './views/club/ClubCCAManagement';
@@ -34,6 +35,20 @@ const AppContent: React.FC = () => {
   const defaultView = user?.role === 'Club' ? 'club-students' : 'dashboard';
   const [currentView, setCurrentView] = useState(defaultView);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // ── Theme State & Persistence ──────────────────────────────
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -61,6 +76,13 @@ const AppContent: React.FC = () => {
 
     verifySession();
   }, [token, isAuthenticated, dispatch]);
+  
+  // Reset view when user logs in or role changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setCurrentView(user.role === 'Club' ? 'club-students' : 'dashboard');
+    }
+  }, [isAuthenticated, user?.id, user?.role]);
 
   if (isVerifying) {
     return (
@@ -83,7 +105,7 @@ const AppContent: React.FC = () => {
       case 'my-clubs':
         return <ClubListView mode={currentView} onViewChange={setCurrentView} />;
       case 'logbook':
-          return user?.year === '1' ? (
+          return String(user?.year) === '1' ? (
             <LogbookView />
           ) : (
             <div className="flex flex-col items-center justify-center h-[70vh]">
@@ -110,7 +132,7 @@ const AppContent: React.FC = () => {
       case 'manage-notices':
         return <ManageNotices />;
       case 'cca-progress':
-          return user?.year === '1' ? (
+          return String(user?.year) === '1' ? (
             <StudentCCAView />
           ) : (
             <div className="flex flex-col items-center justify-center h-[70vh]">
@@ -183,18 +205,16 @@ const AppContent: React.FC = () => {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-      <div className="min-h-screen p-2 md:p-4 font-['Inter',sans-serif] bg-[#f0f4f8] relative overflow-hidden flex flex-col">
+      <div className="min-h-screen p-2 md:p-4 font-['Inter',sans-serif] bg-background text-foreground transition-colors duration-500 relative overflow-hidden flex flex-col">
         
         {/* Dynamic Ambient Background Blobs */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-teal-400/50 blur-[120px] mix-blend-multiply animate-blob" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/40 blur-[140px] mix-blend-multiply animate-blob" style={{ animationDelay: '2s' }} />
-            <div className="absolute top-[20%] right-[10%] w-[35vw] h-[35vw] rounded-full bg-rose-300/40 blur-[100px] mix-blend-multiply animate-blob" style={{ animationDelay: '4s' }} />
-            <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-emerald-300/40 blur-[90px] mix-blend-multiply animate-blob" style={{ animationDelay: '6s' }} />
+            <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-teal-400/30 dark:bg-teal-900/10 blur-[120px] mix-blend-multiply dark:mix-blend-overlay animate-blob" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/20 dark:bg-indigo-900/10 blur-[140px] mix-blend-multiply dark:mix-blend-overlay animate-blob" style={{ animationDelay: '2s' }} />
         </div>
 
         {/* Glassmorphic Application Shell */}
-        <div className="flex relative z-10 w-full h-[calc(100vh-16px)] md:h-[calc(100vh-32px)] bg-white/50 backdrop-blur-3xl border border-white/80 rounded-[32px] overflow-hidden" style={{ boxShadow: '0 8px 32px rgba(31,56,104,0.1), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
+        <div className="flex relative z-10 w-full h-[calc(100vh-16px)] md:h-[calc(100vh-32px)] bg-card-glass backdrop-blur-3xl border border-card-glass-border rounded-[32px] overflow-hidden shadow-[0_8px_32px_rgba(31,56,104,0.1)] transition-all duration-500">
           <Sidebar 
             currentView={currentView} 
             onViewChange={(view) => { setCurrentView(view); setSidebarOpen(false); }} 
@@ -203,12 +223,39 @@ const AppContent: React.FC = () => {
           />
 
           <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} onViewChange={setCurrentView} />
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide animate-fade-in-up">
-              <div className="max-w-7xl mx-auto animate-fade-in-up">
+            <Header 
+              title={getTitle()} 
+              onMenuClick={() => setSidebarOpen(true)} 
+              onViewChange={setCurrentView}
+              theme={theme}
+              onThemeToggle={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')} 
+            />
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+              <div key={currentView} className="max-w-7xl mx-auto animate-fade-in-up">
                 {renderView()}
               </div>
             </main>
+
+            {/* Global Footer Bar */}
+            <footer className="h-9 bg-white/30 border-t border-white/40 flex items-center justify-between px-6 shrink-0">
+              <span className="text-[11px] text-gray-400 font-medium">© 2025 ClubSync — College Club Management Platform</span>
+              <span className="text-[11px] text-gray-400 flex items-center gap-1.5 font-medium">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                Connected
+              </span>
+            </footer>
+
+            {/* Quick Action FAB for Club Role */}
+            {user?.role === 'Club' && currentView !== 'club-events' && (
+              <button 
+                onClick={() => setCurrentView('club-events')}
+                className="fixed bottom-12 right-12 z-50 w-14 h-14 bg-teal-500 text-white rounded-full shadow-xl shadow-teal-500/40 flex items-center justify-center hover:bg-teal-600 hover:scale-110 active:scale-95 transition-all group"
+                title="Manage Events & Notifications"
+              >
+                <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
+              </button>
+            )}
+
           </div>
 
           <Toaster position="bottom-right" richColors theme="light" />

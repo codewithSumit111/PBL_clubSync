@@ -28,7 +28,7 @@ export const StudentCCAView: React.FC = () => {
     }, []);
 
         // Only 1st year students should access CCA view
-        if (user?.year !== '1') {
+        if (String(user?.year) !== '1') {
             return (
                 <div className="flex flex-col items-center justify-center h-[70vh]">
                     <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-4">

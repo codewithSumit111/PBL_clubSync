@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
     
       // Hide CCA-related items for non-1st year students
       if ((item.id === 'logbook' || item.id === 'cca-progress') && user.role === 'Student') {
-        return user.year === '1';
+        return String(user.year) === '1';
       }
     
       return true;
@@ -94,8 +94,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
       {/* Desktop Sidebar Dynamic Squeeze Layout */}
       <aside 
         className={twMerge(
-          "hidden lg:flex flex-col bg-white overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group shrink-0 relative z-50",
-          "w-[76px] hover:w-[240px] shadow-[4px_0_24px_rgba(0,0,0,0.08)] border-r border-gray-100 h-full"
+          "hidden lg:flex flex-col bg-sidebar overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group shrink-0 relative z-50",
+          "w-[76px] hover:w-[240px] shadow-[4px_0_24px_rgba(0,0,0,0.08)] border-r border-sidebar-border h-full"
         )}
       >
         <div className="w-[240px] h-full flex flex-col">
@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
             <div className="min-w-[40px] w-[40px] h-[40px] bg-teal-600 rounded-[12px] flex items-center justify-center text-white font-black text-xl shadow-[0_4px_12px_rgba(13,148,136,0.4)] transition-all duration-500 group-hover:scale-110 group-hover:bg-teal-500 group-hover:shadow-[0_8px_20px_rgba(13,148,136,0.6)]">
               C
             </div>
-            <span className="font-bold text-[#1a1a2e] text-xl ml-4 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 delay-75 whitespace-nowrap">
+            <span className="font-bold text-sidebar-foreground text-xl ml-4 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 delay-75 whitespace-nowrap">
               ClubSync
             </span>
           </div>
@@ -138,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
                       </div>
                       <span className={twMerge(
                           "ml-4 font-semibold text-[13px] uppercase tracking-wider whitespace-nowrap opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500",
-                          isActive ? "text-white" : "text-gray-600 group-hover/btn:text-teal-700 hover:tracking-widest"
+                          isActive ? "text-white" : "text-sidebar-foreground/60 group-hover/btn:text-teal-700 hover:tracking-widest"
                       )} style={{ transitionDelay: `${index * 30}ms` }}>
                           {item.label}
                       </span>

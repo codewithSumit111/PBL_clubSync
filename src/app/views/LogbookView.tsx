@@ -160,7 +160,7 @@ export const LogbookView: React.FC = () => {
   };
 
     // Only 1st year students should access logbook
-    if (user?.year !== '1') {
+    if (String(user?.year) !== '1') {
       return (
         <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">

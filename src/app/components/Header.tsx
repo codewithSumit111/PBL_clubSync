@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, HelpCircle, Menu, Sparkles, Info, AlertTriangle, User, Settings, LogOut } from 'lucide-react';
+import { Search, Bell, HelpCircle, Menu, Sparkles, Info, AlertTriangle, User, Settings, LogOut, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { fetchNotices, Notice } from '../services/studentApi';
 import { logout } from '../features/authSlice';
 
-export const Header: React.FC<{ title: string, onMenuClick?: () => void, onViewChange?: (view: string) => void }> = ({ title, onMenuClick, onViewChange }) => {
+export const Header: React.FC<{ 
+  title: string, 
+  onMenuClick?: () => void, 
+  onViewChange?: (view: string) => void,
+  theme: 'light' | 'dark',
+  onThemeToggle: () => void
+}> = ({ title, onMenuClick, onViewChange, theme, onThemeToggle }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const [showNotices, setShowNotices] = useState(false);
@@ -54,6 +60,16 @@ export const Header: React.FC<{ title: string, onMenuClick?: () => void, onViewC
             <Menu size={24} />
           </button>
         )}
+        {/* Breadcrumb */}
+        <div className="hidden md:flex items-center gap-2 text-sm">
+          <span className="text-gray-400 font-medium">Dashboard</span>
+          {title !== 'Dashboard' && title !== 'Overview' && (
+            <>
+              <ChevronRight size={14} className="text-gray-300" />
+              <span className="text-gray-800 font-semibold">{title}</span>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-6">
@@ -67,6 +83,15 @@ export const Header: React.FC<{ title: string, onMenuClick?: () => void, onViewC
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          <button 
+            onClick={onThemeToggle}
+            className="p-2 rounded-full text-gray-500 hover:bg-white/50 dark:hover:bg-gray-800 transition-all duration-300 hover:rotate-12"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-indigo-600" />}
+          </button>
+
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={handleNotificationClick}
@@ -74,7 +99,9 @@ export const Header: React.FC<{ title: string, onMenuClick?: () => void, onViewC
             >
               <Bell size={20} />
               {notices.length > 0 && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#f8fafc]"></span>
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center border-2 border-white px-0.5">
+                  {notices.length > 9 ? '9+' : notices.length}
+                </span>
               )}
             </button>
 

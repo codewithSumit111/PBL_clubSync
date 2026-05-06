@@ -415,15 +415,20 @@ export const ClubReports: React.FC = () => {
                 </div>
             </div>
 
-            {/* Report Type Selector */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
                 {REPORT_CONFIGS.map(r => (
                     <button key={r.id} onClick={() => setSelectedReport(r.id)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-200 text-center ${
-                            selectedReport === r.id ? `border-${r.color.split('-')[1]}-400 ${r.bg} shadow-md scale-[1.02]` : 'border-white/50 bg-white/60 hover:bg-white'
+                        className={`flex flex-col items-center justify-center p-4 rounded-[20px] border-2 transition-all duration-300 text-center group ${
+                            selectedReport === r.id 
+                            ? `border-teal-500 bg-teal-50/50 shadow-[0_8px_20px_-6px_rgba(13,148,136,0.2)] scale-[1.02]` 
+                            : 'border-white/50 bg-white/40 hover:bg-white hover:border-gray-200 hover:-translate-y-1'
                         }`}>
-                        <r.icon size={24} className={`mb-2 ${selectedReport === r.id ? r.color : 'text-gray-400'}`} />
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${selectedReport === r.id ? 'text-gray-900' : 'text-gray-500'}`}>
+                        <div className={`w-12 h-12 rounded-2xl mb-3 flex items-center justify-center transition-colors ${
+                            selectedReport === r.id ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'
+                        }`}>
+                            <r.icon size={22} />
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest leading-tight ${selectedReport === r.id ? 'text-gray-900' : 'text-gray-500'}`}>
                             {r.title}
                         </span>
                     </button>
@@ -510,14 +515,24 @@ export const ClubReports: React.FC = () => {
                     )}
                 </div>
                 {loading ? (
-                    <div className="flex items-center justify-center py-16 text-gray-400">
-                        <RefreshCw size={24} className="animate-spin mr-2" /> Loading from database...
+                    <div className="p-8 space-y-4">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="flex gap-4 items-center animate-pulse">
+                                <div className="w-16 h-4 bg-gray-100 rounded" />
+                                <div className="flex-1 h-4 bg-gray-100 rounded" />
+                                <div className="w-24 h-4 bg-gray-100 rounded" />
+                                <div className="w-12 h-4 bg-gray-100 rounded" />
+                            </div>
+                        ))}
                     </div>
                 ) : isMemberReport ? (
                     sortedData.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                            <Users size={32} className="mb-2 opacity-40" />
-                            <p className="font-medium">No members match the selected filters</p>
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                <Users size={32} className="text-gray-300" />
+                            </div>
+                            <h4 className="text-gray-900 font-bold">No members found</h4>
+                            <p className="text-gray-500 text-sm max-w-[240px] mt-1">Try adjusting your department or year filters to see results.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -586,14 +601,20 @@ export const ClubReports: React.FC = () => {
                     // Event Report PDF Preview
                     <div className="p-4 bg-gray-50/50 min-h-[300px]">
                         {!eventReport ? (
-                            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                                <Presentation size={32} className="mb-2 opacity-40" />
-                                <p className="font-medium">Please select parameters to view preview</p>
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                                    <Presentation size={32} className="text-indigo-300" />
+                                </div>
+                                <h4 className="text-gray-900 font-bold">Ready to Preview</h4>
+                                <p className="text-gray-500 text-sm max-w-[240px] mt-1">Select an event or time range above to generate a preview.</p>
                             </div>
                         ) : eventReport.events.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                                <AlertCircle size={32} className="mb-2 opacity-40 text-red-300" />
-                                <p className="font-medium">No events found for this filter</p>
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                                    <AlertCircle size={32} className="text-red-300" />
+                                </div>
+                                <h4 className="text-gray-900 font-bold">No events found</h4>
+                                <p className="text-gray-500 text-sm max-w-[240px] mt-1">We couldn't find any events matching these criteria.</p>
                             </div>
                         ) : (
                             <div className="space-y-6">

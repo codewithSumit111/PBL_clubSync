@@ -253,19 +253,24 @@ export const ClubEventsNotifications: React.FC<Props> = ({ clubId, embedded = fa
                         </div>
                     )}
                     {events.length === 0 && (
-                        <div className={`${cardClass} flex flex-col items-center justify-center py-12 text-gray-400`}>
-                            <Calendar size={32} className="mb-2 opacity-40" />
-                            <p className="font-medium">No events yet</p>
-                            <p className="text-sm">Create your first event to get started</p>
+                        <div className={`${cardClass} flex flex-col items-center justify-center py-20 text-center`}>
+                            <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mb-4">
+                                <Calendar size={36} className="text-teal-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-700 mb-1">No events yet</h3>
+                            <p className="text-sm text-gray-400 max-w-xs">Plan your first club event and invite members to participate and earn CCA hours.</p>
                         </div>
                     )}
                 </>
             ) : (
                 <div className="space-y-3">
                     {notifications.length === 0 ? (
-                        <div className={`${cardClass} flex flex-col items-center justify-center py-12 text-gray-400`}>
-                            <Bell size={32} className="mb-2 opacity-40" />
-                            <p className="font-medium">No notifications sent yet</p>
+                        <div className={`${cardClass} flex flex-col items-center justify-center py-20 text-center`}>
+                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                                <Bell size={36} className="text-indigo-300" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-700 mb-1">No notifications sent yet</h3>
+                            <p className="text-sm text-gray-400 max-w-xs">Broadcast important updates, deadlines, or announcements to all your club members.</p>
                         </div>
                     ) : notifications.map(n => (
                         <div key={n._id} className={`${cardClass} p-4 flex items-start gap-4`}>

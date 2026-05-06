@@ -198,21 +198,48 @@ export const ClubAnalytics: React.FC = () => {
                     <h3 className="font-bold text-gray-900 mb-1">CCA Marks Distribution</h3>
                     <p className="text-xs text-gray-400 mb-4">Number of members in each marks range (out of 25)</p>
                     {analytics.totalMembers === 0 ? (
-                        <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No member data yet</div>
+                        <div className="h-48 flex flex-col items-center justify-center text-gray-400 py-10">
+                            <Activity size={32} className="mb-2 opacity-20" />
+                            <p className="text-sm font-medium">No member data yet</p>
+                        </div>
                     ) : (
-                        <div className="h-48">
+                        <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={analytics.marksDistribution}>
+                                <AreaChart data={analytics.marksDistribution}>
+                                    <defs>
+                                        <linearGradient id="colorMarks" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="range" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                    <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                    <Tooltip contentStyle={tooltipStyle} />
-                                    <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={36}>
-                                        {analytics.marksDistribution.map((_, i) => (
-                                            <Cell key={i} fill={['#f87171', '#fb923c', '#fbbf24', '#34d399', '#0d9488'][i]} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
+                                    <XAxis 
+                                        dataKey="range" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
+                                        dy={10}
+                                    />
+                                    <YAxis 
+                                        allowDecimals={false} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{...tooltipStyle, backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)'}}
+                                        cursor={{ stroke: '#0d9488', strokeWidth: 2, strokeDasharray: '5 5' }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="count" 
+                                        stroke="#0d9488" 
+                                        strokeWidth={4}
+                                        fillOpacity={1} 
+                                        fill="url(#colorMarks)" 
+                                        animationDuration={1500}
+                                    />
+                                </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     )}
@@ -347,19 +374,25 @@ export const ClubAnalytics: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Yearly Trend Line Chart */}
+                                {/* Yearly Trend Line Chart upgraded to Area */}
                                 <div className={`${cardClass} p-6`}>
                                     <h3 className="font-bold text-gray-900 mb-1">Yearly Attendance Trend</h3>
                                     <p className="text-xs text-gray-400 mb-4">Total attendance numbers year over year</p>
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <LineChart data={eventAnalytics.yearlyData}>
+                                            <AreaChart data={eventAnalytics.yearlyData}>
+                                                <defs>
+                                                    <linearGradient id="colorAttend" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                                <Tooltip contentStyle={tooltipStyle} />
-                                                <Line type="monotone" dataKey="attendance" name="Total Attendance" stroke="#0d9488" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                            </LineChart>
+                                                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} dy={10} />
+                                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
+                                                <Tooltip contentStyle={{...tooltipStyle, backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)'}} />
+                                                <Area type="monotone" dataKey="attendance" name="Total Attendance" stroke="#0d9488" strokeWidth={4} fillOpacity={1} fill="url(#colorAttend)" animationDuration={1500} />
+                                            </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>

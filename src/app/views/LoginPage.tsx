@@ -63,7 +63,7 @@ export const LoginPage: React.FC = () => {
         return;
       }
       toast.success('Login successful!');
-      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name || data.user.club_name, role: data.user.role || selectedRole, email: data.user.email, rollNo: data.user.roll_no, department: data.user.department, clubId: data.user._id, clubName: data.user.club_name }, token: data.token }));
+      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name || data.user.club_name, role: data.user.role || selectedRole, email: data.user.email, rollNo: data.user.roll_no, department: data.user.department, clubId: data.user._id, clubName: data.user.club_name, year: data.user.year }, token: data.token }));
     } catch (err) {
       toast.error('Network error. Please try again.');
     } finally {
@@ -95,7 +95,7 @@ export const LoginPage: React.FC = () => {
         return;
       }
       toast.success('Account created successfully!');
-      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name, role: 'Student', email: data.user.email, rollNo: data.user.roll_no, department: data.user.department }, token: data.token }));
+      dispatch(setUser({ user: { id: data.user.id || data.user._id, name: data.user.name, role: 'Student', email: data.user.email, rollNo: data.user.roll_no, department: data.user.department, year: data.user.year }, token: data.token }));
     } catch (err) {
       toast.error('Network error. Please try again.');
     } finally {

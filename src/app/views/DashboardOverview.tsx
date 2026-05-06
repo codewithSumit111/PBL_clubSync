@@ -202,28 +202,39 @@ export const DashboardOverview: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome back, {user?.name}!</h2>
-          <p className="text-gray-500">Here's what's happening in your admin dashboard today.</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={loadDashboard}
-            disabled={loading}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Refresh
-          </button>
-          <button
-            onClick={handleExportReport}
-            className="px-4 py-2 bg-teal-500 text-white rounded-xl text-sm font-medium hover:bg-teal-600 transition-shadow shadow-lg shadow-teal-200 flex items-center gap-2"
-          >
-            <Download size={14} />
-            Export Report
-          </button>
+      {/* ── Hero Welcome Banner ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-500 p-8 text-white shadow-xl shadow-indigo-500/20">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-44 h-44 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
+        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white/5 rounded-full" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-indigo-200 text-sm font-medium mb-1">
+              {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'} 👋
+            </p>
+            <h2 className="text-3xl font-bold">{user?.name}</h2>
+            <p className="text-indigo-100/80 text-sm mt-2 max-w-md">
+              Here's your admin dashboard overview. Manage clubs, students, and track performance.
+            </p>
+          </div>
+          <div className="flex gap-3 self-start md:self-auto">
+            <button
+              onClick={loadDashboard}
+              disabled={loading}
+              className="px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/20 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+            <button
+              onClick={handleExportReport}
+              className="px-5 py-2.5 bg-white text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg"
+            >
+              <Download size={14} />
+              Export
+            </button>
+          </div>
         </div>
       </div>
 
@@ -239,8 +250,8 @@ export const DashboardOverview: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {(loading ? [1, 2, 3, 4] : statCards).map((stat: any, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(13,148,136,0.12)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden group border border-transparent hover:border-teal-100/50" >
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <div key={idx} className="bg-card p-6 rounded-[20px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(79,70,229,0.1)] hover:-translate-y-1.5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative overflow-hidden group border border-border hover:border-indigo-100" >
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             {loading ? (
               <div className="space-y-3 relative z-10">
                 <div className="h-12 w-12 rounded-xl bg-gray-100 animate-pulse" />
@@ -250,20 +261,22 @@ export const DashboardOverview: React.FC = () => {
             ) : (
               <div className="relative z-10">
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+                  <div className={`w-12 h-12 rounded-xl flex-shrink-0 ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}>
                     <stat.icon size={24} />
                   </div>
                   <div>
-                    <h3 className="text-[13px] uppercase font-semibold text-[#6b7280] tracking-wider mb-1">{stat.label}</h3>
+                    <h3 className="text-[13px] font-bold text-muted-plus uppercase tracking-wider mb-1">{stat.label}</h3>
                     <div className="flex items-baseline gap-2">
-                       <p className="text-[28px] leading-tight font-bold text-[#1a1a2e]">{stat.value}</p>
+                       <p className="text-3xl leading-tight font-extrabold text-foreground">{stat.value}</p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 pl-16">
-                  <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-full inline-flex items-center gap-1 shadow-sm">
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border border-border group-hover:bg-card transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                     {stat.change}
                   </span>
+                  <ArrowUpRight size={16} className="text-gray-300 group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
                 </div>
               </div>
             )}
@@ -273,32 +286,43 @@ export const DashboardOverview: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300">
+        <div className="lg:col-span-2 bg-card p-6 rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px] transition-all duration-300 border border-border">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Engagement Overview</h3>
             <span className="text-xs text-gray-400">Last 6 months</span>
           </div>
           {loading ? (
             <div className="h-[300px] bg-gray-50 rounded-xl animate-pulse" />
-          ) : monthlyData.length > 0 ? (
-            <div className="h-[300px] w-full">
+          ) : submissionsData.length > 0 ? (
+            <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
+                <AreaChart data={submissionsData}>
+                  <defs>
+                    <linearGradient id="colorSubs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorHrs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#99f6e4" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#99f6e4" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <Tooltip
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    cursor={{ stroke: '#0d9488', strokeWidth: 2, strokeDasharray: '5 5' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 24px rgba(0,0,0,0.08)', backdropFilter: 'blur(8px)', backgroundColor: 'var(--popover)', color: 'var(--popover-foreground)' }}
                   />
-                  <Bar dataKey="submissions" name="Submissions" fill="#0d9488" radius={[6, 6, 0, 0]} barSize={36} />
-                  <Bar dataKey="hours" name="Hours" fill="#99f6e4" radius={[6, 6, 0, 0]} barSize={36} />
-                </BarChart>
+                  <Area type="monotone" dataKey="submissions" name="Submissions" stroke="#0d9488" strokeWidth={3} fillOpacity={1} fill="url(#colorSubs)" animationDuration={1500} />
+                  <Area type="monotone" dataKey="hours" name="Hours" stroke="#5eead4" strokeWidth={3} fillOpacity={1} fill="url(#colorHrs)" animationDuration={1500} />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
-              No engagement data yet. Activity will appear as students submit logbooks.
+            <div className="h-[300px] flex flex-col items-center justify-center text-gray-400 gap-2">
+              <Activity size={32} className="opacity-20" />
+              <p className="text-sm font-medium">No engagement data yet</p>
             </div>
           )}
         </div>
@@ -351,16 +375,22 @@ export const DashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Activity (Table) */}
+      {/* Recent Activity (Timeline) */}
       <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Recent Activity</h3>
-          <span className="text-xs text-gray-400">{activities.length} recent updates</span>
+          <h3 className="text-[13px] uppercase font-semibold text-[#6b7280]">Real-time Updates</h3>
+          <span className="text-xs text-gray-400">{activities.length} recent events</span>
         </div>
         {loading ? (
-          <div className="p-6 space-y-4">
+          <div className="p-8 space-y-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-14 bg-gray-50 rounded-xl animate-pulse" />
+              <div key={i} className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-gray-50 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-50 rounded-md w-1/4 animate-pulse" />
+                  <div className="h-3 bg-gray-50 rounded-md w-1/2 animate-pulse" />
+                </div>
+              </div>
             ))}
           </div>
         ) : activities.length === 0 ? (
@@ -369,45 +399,36 @@ export const DashboardOverview: React.FC = () => {
             <p className="text-sm">No recent activity yet</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                <tr>
-                  <th className="px-6 py-4">Student/Club</th>
-                  <th className="px-6 py-4">Activity</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-sm">
-                {activities.map((a, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors text-[13px] text-[#374151]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xs">
-                          {getInitials(a.name)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{a.name}</p>
-                          <p className="text-[11px] text-gray-500">{a.department}</p>
-                        </div>
+          <div className="p-8">
+            <div className="space-y-8 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-gray-100 before:pointer-events-none">
+              {activities.map((a, i) => (
+                <div key={i} className="relative flex gap-6 items-start group">
+                  <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-sm border-4 border-white transition-transform group-hover:scale-110 duration-300 ${
+                    a.status === 'Approved' ? 'bg-teal-100 text-teal-700' : 
+                    a.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {a.message.toLowerCase().includes('achievement') ? <Trophy size={16} /> :
+                     a.message.toLowerCase().includes('logbook') ? <Clock size={16} /> :
+                     a.status === 'Approved' ? <TrendingUp size={16} /> : <Activity size={16} />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-900 text-sm">{a.name}</span>
+                        <span className="text-[11px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">{a.department}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
-                      {a.message}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(a.status)}`}>
+                      <span className="text-[11px] text-gray-400 font-medium">{new Date(a.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <p className="text-[13px] text-gray-600 leading-relaxed mb-2">{a.message}</p>
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${getStatusStyle(a.status)}`}>
                         {a.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 font-medium whitespace-nowrap">
-                      {new Date(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

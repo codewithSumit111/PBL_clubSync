@@ -104,21 +104,27 @@ export const StudentDashboard: React.FC<{ onNavigateToMyClubs?: () => void }> = 
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Welcome Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        Welcome back, {user?.name}! <Sparkles className="text-teal-500" size={24} />
-                    </h2>
-                    <p className="text-gray-500">
-                        Here's your student dashboard overview for today.
-                    </p>
-                </div>
-                <div className="flex gap-3">
+            {/* ── Hero Welcome Banner ── */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-400 p-8 text-white shadow-xl shadow-teal-500/20">
+                {/* Decorative circles */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
+                <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white/5 rounded-full" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <p className="text-teal-100 text-sm font-medium mb-1">
+                            {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'} 👋
+                        </p>
+                        <h2 className="text-3xl font-bold">{user?.name}</h2>
+                        <p className="text-teal-100/80 text-sm mt-2 max-w-md">
+                            Here's what's happening with your clubs today. Stay on top of your activities and achievements.
+                        </p>
+                    </div>
                     <button
                         onClick={loadDashboard}
                         disabled={loading}
-                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                        className="px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/20 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50 self-start md:self-auto"
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         Refresh
