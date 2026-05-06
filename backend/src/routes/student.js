@@ -53,15 +53,15 @@ router.get('/dashboard', protect, async (req, res) => {
             // 1st year: Only aggregate hours from primary club
             const primaryId = student.primary_club_id.toString();
             const logbookHours = approvedLogbooks
-                .filter(l => l.club_id.toString() === primaryId)
+                .filter(l => l.club_id && l.club_id.toString() === primaryId)
                 .reduce((sum, l) => sum + (l.hours || 0), 0);
             const attendanceHours = attendanceRecords
-                .filter(a => a.club_id.toString() === primaryId)
+                .filter(a => a.club_id && a.club_id.toString() === primaryId)
                 .reduce((sum, a) => sum + (a.cca_hours_awarded || 0), 0);
             
             totalCCAHours = logbookHours + attendanceHours;
             
-            const primaryClub = joinedClubs.find(c => c._id.toString() === primaryId);
+            const primaryClub = joinedClubs.find(c => c._id && c._id.toString() === primaryId);
             if (primaryClub) totalCCAMarks = primaryClub.cca_marks?.total || 0;
         } else {
             // Other years or no primary club set: aggregate from all clubs
@@ -74,9 +74,10 @@ router.get('/dashboard', protect, async (req, res) => {
 
         // Also update joinedClubs cca_hours with real data so individual club chips show correct hours
         joinedClubs.forEach(club => {
+            if (!club._id) return;
             const cId = club._id.toString();
-            const lHours = approvedLogbooks.filter(l => l.club_id.toString() === cId).reduce((s, l) => s + (l.hours || 0), 0);
-            const aHours = attendanceRecords.filter(a => a.club_id.toString() === cId).reduce((s, a) => s + (a.cca_hours_awarded || 0), 0);
+            const lHours = approvedLogbooks.filter(l => l.club_id && l.club_id.toString() === cId).reduce((s, l) => s + (l.hours || 0), 0);
+            const aHours = attendanceRecords.filter(a => a.club_id && a.club_id.toString() === cId).reduce((s, a) => s + (a.cca_hours_awarded || 0), 0);
             club.cca_hours = lHours + aHours;
         });
 
