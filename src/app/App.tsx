@@ -11,6 +11,7 @@ import { CCAAnalytics } from './views/CCAAnalytics';
 import { AchievementView } from './views/AchievementView';
 import { ManageClubLeads } from './views/ManageClubLeads';
 import { ManageNotices } from './views/ManageNotices';
+import { AllMembersView } from './views/AllMembersView';
 import { Toaster } from 'sonner';
 import { Plus } from 'lucide-react';
 // ── Club Role Views ──────────────────────────────────────────
@@ -149,6 +150,8 @@ const AppContent: React.FC = () => {
             </div>
           );
       // ── Admin only ───────────────────────────
+      case 'student-mgmt':
+        return <AllMembersView />;
       case 'analytics':
         return <CCAAnalytics />;
       // ── Club Role Views ──────────────────────
@@ -182,7 +185,7 @@ const AppContent: React.FC = () => {
       clubs: 'Explore All Clubs',
       'my-clubs': 'My Registered Clubs',
       'student-mgmt': 'Student Management',
-      'add-club-lead': 'Add Club',
+      'add-club-lead': 'Add New Club',
       'manage-notices': 'Manage Notices',
       logbook: 'Activity Logbook',
       'qr-attendance': 'QR Attendance',

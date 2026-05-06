@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE } from '../config';
@@ -75,6 +76,9 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [expandedClub, setExpandedClub] = useState<string | null>(null);
 
+  // Track student's application statuses per club: { clubId: 'Pending' | 'Approved' | 'Rejected' }
+  const [appliedClubs, setAppliedClubs] = useState<Record<string, string>>({});
+
   // Preference form state
   const [intakeStatus, setIntakeStatus] = useState<IntakeStatus>({ is_open: false, max_preferences: 3 });
   const [showPrefForm, setShowPrefForm] = useState(false);
@@ -93,13 +97,33 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
         
         let fetchedClubs = data.success ? (data.clubs || []) : [];
         
-        if (mode === 'my-clubs' && user?.role === 'Student') {
+        if (user?.role === 'Student') {
             const dashRes = await fetch(`${API_BASE}/students/dashboard`, { headers: getAuthHeaders() });
             const dashData = await dashRes.json();
-            if (dashData.success && dashData.dashboard?.joinedClubs) {
-                const joinedIds = dashData.dashboard.joinedClubs.map((c: any) => c._id);
-                fetchedClubs = fetchedClubs.filter((c: any) => joinedIds.includes(c._id));
-            } else {
+            if (dashData.success && dashData.dashboard) {
+                // Build application status map from ALL registered_clubs (Pending, Approved, Rejected)
+                const statusMap: Record<string, string> = {};
+                if (dashData.dashboard.joinedClubs) {
+                    // joinedClubs are Approved ones
+                    dashData.dashboard.joinedClubs.forEach((c: any) => {
+                        statusMap[c._id] = 'Approved';
+                    });
+                }
+                if (dashData.dashboard.actionItems) {
+                    // Pending allocations from action items
+                    dashData.dashboard.actionItems
+                        .filter((a: any) => a.type === 'allocation')
+                        .forEach((a: any) => {
+                            // These are pending — but we need club IDs
+                        });
+                }
+                setAppliedClubs(statusMap);
+
+                if (mode === 'my-clubs') {
+                    const joinedIds = dashData.dashboard.joinedClubs.map((c: any) => c._id);
+                    fetchedClubs = fetchedClubs.filter((c: any) => joinedIds.includes(c._id));
+                }
+            } else if (mode === 'my-clubs') {
                 fetchedClubs = [];
             }
         }
@@ -109,6 +133,25 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
         // API unreachable — show empty state
       } finally {
         setLoading(false);
+      }
+    };
+
+    // Fetch student's full registered_clubs status from /api/auth/me
+    const fetchStudentApplications = async () => {
+      if (user?.role !== 'Student') return;
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (data.success && data.user?.registered_clubs) {
+          const statusMap: Record<string, string> = {};
+          data.user.registered_clubs.forEach((rc: any) => {
+            const clubId = typeof rc.club === 'object' ? rc.club._id : rc.club;
+            if (clubId) statusMap[clubId] = rc.status;
+          });
+          setAppliedClubs(statusMap);
+        }
+      } catch {
+        // Ignore — fallback to no status
       }
     };
 
@@ -125,6 +168,7 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
     };
 
     fetchClubs();
+    fetchStudentApplications();
     fetchIntake();
   }, [mode, user?.role]);
 
@@ -193,6 +237,8 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
       const data = await res.json();
       if (data.success) {
         toast.success(data.message || 'Successfully applied to club!');
+        // Update local state to immediately reflect pending status
+        setAppliedClubs(prev => ({ ...prev, [clubId]: 'Pending' }));
       } else {
         toast.error(data.message || 'Failed to apply to club.');
       }
@@ -339,8 +385,8 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClubs.map((club, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+          {filteredClubs.map(club => {
             const catStyle = style(club.category);
             const isExpanded = expandedClub === club._id;
             return (
@@ -376,7 +422,7 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
                   {club.tagline && (
                     <p className="text-xs text-teal-600 font-medium italic mb-2">"{club.tagline}"</p>
                   )}
-                  <p className={`text-gray-500 text-sm ${isExpanded ? '' : 'line-clamp-3'} mb-4 flex-1`}>
+                  <p className={`text-gray-500 text-sm ${isExpanded ? '' : 'line-clamp-3'} mb-4`}>
                     {club.description}
                   </p>
 
@@ -438,14 +484,31 @@ export const ClubListView: React.FC<ClubListViewProps> = ({ mode = 'clubs', onVi
                           <Globe size={14} />
                         </a>
                       )}
-                      {user?.role === 'Student' && mode === 'clubs' && (
-                        <button
-                           onClick={() => handleEnroll(club._id)}
-                           className="px-3 py-1.5 bg-teal-50 text-teal-600 font-bold rounded-lg text-xs hover:bg-teal-100 transition-colors whitespace-nowrap"
-                        >
-                           Apply to Join
-                        </button>
-                      )}
+                      {user?.role === 'Student' && mode === 'clubs' && (() => {
+                        const status = appliedClubs[club._id];
+                        if (status === 'Approved') {
+                          return (
+                            <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 font-bold rounded-lg text-xs inline-flex items-center gap-1 whitespace-nowrap">
+                              <CheckCircle2 size={12} /> Member
+                            </span>
+                          );
+                        }
+                        if (status === 'Pending') {
+                          return (
+                            <span className="px-3 py-1.5 bg-amber-50 text-amber-600 font-bold rounded-lg text-xs inline-flex items-center gap-1 whitespace-nowrap">
+                              <Clock size={12} /> Pending
+                            </span>
+                          );
+                        }
+                        return (
+                          <button
+                             onClick={() => handleEnroll(club._id)}
+                             className="px-3 py-1.5 bg-teal-50 text-teal-600 font-bold rounded-lg text-xs hover:bg-teal-100 transition-colors whitespace-nowrap"
+                          >
+                             Apply to Join
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
