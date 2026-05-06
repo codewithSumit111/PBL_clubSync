@@ -12,6 +12,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  AreaChart,
+  Area,
 } from 'recharts';
 import {
   TrendingUp,
@@ -23,6 +25,9 @@ import {
   RefreshCw,
   Calendar,
   Download,
+  Trophy,
+  Clock,
+  Activity as ActivityIcon,
 } from 'lucide-react';
 import { StudentDashboard } from './StudentDashboard';
 import { ClubDashboard } from './club/ClubDashboard';
@@ -293,10 +298,10 @@ export const DashboardOverview: React.FC = () => {
           </div>
           {loading ? (
             <div className="h-[300px] bg-gray-50 rounded-xl animate-pulse" />
-          ) : submissionsData.length > 0 ? (
+          ) : monthlyData.length > 0 ? (
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={submissionsData}>
+                <AreaChart data={monthlyData}>
                   <defs>
                     <linearGradient id="colorSubs" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
@@ -321,7 +326,7 @@ export const DashboardOverview: React.FC = () => {
             </div>
           ) : (
             <div className="h-[300px] flex flex-col items-center justify-center text-gray-400 gap-2">
-              <Activity size={32} className="opacity-20" />
+              <ActivityIcon size={32} className="opacity-20" />
               <p className="text-sm font-medium">No engagement data yet</p>
             </div>
           )}
@@ -409,7 +414,7 @@ export const DashboardOverview: React.FC = () => {
                   }`}>
                     {a.message.toLowerCase().includes('achievement') ? <Trophy size={16} /> :
                      a.message.toLowerCase().includes('logbook') ? <Clock size={16} /> :
-                     a.status === 'Approved' ? <TrendingUp size={16} /> : <Activity size={16} />}
+                     a.status === 'Approved' ? <TrendingUp size={16} /> : <ActivityIcon size={16} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
