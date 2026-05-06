@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { toast } from 'sonner';
-import { Building2, Mail, Lock, FileText, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building2, Mail, Lock, FileText, Plus, CheckCircle2, AlertCircle, Tag, Layers, UserCheck } from 'lucide-react';
 import { API_BASE } from '../config';
 
 const API_AUTH = `${API_BASE}/auth`;
+
+const CLUB_CATEGORIES = ['Technical', 'Cultural', 'Sports', 'Social', 'Literary', 'Other'] as const;
 
 export const ManageClubLeads: React.FC = () => {
   const token = useSelector((state: RootState) => state.auth.token);
@@ -14,6 +16,9 @@ export const ManageClubLeads: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [tagline, setTagline] = useState('');
+  const [facultyCoordinator, setFacultyCoordinator] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recentlyAdded, setRecentlyAdded] = useState<{ name: string; email: string }[]>([]);
 
@@ -28,17 +33,25 @@ export const ManageClubLeads: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ clubName, email, password, description }),
+        body: JSON.stringify({
+          clubName,
+          email,
+          password,
+          description,
+          category: category || undefined,
+          tagline: tagline || undefined,
+          facultyCoordinator: facultyCoordinator || undefined,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || 'Failed to add club lead.');
+        toast.error(data.message || 'Failed to add new club.');
         return;
       }
 
-      toast.success(data.message || 'Club lead added successfully!');
+      toast.success(data.message || 'New club added successfully!');
       setRecentlyAdded(prev => [{ name: clubName, email }, ...prev]);
 
       // Reset form
@@ -46,6 +59,9 @@ export const ManageClubLeads: React.FC = () => {
       setEmail('');
       setPassword('');
       setDescription('');
+      setCategory('');
+      setTagline('');
+      setFacultyCoordinator('');
     } catch (err) {
       toast.error('Network error. Please try again.');
     } finally {
@@ -62,8 +78,8 @@ export const ManageClubLeads: React.FC = () => {
             <Plus size={20} className="text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add Club</h1>
-            <p className="text-sm text-gray-500">Create a new club account and assign a club lead</p>
+            <h1 className="text-2xl font-bold text-gray-900">Add New Club</h1>
+            <p className="text-sm text-gray-500">Create a new club account with its details</p>
           </div>
         </div>
       </div>
@@ -83,6 +99,55 @@ export const ManageClubLeads: React.FC = () => {
                 value={clubName}
                 onChange={e => setClubName(e.target.value)}
                 placeholder="e.g. Robotics Club"
+                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Club Category</label>
+            <div className="relative">
+              <Layers size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <select
+                required
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all appearance-none bg-white"
+              >
+                <option value="" disabled>Select a category</option>
+                {CLUB_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Tagline */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Club Tagline <span className="text-gray-400 font-normal">(optional)</span></label>
+            <div className="relative">
+              <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={tagline}
+                onChange={e => setTagline(e.target.value)}
+                placeholder="e.g. Building the future, one robot at a time"
+                className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Faculty Coordinator */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Faculty Coordinator Name <span className="text-gray-400 font-normal">(optional)</span></label>
+            <div className="relative">
+              <UserCheck size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={facultyCoordinator}
+                onChange={e => setFacultyCoordinator(e.target.value)}
+                placeholder="e.g. Dr. John Smith"
                 className="w-full pl-11 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
               />
             </div>
@@ -145,12 +210,12 @@ export const ManageClubLeads: React.FC = () => {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creating Account...
+                Creating Club...
               </>
             ) : (
               <>
                 <Plus size={16} />
-                Add Club
+                Add New Club
               </>
             )}
           </button>

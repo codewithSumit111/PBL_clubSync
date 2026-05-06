@@ -146,7 +146,7 @@ router.post('/register', async (req, res) => {
 
 // ─────────────────────────────────────────────
 // POST /api/auth/add-club-lead  (admin-only)
-// Body: { clubName, email, password, description }
+// Body: { clubName, email, password, description, category, tagline, facultyCoordinator }
 // ─────────────────────────────────────────────
 router.post('/add-club-lead', protect, async (req, res) => {
     try {
@@ -155,7 +155,7 @@ router.post('/add-club-lead', protect, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Only admins can add club lead accounts.' });
         }
 
-        const { clubName, email, password, description } = req.body;
+        const { clubName, email, password, description, category, tagline, facultyCoordinator } = req.body;
 
         if (!clubName || !email || !password) {
             return res.status(400).json({ success: false, message: 'Club name, email, and password are required.' });
@@ -179,18 +179,35 @@ router.post('/add-club-lead', protect, async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newClub = new Club({
+        const clubData = {
             club_name: clubName,
             description: description || 'Club description to be updated.',
             email: email.toLowerCase(),
             password: hashedPassword
-        });
+        };
+
+        // Optional fields
+        if (category) {
+            clubData.category = category;
+        }
+        if (tagline) {
+            clubData.tagline = tagline;
+        }
+        if (facultyCoordinator) {
+            clubData.faculty_coordinators = [{
+                name: facultyCoordinator,
+                email: 'N/A',
+                department: 'N/A'
+            }];
+        }
+
+        const newClub = new Club(clubData);
 
         await newClub.save();
 
         return res.status(201).json({
             success: true,
-            message: `Club lead account for "${clubName}" created successfully.`,
+            message: `Club "${clubName}" created successfully.`,
             club: sanitizeUser(newClub, 'Club'),
         });
     } catch (err) {
