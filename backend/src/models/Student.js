@@ -91,6 +91,22 @@ const studentSchema = new mongoose.Schema({
         min: 1,
         max: 4
     },
+    division: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobile_no: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    prn: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        default: ''
+    },
     role: {
         type: String,
         default: 'Student',
